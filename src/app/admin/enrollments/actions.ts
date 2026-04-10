@@ -22,6 +22,44 @@ export async function enrollUser(userId: string, courseId: string, deadline?: Da
   }
 }
 
+// ─── Enroll banyak karyawan sekaligus ──────────────────────────────────────
+export async function enrollMultipleUsers(userIds: string[], courseId: string, deadline?: Date | null) {
+  try {
+    if (userIds.length === 0) return { success: false, error: "Tidak ada karyawan yang dipilih." };
+
+    // Cek siapa yang sudah terdaftar
+    const existingEnrollments = await (db.enrollment as any).findMany({
+      where: { courseId, userId: { in: userIds } },
+      select: { userId: true },
+    });
+    const enrolledIds = new Set(existingEnrollments.map((e: any) => e.userId));
+    const toEnroll = userIds.filter((id) => !enrolledIds.has(id));
+
+    if (toEnroll.length === 0) {
+      return { success: false, error: "Semua karyawan yang dipilih sudah terdaftar." };
+    }
+
+    await (db.enrollment as any).createMany({
+      data: toEnroll.map((userId) => ({
+        userId,
+        courseId,
+        deadline,
+        status: "IN_PROGRESS",
+      })),
+      skipDuplicates: true,
+    });
+
+    revalidatePath("/admin/enrollments");
+    return { 
+      success: true, 
+      count: toEnroll.length,
+      skipped: enrolledIds.size
+    };
+  } catch (error: any) {
+    return { success: false, error: error?.message ?? "Terjadi kesalahan pendaftaran masal." };
+  }
+}
+
 // ─── Enroll massal per departemen ke satu kursus ──────────────────────────
 export async function enrollDepartment(department: string, courseId: string, deadline?: Date | null) {
   try {

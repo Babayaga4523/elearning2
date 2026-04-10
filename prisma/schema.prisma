@@ -1,54 +1,45 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-generator client {
-  provider = "prisma-client-js"
-}
-
-enum UserRole {
-  ADMIN
-  KARYAWAN
-}
-
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String?        @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  role          UserRole  @default(KARYAWAN)
+  role          UserRole       @default(KARYAWAN)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   department    String?
-  nip           String?
   lokasi        String?
-  
+  nip           String?
   enrollments   Enrollment[]
-  userProgress  UserProgress[]
   testAttempts  TestAttempt[]
-
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  userProgress  UserProgress[]
 }
 
 model Course {
-  id          String   @id @default(cuid())
+  id          String       @id @default(cuid())
   userId      String
-  title       String   @db.Text
-  description String?  @db.Text
-  imageUrl    String?  @db.Text
-  isPublished Boolean  @default(false)
-
-  category    Category? @relation(fields: [categoryId], references: [id])
-  categoryId  String?
-
-  modules     Module[]
-  enrollments Enrollment[]
-  tests       Test[]
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  title       String
+  description String?
+  imageUrl    String?
+  isPublished Boolean      @default(false)
+  categoryId       String?
+  deadlineDuration Int?
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+  category         Category?    @relation(fields: [categoryId], references: [id])
+  enrollments      Enrollment[]
+  modules          Module[]
+  tests            Test[]
 
   @@index([categoryId])
 }
@@ -59,54 +50,145 @@ model Category {
   courses Course[]
 }
 
-enum ModuleType {
-  VIDEO
-  PDF
-}
-
 model Module {
-  id          String   @id @default(cuid())
-  title       String
-  description String?  @db.Text
-  type        ModuleType @default(VIDEO)
-  url         String?  @db.Text
-  videoUrl    String?  @db.Text
-  pdfUrl      String?  @db.Text
-  sharepointUrl String? @db.Text
-  duration    Int      @default(0) // minutes
-  position    Int      @default(0)
-  isPublished Boolean  @default(false)
-  isFree      Boolean  @default(false)
-
-  courseId    String
-  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  userProgress UserProgress[]
-
-  originalFilename String?
+  id               String         @id @default(cuid())
+  title            String
+  description      String?
+  position         Int            @default(0)
+  isPublished      Boolean        @default(false)
+  isFree           Boolean        @default(false)
+  courseId         String
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  duration         Int            @default(0)
+  type             ModuleType     @default(VIDEO)
+  url              String?
+  pdfUrl           String?
+  sharepointUrl    String?
+  videoUrl         String?
   fileSize         BigInt?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  originalFilename String?
+  course           Course         @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userProgress     UserProgress[]
 
   @@index([courseId])
 }
 
 model Test {
-  id           String   @id @default(cuid())
-  title        String
-  type         TestType
-  duration     Int      @default(30) // minutes
-  passingScore Int      @default(70)
-  courseId     String
-  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-  
-  questions    Question[]
-  attempts     TestAttempt[]
-
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id                  String        @id @default(cuid())
+  title               String
+  type                TestType
+  courseId            String
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+  duration            Int           @default(30)
+  passingScore        Int           @default(70)
+  maxAttempts         Int           @default(0)   // 0 = unlimited
+  randomizeQuestions  Boolean       @default(false)
+  randomizeOptions    Boolean       @default(false)
+  questions           Question[]
+  course              Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attempts            TestAttempt[]
 
   @@index([courseId])
+}
+
+model Question {
+  id        String       @id @default(cuid())
+  text      String
+  testId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  options   Option[]
+  test      Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers   TestAnswer[]
+
+  @@index([testId])
+}
+
+model Option {
+  id          String       @id @default(cuid())
+  text        String
+  isCorrect   Boolean      @default(false)
+  questionId  String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  testAnswers TestAnswer[]
+
+  @@index([questionId])
+}
+
+model UserProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  moduleId    String
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([moduleId])
+}
+
+model Enrollment {
+  id        String           @id @default(cuid())
+  userId    String
+  courseId  String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  status    EnrollmentStatus @default(IN_PROGRESS)
+  deadline  DateTime?
+  course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId])
+}
+
+model TestAttempt {
+  id          String       @id @default(cuid())
+  userId      String
+  testId      String
+  score       Float
+  passed      Boolean      @default(false)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  completedAt DateTime?    @default(now())
+  startedAt   DateTime?
+  answers     TestAnswer[]
+  test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([testId])
+}
+
+model TestAnswer {
+  id               String      @id @default(cuid())
+  testAttemptId    String
+  questionId       String
+  selectedOptionId String?
+  isCorrect        Boolean
+  createdAt        DateTime    @default(now())
+  question         Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   Option?     @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
+  testAttempt      TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+
+  @@unique([testAttemptId, questionId])
+  @@index([testAttemptId])
+}
+
+enum UserRole {
+  ADMIN
+  KARYAWAN
+}
+
+enum ModuleType {
+  VIDEO
+  PDF
 }
 
 enum TestType {
@@ -114,114 +196,8 @@ enum TestType {
   POST
 }
 
-model Question {
-  id      String   @id @default(cuid())
-  text    String   @db.Text
-  testId  String
-  test    Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
-  
-  options Option[]
-  answers TestAnswer[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@index([testId])
-}
-
-model Option {
-  id          String   @id @default(cuid())
-  text        String   @db.Text
-  isCorrect   Boolean  @default(false)
-  questionId  String
-  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  testAnswers TestAnswer[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @default(now()) @updatedAt
-
-  @@index([questionId])
-}
-
-model UserProgress {
-  id          String  @id @default(cuid())
-  userId      String
-  user        User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  moduleId    String
-  module      Module  @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  
-  isCompleted Boolean @default(false)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  @@unique([userId, moduleId])
-  @@index([moduleId])
-}
-
 enum EnrollmentStatus {
   IN_PROGRESS
   COMPLETED
   FAILED
 }
-
-model Enrollment {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  courseId  String
-  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
-
-  status    EnrollmentStatus @default(IN_PROGRESS)
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  deadline  DateTime?
-
-  @@unique([userId, courseId])
-  @@index([courseId])
-}
-
-model TestAttempt {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  testId    String
-  test      Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
-  
-  score     Float
-  passed    Boolean  @default(false)
-  
-  // Analitik pengerjaan
-  startedAt   DateTime?
-  completedAt DateTime? @default(now())
-
-  answers     TestAnswer[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([userId])
-  @@index([testId])
-}
-
-model TestAnswer {
-  id              String      @id @default(cuid())
-  testAttemptId   String
-  questionId      String
-  selectedOptionId String?
-  isCorrect       Boolean
-
-  testAttempt     TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
-  question        Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
-  selectedOption  Option?     @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
-
-  createdAt       DateTime    @default(now())
-
-  @@unique([testAttemptId, questionId])
-  @@index([testAttemptId])
-}
-

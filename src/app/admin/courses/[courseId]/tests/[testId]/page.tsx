@@ -35,6 +35,10 @@ export default async function TestIdPage({
     return notFound();
   }
 
+  const course = await db.course.findUnique({
+    where: { id: params.courseId }
+  });
+
   return (
     <div className="p-6 max-w-5xl mx-auto space-y-8 animate-in fade-in duration-500">
 
@@ -55,6 +59,7 @@ export default async function TestIdPage({
           courseId={params.courseId} 
           initialData={test} 
           type={testType as any} 
+          isCoursePublished={course?.isPublished}
         />
       </div>
     </div>

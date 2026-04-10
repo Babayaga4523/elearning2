@@ -141,10 +141,22 @@ export async function enroll(courseId: string) {
     throw new Error("Unauthorized");
   }
 
+  const course = await db.course.findUnique({
+    where: { id: courseId },
+    select: { deadlineDuration: true } as any
+  });
+
+  let deadline = null;
+  if ((course as any)?.deadlineDuration) {
+    deadline = new Date();
+    deadline.setDate(deadline.getDate() + (course as any).deadlineDuration);
+  }
+
   const enrollment = await db.enrollment.create({
     data: {
       courseId,
       userId: session.user.id!,
+      deadline,
     },
   });
 

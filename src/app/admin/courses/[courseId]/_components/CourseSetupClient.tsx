@@ -28,6 +28,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ModuleFormModal } from "./ModuleFormModal";
+import { ConfirmDraftDialog } from "@/components/admin/ConfirmDraftDialog";
 import { deleteModule } from "../actions";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -53,13 +54,26 @@ export const CourseSetupClient = ({
 }: CourseSetupClientProps) => {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
+  const [showDraftConfirm, setShowDraftConfirm] = useState(false);
+  const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
   const onDeleteModule = async (moduleId: string) => {
+    // If course is published, warn before deleting
+    if (course.isPublished) {
+      setModuleToDelete(moduleId);
+      setShowDraftConfirm(true);
+      return;
+    }
+    
+    executeDelete(moduleId);
+  };
+
+  const executeDelete = async (moduleId: string) => {
     try {
       setIsDeleting(moduleId);
       const result = await deleteModule(course.id, moduleId);
       if (result.success) {
-        toast.success("Modul berhasil dihapus");
+        toast.success(result.statusReverted ? "Kursus ditarik ke Draft & Modul dihapus" : "Modul berhasil dihapus");
         router.refresh();
       } else {
         toast.error("Gagal menghapus modul");
@@ -68,6 +82,8 @@ export const CourseSetupClient = ({
       toast.error("Terjadi kesalahan");
     } finally {
       setIsDeleting(null);
+      setShowDraftConfirm(false);
+      setModuleToDelete(null);
     }
   };
 
@@ -134,7 +150,9 @@ export const CourseSetupClient = ({
                     </div>
 
                     <div className="flex items-center gap-1 pr-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0 group-hover:transition-all">
-                      <ModuleFormModal initialData={module}>
+                      <ModuleFormModal 
+                        initialData={module}
+                      >
                         <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl">
                           <Pencil className="h-4 w-4" />
                         </Button>
@@ -266,6 +284,16 @@ export const CourseSetupClient = ({
           </Card>
         </div>
       </section>
+      
+      <ConfirmDraftDialog 
+        isOpen={showDraftConfirm}
+        onClose={() => setShowDraftConfirm(false)}
+        onConfirm={() => moduleToDelete && executeDelete(moduleToDelete)}
+        warningDetails={[
+          "Menghapus modul ini mungkin membuat kurikulum tidak memenuhi syarat publikasi.",
+          "Kursus akan ditarik ke Draft untuk menghindari ketidakkonsistenan materi bagi peserta."
+        ]}
+      />
     </div>
   );
 };

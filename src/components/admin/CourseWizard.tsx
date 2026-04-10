@@ -7,6 +7,7 @@ import {
   LayoutGrid, 
   Globe 
 } from "lucide-react";
+import Link from "next/link";
 
 interface Step {
   id: number;
@@ -38,9 +39,10 @@ const steps: Step[] = [
 
 interface CourseWizardProps {
   activeStep: number;
+  courseId: string;
 }
 
-export const CourseWizard = ({ activeStep }: CourseWizardProps) => {
+export const CourseWizard = ({ activeStep, courseId }: CourseWizardProps) => {
   return (
     <div className="w-full py-8">
       <div className="flex items-center justify-center max-w-4xl mx-auto px-4">
@@ -52,20 +54,21 @@ export const CourseWizard = ({ activeStep }: CourseWizardProps) => {
             <div key={step.id} className="flex items-center flex-1 last:flex-none">
               {/* Step Circle & Label */}
               <div className="flex flex-col items-center relative z-10">
-                <div 
-                  className={cn(
-                    "h-12 w-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 shadow-sm",
-                    isCompleted && "bg-emerald-500 border-emerald-500 text-white shadow-emerald-200",
-                    isActive && "bg-primary border-primary text-white shadow-primary/20 scale-110",
-                    !isCompleted && !isActive && "bg-white border-slate-200 text-slate-400"
-                  )}
-                >
-                  {isCompleted ? (
-                    <Check className="h-6 w-6" />
-                  ) : (
-                    <step.icon className="h-5 w-5" />
-                  )}
-                </div>
+                  <Link 
+                    href={`/admin/courses/${courseId}?step=${step.id}`}
+                    className={cn(
+                      "h-12 w-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 shadow-sm hover:scale-105 active:scale-95",
+                      isCompleted && "bg-emerald-500 border-emerald-500 text-white shadow-emerald-200",
+                      isActive && "bg-primary border-primary text-white shadow-primary/20 scale-110",
+                      !isCompleted && !isActive && "bg-white border-slate-200 text-slate-400"
+                    )}
+                  >
+                    {isCompleted ? (
+                      <Check className="h-6 w-6" />
+                    ) : (
+                      <step.icon className="h-5 w-5" />
+                    )}
+                  </Link>
                 
                 <div className="absolute -bottom-10 w-32 text-center pointer-events-none">
                    <p className={cn(

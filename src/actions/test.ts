@@ -145,16 +145,47 @@ export async function submitTest(
         },
       },
     },
-  });
+  }) as any;
 
   if (!test) throw new Error("Test tidak ditemukan");
 
-  // 2. Proses perhitungan jawaban secara server-side
+  // 2. SERVER-SIDE ACCESS VALIDATION
+  // Rule A: Lulus = Kunci (passed tests are permanently locked)
+  const bestPassedAttempt = await db.testAttempt.findFirst({
+    where: { userId, testId, passed: true },
+    orderBy: { score: "desc" },
+  });
+  if (bestPassedAttempt) {
+    throw new Error("TEST_ALREADY_PASSED");
+  }
+
+  // Rule B: Max Attempts enforcement (0 = unlimited)
+  const testMaxAttempts = (test as any).maxAttempts as number;
+  if (testMaxAttempts > 0) {
+    const attemptCount = await db.testAttempt.count({ where: { userId, testId } });
+    if (attemptCount >= testMaxAttempts) {
+      throw new Error("MAX_ATTEMPTS_REACHED");
+    }
+  }
+
+  // Rule C: Post-test Prerequisite (All modules completed)
+  if (test.type === "POST") {
+    const modules = await db.module.findMany({
+      where: { courseId: test.courseId, isPublished: true },
+      include: { userProgress: { where: { userId } } }
+    });
+    const isAllModulesCompleted = modules.every(m => m.userProgress[0]?.isCompleted === true);
+    if (!isAllModulesCompleted) {
+      throw new Error("MODULES_NOT_COMPLETED");
+    }
+  }
+
+  // 3. Proses perhitungan jawaban secara server-side
   let correctCount = 0;
   const totalQuestions = test.questions.length;
-  const results = test.questions.map((question) => {
+  const results = test.questions.map((question: { id: string; options: { id: string; isCorrect: boolean }[] }) => {
     const userAnswer = answersData.find((a) => a.questionId === question.id);
-    const correctOption = question.options.find((o) => o.isCorrect);
+    const correctOption = question.options.find((o: { id: string; isCorrect: boolean }) => o.isCorrect);
     const isCorrect = !!(userAnswer && correctOption && userAnswer.optionId === correctOption.id);
     
     if (isCorrect) correctCount++;
@@ -175,7 +206,7 @@ export async function submitTest(
     const testAttempt = await (tx as any).testAttempt.create({
       data: {
         userId,
-        testId,
+        testId: testId,
         score,
         passed,
         startedAt: startedAt ? new Date(startedAt) : null,
@@ -185,7 +216,7 @@ export async function submitTest(
 
     // Simpan Detail Jawaban
     await (tx as any).testAnswer.createMany({
-      data: results.map((r) => ({
+      data: results.map((r: { questionId: string; selectedOptionId: string | null; isCorrect: boolean }) => ({
         testAttemptId: testAttempt.id,
         questionId: r.questionId,
         selectedOptionId: r.selectedOptionId,
@@ -193,10 +224,40 @@ export async function submitTest(
       })),
     });
 
+    // ─── LOGIKA UPDATE STATUS ENROLLMENT ───
+    if (test.type === "POST") {
+      const currentEnrollment = await (tx as any).enrollment.findUnique({
+        where: { userId_courseId: { userId, courseId: test.courseId } },
+      });
+
+      if (currentEnrollment) {
+        if (passed) {
+          // Rule: Lulus Post-Test -> COMPLETED
+          await (tx as any).enrollment.update({
+            where: { id: currentEnrollment.id },
+            data: { status: "COMPLETED" },
+          });
+        } else if (testMaxAttempts > 0) {
+          // Rule: Gagal Post-Test & Habis Percobaan -> FAILED
+          const totalAttempts = await (tx as any).testAttempt.count({
+            where: { userId, testId },
+          });
+          
+          if (totalAttempts >= testMaxAttempts) {
+            await (tx as any).enrollment.update({
+              where: { id: currentEnrollment.id },
+              data: { status: "FAILED" },
+            });
+          }
+        }
+      }
+    }
+
     return testAttempt;
   });
 
   revalidatePath(`/courses/${test.courseId}/tests/${testId}`);
+  revalidatePath(`/courses/${test.courseId}/tests/${testId}/result`);
   revalidatePath(`/courses/${test.courseId}`);
   
   return attempt;
@@ -217,7 +278,7 @@ export async function getTestAttemptDetail(attemptId: string) {
       test: {
         include: {
           questions: {
-            orderBy: { position: "asc" as any },
+            orderBy: { createdAt: "asc" },
             include: {
               options: true
             }

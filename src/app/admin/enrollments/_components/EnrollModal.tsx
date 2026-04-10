@@ -5,7 +5,7 @@ import { X, UserPlus, Users, Search, CheckCircle2, AlertCircle, Loader2, Chevron
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { enrollUser, enrollDepartment, updateEnrollmentDeadline } from "../actions";
+import { enrollUser, enrollDepartment, updateEnrollmentDeadline, enrollMultipleUsers } from "../actions";
 import { useEffect } from "react";
 import { toast } from "sonner";
 
@@ -41,7 +41,7 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
   const isEdit = !!editData;
   const [mode, setMode] = useState<"individual" | "department">("individual");
   const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedUser, setSelectedUser] = useState("");
+  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [selectedDept, setSelectedDept] = useState("");
   const [selectedDeadline, setSelectedDeadline] = useState("");
   const [userSearch, setUserSearch] = useState("");
@@ -51,13 +51,13 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
   useEffect(() => {
     if (editData && isOpen) {
       setSelectedCourse(editData.courseId);
-      setSelectedUser(editData.userId);
+      setSelectedUsers([editData.userId]);
       setSelectedDeadline(editData.deadline ? editData.deadline.substring(0, 10) : "");
       setMode("individual");
     } else if (isOpen) {
       // Reset if not edit mode
       setSelectedCourse("");
-      setSelectedUser("");
+      setSelectedUsers([]);
       setSelectedDept("");
       setSelectedDeadline("");
     }
@@ -76,8 +76,8 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
     return matchSearch;
   });
 
-  const isAlreadyEnrolled = selectedCourse && selectedUser
-    ? enrolledPairs.has(`${selectedUser}_${selectedCourse}`)
+  const isAlreadyEnrolled = selectedCourse && selectedUsers.length === 1 && !isEdit
+    ? enrolledPairs.has(`${selectedUsers[0]}_${selectedCourse}`)
     : false;
 
   const handleSubmit = () => {
@@ -102,13 +102,14 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
       }
 
       if (mode === "individual") {
-        if (!selectedUser) {
-          toast.error("Pilih karyawan terlebih dahulu.");
+        if (selectedUsers.length === 0) {
+          toast.error("Pilih minimal satu karyawan.");
           return;
         }
-        const result = await enrollUser(selectedUser, selectedCourse, deadlineDate);
+        
+        const result = await enrollMultipleUsers(selectedUsers, selectedCourse, deadlineDate);
         if (result.success) {
-          toast.success("Karyawan berhasil didaftarkan ke kursus.");
+          toast.success(`${result.count} karyawan berhasil didaftarkan ke kursus.`);
           handleClose();
         } else {
           toast.error(result.error);
@@ -134,7 +135,7 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
 
   const handleClose = () => {
     setSelectedCourse("");
-    setSelectedUser("");
+    setSelectedUsers([]);
     setSelectedDept("");
     setSelectedDeadline("");
     setUserSearch("");
@@ -212,11 +213,12 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
             {/* Pilih Kursus */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                <label htmlFor="course-select" className="text-xs font-black text-slate-500 uppercase tracking-wider">
                   Kursus Tujuan <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <select
+                    id="course-select"
                     value={selectedCourse}
                     onChange={(e) => setSelectedCourse(e.target.value)}
                     disabled={isEdit}
@@ -235,11 +237,12 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
               </div>
 
               <div className="space-y-2">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                <label htmlFor="deadline-input" className="text-xs font-black text-slate-500 uppercase tracking-wider">
                   Target Deadline (Optional)
                 </label>
                 <div className="relative">
                   <input
+                    id="deadline-input"
                     type="date"
                     value={selectedDeadline}
                     onChange={(e) => setSelectedDeadline(e.target.value)}
@@ -252,19 +255,47 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
             {/* Mode: Individual */}
             {mode === "individual" && (
               <div className="space-y-3">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
-                  Karyawan {isEdit ? "" : <span className="text-rose-500">*</span>}
-                </label>
+                <div className="flex items-center justify-between">
+                  <label htmlFor="user-search-input" className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                    Karyawan {isEdit ? "" : <span className="text-rose-500">*</span>}
+                  </label>
+                  {!isEdit && selectedUsers.length > 0 && (
+                    <button 
+                      onClick={() => setSelectedUsers([])}
+                      className="text-[10px] font-bold text-rose-500 hover:underline"
+                    >
+                      Batal Pilih Semua ({selectedUsers.length})
+                    </button>
+                  )}
+                </div>
                 {/* Search user - hidden in edit mode */}
                 {!isEdit && (
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <input
-                      value={userSearch}
-                      onChange={(e) => setUserSearch(e.target.value)}
-                      placeholder="Cari nama, email, NIP, departemen..."
-                      className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20"
-                    />
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <input
+                        id="user-search-input"
+                        value={userSearch}
+                        onChange={(e) => setUserSearch(e.target.value)}
+                        placeholder="Cari nama, email, NIP..."
+                        className="w-full h-10 pl-10 pr-4 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                      />
+                    </div>
+                    {userSearch && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-10 rounded-xl px-4 text-xs font-bold"
+                        onClick={() => {
+                          const availableUsers = filteredUsers
+                            .filter(u => !enrolledPairs.has(`${u.id}_${selectedCourse}`))
+                            .map(u => u.id);
+                          setSelectedUsers(prev => Array.from(new Set([...prev, ...availableUsers])));
+                        }}
+                      >
+                        Pilih Hasil ({filteredUsers.length})
+                      </Button>
+                    )}
                   </div>
                 )}
                 {/* User list / Selected user only in edit mode */}
@@ -272,80 +303,90 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
                   "border border-slate-100 rounded-xl overflow-hidden",
                   !isEdit && "max-h-52 overflow-y-auto"
                 )}>
-                  {filteredUsers
-                    .filter(u => isEdit ? u.id === selectedUser : true)
-                    .map((u) => {
-                      const alreadyEnrolled = selectedCourse
-                        ? enrolledPairs.has(`${u.id}_${selectedCourse}`)
-                        : false;
-                      const isSelected = selectedUser === u.id;
-                      return (
-                        <button
-                          key={u.id}
-                          disabled={alreadyEnrolled || isEdit}
-                          onClick={() => setSelectedUser(isSelected ? "" : u.id)}
-                          className={cn(
-                            "w-full text-left px-4 py-3 flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors",
-                            isSelected
-                              ? "bg-primary/5 border-primary/10"
-                              : alreadyEnrolled
-                              ? "opacity-40 cursor-not-allowed bg-slate-50"
-                              : isEdit
-                              ? "bg-slate-50"
-                              : "hover:bg-slate-50"
-                          )}
-                        >
-                          <div className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center font-black text-sm shrink-0",
-                            isSelected ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
-                          )}>
-                            {u.name.charAt(0).toUpperCase()}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-800 text-sm leading-tight">{u.name}</p>
-                            <div className="flex items-center gap-2 mt-0.5">
-                              <span className="text-[11px] text-slate-400 truncate">{u.email}</span>
-                              {u.nip && (
-                                <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
-                                  {u.nip}
-                                </span>
+                  {filteredUsers.length === 0 ? (
+                    <p className="p-10 text-center text-sm text-slate-400 italic font-medium">Karyawan tidak ditemukan</p>
+                  ) : (
+                    filteredUsers
+                      .filter(u => isEdit ? u.id === selectedUsers[0] : true)
+                      .map((u) => {
+                        const alreadyEnrolled = selectedCourse
+                          ? enrolledPairs.has(`${u.id}_${selectedCourse}`)
+                          : false;
+                        const isSelected = selectedUsers.includes(u.id);
+                        
+                        const toggleUser = () => {
+                          if (isEdit || alreadyEnrolled) return;
+                          setSelectedUsers(prev => 
+                            prev.includes(u.id) 
+                              ? prev.filter(id => id !== u.id) 
+                              : [...prev, u.id]
+                          );
+                        };
+
+                        return (
+                          <button
+                            key={u.id}
+                            disabled={alreadyEnrolled || isEdit}
+                            onClick={toggleUser}
+                            className={cn(
+                              "w-full text-left px-4 py-3 flex items-center gap-3 border-b border-slate-50 last:border-0 transition-colors",
+                              isSelected
+                                ? "bg-primary/5 border-primary/10"
+                                : alreadyEnrolled
+                                ? "opacity-40 cursor-not-allowed bg-slate-50"
+                                : isEdit
+                                ? "bg-slate-50"
+                                : "hover:bg-slate-50"
+                            )}
+                          >
+                            <div className={cn(
+                              "h-8 w-8 rounded-full flex items-center justify-center font-black text-sm shrink-0",
+                              isSelected ? "bg-primary text-white" : "bg-slate-100 text-slate-500"
+                            )}>
+                              {u.name.charAt(0).toUpperCase()}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-slate-800 text-sm leading-tight">{u.name}</p>
+                              <div className="flex items-center gap-2 mt-0.5">
+                                <span className="text-[11px] text-slate-400 truncate">{u.email}</span>
+                                {u.nip && (
+                                  <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded shrink-0">
+                                    {u.nip}
+                                  </span>
+                                )}
+                              </div>
+                              {u.department && (
+                                <p className="text-[10px] text-slate-400 mt-0.5">{u.department}</p>
                               )}
                             </div>
-                            {u.department && (
-                              <span className="text-[10px] text-slate-400">{u.department}</span>
-                            )}
-                          </div>
-                          <div className="shrink-0">
-                            {alreadyEnrolled ? (
-                              <Badge className="bg-slate-100 text-slate-400 text-[10px] border-none">
-                                Sudah Terdaftar
-                              </Badge>
-                            ) : isSelected ? (
-                              <CheckCircle2 className="h-4 w-4 text-primary" />
-                            ) : null}
-                          </div>
-                        </button>
-                      );
-                    })
-                  }
+                            <div className="shrink-0">
+                              {alreadyEnrolled ? (
+                                <Badge className="bg-slate-100 text-slate-400 text-[10px] border-none">
+                                  Sudah Terdaftar
+                                </Badge>
+                              ) : isSelected ? (
+                                <CheckCircle2 className="h-4 w-4 text-primary" />
+                              ) : (
+                                <div className="h-4 w-4 border-2 border-slate-200 rounded-md" />
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })
+                  )}
                 </div>
-                {!isEdit && isAlreadyEnrolled && (
-                  <div className="flex items-center gap-2 text-amber-600 text-xs font-bold bg-amber-50 px-3 py-2 rounded-lg">
-                    <AlertCircle className="h-4 w-4 shrink-0" />
-                    Karyawan ini sudah terdaftar di kursus tersebut.
-                  </div>
-                )}
               </div>
             )}
 
             {/* Mode: Department */}
             {mode === "department" && (
               <div className="space-y-3">
-                <label className="text-xs font-black text-slate-500 uppercase tracking-wider">
+                <label htmlFor="dept-select" className="text-xs font-black text-slate-500 uppercase tracking-wider">
                   Pilih Departemen <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <select
+                    id="dept-select"
                     value={selectedDept}
                     onChange={(e) => setSelectedDept(e.target.value)}
                     className="w-full h-11 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-primary/20 appearance-none"
@@ -427,7 +468,7 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
               disabled={
                 isPending ||
                 !selectedCourse ||
-                (mode === "individual" && (!selectedUser || (!isEdit && isAlreadyEnrolled))) ||
+                (mode === "individual" && selectedUsers.length === 0) ||
                 (mode === "department" && (!selectedDept || deptNewEnrollments.length === 0))
               }
               className="font-black gap-2 min-w-32"
@@ -450,7 +491,7 @@ export function EnrollModal({ isOpen, onClose, courses, users, departments, exis
               ) : (
                 <>
                   <UserPlus className="h-4 w-4" />
-                  Daftarkan
+                  Daftarkan {selectedUsers.length > 0 ? `(${selectedUsers.length})` : ""}
                 </>
               )}
             </Button>

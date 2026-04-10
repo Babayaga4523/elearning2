@@ -39,13 +39,14 @@ export const ConfirmDialog = ({
           </div>
           <DialogHeader>
             <DialogTitle className="text-2xl font-black tracking-tight text-white">{title}</DialogTitle>
+            <DialogDescription className="sr-only">{description}</DialogDescription>
           </DialogHeader>
         </div>
         
         <div className="p-8 bg-white text-center">
-          <DialogDescription className="text-slate-600 font-medium text-base mb-8">
+          <p className="text-slate-600 font-medium text-base mb-8">
             {description}
-          </DialogDescription>
+          </p>
           
           <div className="flex flex-col gap-3">
             <Button 

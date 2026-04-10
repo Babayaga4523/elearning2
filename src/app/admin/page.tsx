@@ -65,10 +65,24 @@ export default async function AdminDashboard() {
   });
   const courseTitleMap = Object.fromEntries(topCourses.map(c => [c.id, c.title]));
 
+  // Fetch real completion counts for these top courses
+  const completionStats = await db.enrollment.groupBy({
+    by: ["courseId"],
+    where: {
+      courseId: { in: topCourseIds },
+      status: "COMPLETED"
+    },
+    _count: { status: true }
+  });
+
+  const completionMap = Object.fromEntries(
+    completionStats.map(s => [s.courseId, s._count.status])
+  );
+
   const chartData = coursePopularity.map(c => ({
     name: courseTitleMap[c.courseId] ?? "Unknown",
     total: c._count.courseId,
-    completed: 0, // Completed count per course would need a separate query; omit for performance
+    completed: completionMap[c.courseId] ?? 0,
   }));
 
   // Status Breakdown for Pie Chart

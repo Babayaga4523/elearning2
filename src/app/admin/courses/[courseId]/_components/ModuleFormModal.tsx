@@ -8,30 +8,30 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useRef, useTransition } from "react";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogTrigger 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
 } from "@/components/ui/dialog";
-import { 
-  Form, 
-  FormControl, 
-  FormField, 
-  FormItem, 
-  FormLabel, 
-  FormMessage 
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { 
-  Upload, 
-  Link2, 
-  FileText, 
-  X, 
-  Loader2, 
-  AlertCircle, 
+import {
+  Upload,
+  Link2,
+  FileText,
+  X,
+  Loader2,
+  AlertCircle,
   CheckCircle2,
   FileVideo,
   Clock
@@ -45,15 +45,15 @@ interface ModuleFormModalProps {
   initialData?: any;
 }
 
-export const ModuleFormModal = ({ 
-  children, 
-  initialData 
+export const ModuleFormModal = ({
+  children,
+  initialData
 }: ModuleFormModalProps) => {
   const [open, setOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [isDragOver, setIsDragOver] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
+
   const params = useParams();
   const courseId = params.courseId as string;
 
@@ -130,12 +130,12 @@ export const ModuleFormModal = ({
     startTransition(async () => {
       try {
         const result = await upsertModule(courseId, initialData?.id || null, values);
-        if (result.success) {
+        if (result?.success) {
           toast.success(initialData ? "Modul diperbarui" : "Modul dibuat");
           setOpen(false);
           if (!initialData) form.reset();
         } else {
-          toast.error(result.error || "Gagal menyimpan modul");
+          toast.error(result?.error || "Gagal menyimpan modul");
         }
       } catch (error) {
         toast.error("Terjadi kesalahan");
@@ -180,7 +180,7 @@ export const ModuleFormModal = ({
                 name="type"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-sm font-bold text-slate-700 uppercase tracking-wider">Tipe Konten</FormLabel>
+                    <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-2">Tipe Konten</h4>
                     <div className="flex p-1 bg-slate-100 rounded-2xl gap-1">
                       <button
                         type="button"
@@ -213,12 +213,12 @@ export const ModuleFormModal = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-bold text-slate-700 uppercase tracking-wider">Estimasi (Menit)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <div className="relative">
+                      <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10" />
+                      <FormControl>
                         <Input {...field} disabled={isSubmitting || isPending} type="number" className="h-12 pl-10 bg-slate-50 border-slate-200 rounded-xl" />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -232,19 +232,19 @@ export const ModuleFormModal = ({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel className="text-sm font-bold text-slate-700 uppercase tracking-wider">URL Link (YouTube/SharePoint)</FormLabel>
-                    <FormControl>
-                      <div className="relative">
-                        <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <div className="relative">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 z-10" />
+                      <FormControl>
                         <Input {...field} disabled={isSubmitting || isPending} placeholder="https://youtube.com/..." className="h-12 pl-10 bg-slate-50 border-slate-200 rounded-xl font-medium" />
-                      </div>
-                    </FormControl>
+                      </FormControl>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             ) : (
               <div className="space-y-4">
-                <FormLabel className="text-sm font-bold text-slate-700 uppercase tracking-wider block">Unggah Dokumen PDF</FormLabel>
+                <h4 className="text-sm font-bold text-slate-700 uppercase tracking-wider block">Unggah Dokumen PDF</h4>
                 {pdfData.status === "success" ? (
                   <div className="flex items-center gap-4 p-4 bg-emerald-50 border border-emerald-100 rounded-2xl group">
                     <div className="p-3 bg-emerald-500 text-white rounded-xl shadow-lg shadow-emerald-200">
@@ -254,9 +254,9 @@ export const ModuleFormModal = ({
                       <p className="text-sm font-bold text-emerald-900 truncate">{pdfData.originalFilename}</p>
                       <p className="text-xs text-emerald-600 font-medium">{formatFileSize(pdfData.fileSize || 0)}</p>
                     </div>
-                    <button 
-                      type="button" 
-                      onClick={resetUpload} 
+                    <button
+                      type="button"
+                      onClick={resetUpload}
                       className="p-2 text-slate-400 hover:text-red-500 transition-colors"
                     >
                       <X className="h-5 w-5" />

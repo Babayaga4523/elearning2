@@ -12,11 +12,15 @@ import {
 } from "@/lib/utils/file.utils";
 import { MAX_FILE_SIZE } from "@/lib/utils/file-constants";
 import { auth } from "@/auth";
+import { validateCourse } from "@/lib/course-integrity";
 
 const TestSchema = z.object({
-  type:         z.enum(["PRE", "POST"]),
-  duration:     z.coerce.number().int().min(1, "Durasi tes minimal 1 menit"),
-  passingScore: z.coerce.number().int().min(0).max(100).default(70),
+  type:               z.enum(["PRE", "POST"]),
+  duration:           z.coerce.number().int().min(1, "Durasi tes minimal 1 menit"),
+  passingScore:       z.coerce.number().int().min(0).max(100).default(70),
+  maxAttempts:        z.coerce.number().int().min(0).default(0),
+  randomizeQuestions: z.boolean().default(false),
+  randomizeOptions:   z.boolean().default(false),
   questions: z.array(
     z.object({
       text:    z.string().min(10, "Pertanyaan minimal 10 karakter"),
@@ -113,18 +117,33 @@ export async function upsertModule(
       });
       
       revalidatePath(`/admin/courses/${courseId}`);
-      return { success: true, module: result };
-    } else {
-      const result = await db.module.create({
-        data: {
-          ...dataToSave,
-          courseId
+
+      // Auto-Draft check
+      const course = await db.course.findUnique({ where: { id: courseId } });
+      if (course?.isPublished) {
+        const integrity = await validateCourse(courseId);
+        if (!integrity.isValid) {
+          await db.course.update({
+            where: { id: courseId },
+            data: { isPublished: false }
+          });
+          return { success: true, module: result, statusReverted: true, errors: integrity.errors };
         }
-      });
-      
-      revalidatePath(`/admin/courses/${courseId}`);
+      }
+
       return { success: true, module: result };
     }
+
+    // Jika buat baru
+    const result = await db.module.create({
+      data: {
+        ...dataToSave,
+        courseId: courseId,
+      }
+    });
+
+    revalidatePath(`/admin/courses/${courseId}`);
+    return { success: true, module: result };
   } catch (error) {
     console.error("[UPSERT_MODULE]", error);
     return { success: false, error: "Gagal menyimpan modul" };
@@ -146,6 +165,20 @@ export async function deleteModule(courseId: string, moduleId: string) {
 
     await db.module.delete({ where: { id: moduleId } });
     revalidatePath(`/admin/courses/${courseId}`);
+
+    // Auto-Draft check
+    const course = await db.course.findUnique({ where: { id: courseId } });
+    if (course?.isPublished) {
+      const integrity = await validateCourse(courseId);
+      if (!integrity.isValid) {
+        await db.course.update({
+          where: { id: courseId },
+          data: { isPublished: false }
+        });
+        return { success: true, statusReverted: true, errors: integrity.errors };
+      }
+    }
+
     return { success: true };
   } catch (error) {
     console.error("[DELETE_MODULE]", error);
@@ -188,8 +221,11 @@ export async function upsertTest(courseId: string, raw: unknown) {
       const updated = await db.test.update({
         where: { id: existing.id },
         data: {
-          duration:     data.duration as any,
-          passingScore: data.passingScore,
+          duration:           data.duration as any,
+          passingScore:       data.passingScore,
+          maxAttempts:        data.maxAttempts,
+          randomizeQuestions: data.randomizeQuestions,
+          randomizeOptions:   data.randomizeOptions,
           questions: {
             create: data.questions.map((q: any) => ({
               text:    q.text,
@@ -210,9 +246,12 @@ export async function upsertTest(courseId: string, raw: unknown) {
     const created = await db.test.create({
       data: {
         courseId,
-        type:         data.type as any,
-        duration:     data.duration as any,
-        passingScore: data.passingScore,
+        type:               data.type as any,
+        duration:           data.duration as any,
+        passingScore:       data.passingScore,
+        maxAttempts:        data.maxAttempts,
+        randomizeQuestions: data.randomizeQuestions,
+        randomizeOptions:   data.randomizeOptions,
         title:        data.type === "PRE" ? "Pre-Test" : "Post-Test",
         questions: {
           create: data.questions.map((q: any) => ({
@@ -228,9 +267,59 @@ export async function upsertTest(courseId: string, raw: unknown) {
       } as any,
     });
     revalidatePath(`/admin/courses/${courseId}`);
+
+    // Auto-Draft check
+    const course = await db.course.findUnique({ where: { id: courseId } });
+    if (course?.isPublished) {
+      const integrity = await validateCourse(courseId);
+      if (!integrity.isValid) {
+        await db.course.update({
+          where: { id: courseId },
+          data: { isPublished: false }
+        });
+        return { success: true, test: created || existing, statusReverted: true, errors: integrity.errors };
+      }
+    }
+
     return { success: true, test: created };
   } catch (error) {
     console.error("[UPSERT_TEST]", error);
     return { success: false, error: "Gagal menyimpan tes" };
+  }
+}
+
+// --- Course Actions ---
+export async function togglePublishCourse(courseId: string, currentStatus: boolean) {
+  try {
+    const session = await auth();
+    if (!session || session.user?.role !== "ADMIN") {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    // Only allow publishing if valid
+    if (!currentStatus) {
+      const integrity = await validateCourse(courseId);
+      if (!integrity.isValid) {
+        return { 
+          success: false, 
+          error: "Kursus belum memenuhi syarat publikasi (cek modul & Post-Test).",
+          errors: integrity.errors 
+        };
+      }
+    }
+
+    const course = await db.course.update({
+      where: { id: courseId },
+      data: { isPublished: !currentStatus }
+    });
+
+    revalidatePath(`/admin/courses/${courseId}`);
+    revalidatePath("/admin/courses");
+    revalidatePath("/courses");
+    
+    return { success: true, isPublished: course.isPublished };
+  } catch (error) {
+    console.error("[PUBLISH_COURSE]", error);
+    return { success: false, error: "Gagal mengubah status publikasi" };
   }
 }
