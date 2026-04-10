@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
-import "jspdf-autotable";
+import autoTable from "jspdf-autotable";
 import { toast } from "react-hot-toast";
 
 interface ExportTranscriptButtonProps {
@@ -96,7 +96,7 @@ export const ExportTranscriptButton = ({ data, userName }: ExportTranscriptButto
         course.status === "COMPLETED" ? "LULUS" : "IN PROGRESS"
       ]);
 
-      (doc as any).autoTable({
+      autoTable(doc, {
         startY: 125,
         head: [["No", "Nama Kursus", "Kategori", "Pre-Test", "Post-Test", "Growth", "Status"]],
         body: tableData,
