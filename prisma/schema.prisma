@@ -158,6 +158,7 @@ model TestAttempt {
   updatedAt   DateTime     @updatedAt
   completedAt DateTime?    @default(now())
   startedAt   DateTime?
+  cheated     Boolean      @default(false)
   answers     TestAnswer[]
   test        Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
   user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)

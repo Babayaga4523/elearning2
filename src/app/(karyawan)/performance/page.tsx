@@ -38,34 +38,34 @@ export default async function PerformancePage() {
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-20">
       {/* Header Section */}
-      <div className="bg-slate-900 pt-12 pb-32 px-6 md:px-12 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-blue-500/10 rounded-full blur-[100px] -mr-48 -mt-48" />
+      <div className="bg-slate-900 pt-10 pb-24 px-6 md:px-12 relative overflow-hidden">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 rounded-full blur-[100px] -mr-40 -mt-40" />
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-[100px] -ml-32 -mb-32" />
         
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-2">
-              <Badge className="bg-blue-500/20 text-blue-300 border-none font-bold tracking-widest text-[10px] uppercase py-1 px-3">
+            <div className="space-y-1">
+              <Badge className="bg-blue-500/10 text-blue-400 border-white/10 font-black tracking-widest text-[9px] uppercase py-0.5 px-3">
                 Learning Analytics
               </Badge>
-              <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">Performa Belajar</h1>
-              <p className="text-slate-400 font-medium text-lg max-w-xl">
+              <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">Performa Belajar</h1>
+              <p className="text-slate-400 font-medium text-base max-w-xl">
                  Analisis mendalam mengenai kemajuan kompetensi dan hasil evaluasi Anda di BNI Finance.
               </p>
-              <div className="pt-4 flex flex-wrap gap-4">
+              <div className="pt-3 flex flex-wrap gap-3">
                  <ExportTranscriptButton 
                    data={data} 
                    userName={session.user.name || "Karyawan"} 
                  />
               </div>
             </div>
-            <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex items-center gap-4">
-               <div className="h-12 w-12 bg-blue-500 rounded-xl flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
-                  <BarChart3 className="h-6 w-6" />
+            <div className="bg-white/5 backdrop-blur-sm rounded-xl p-3 border border-white/10 flex items-center gap-3">
+               <div className="h-10 w-10 bg-blue-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-blue-500/20">
+                  <BarChart3 className="h-5 w-5" />
                </div>
                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Rata-rata Skor</p>
-                  <p className="text-2xl font-black text-white">{data.summary.averageScore}%</p>
+                  <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Rata-rata Skor</p>
+                  <p className="text-xl font-black text-white leading-none">{data.summary.averageScore}%</p>
                </div>
             </div>
           </div>
@@ -73,7 +73,7 @@ export default async function PerformancePage() {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 -mt-20 relative z-20 space-y-8">
+      <div className="max-w-7xl mx-auto px-6 md:px-12 -mt-12 relative z-20 space-y-8">
         
         {/* Top Summary Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
@@ -105,10 +105,10 @@ export default async function PerformancePage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
            {/* Chart Section */}
-           <Card className="lg:col-span-2 rounded-[2.5rem] border-none shadow-xl bg-white p-8 md:p-10">
+           <Card className="lg:col-span-2 rounded-3xl border-none shadow-xl bg-white p-6 md:p-8">
               <div className="flex items-center justify-between mb-10">
                  <div>
-                    <h3 className="text-xl font-black text-slate-800 tracking-tight">Tren Skor Belajar</h3>
+                    <h3 className="text-lg font-black text-slate-800 tracking-tight">Tren Skor Belajar</h3>
                     <p className="text-sm text-slate-400 font-medium">10 percobaan ujian terakhir</p>
                  </div>
                  <div className="flex items-center gap-2 text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-xl text-xs font-black">
@@ -122,14 +122,14 @@ export default async function PerformancePage() {
            </Card>
 
            {/* Recent Activity */}
-           <Card className="rounded-[2.5rem] border-none shadow-xl bg-white p-8 overflow-hidden">
-              <h3 className="text-xl font-black text-slate-800 tracking-tight mb-8">Aktivitas Terakhir</h3>
+           <Card className="rounded-3xl border-none shadow-xl bg-white p-6 overflow-hidden">
+              <h3 className="text-lg font-black text-slate-800 tracking-tight mb-6">Aktivitas Terakhir</h3>
               <div className="space-y-6">
                  {data.recentActivity.map((activity, idx) => (
                    <div key={activity.id} className="flex gap-4 group transition-all">
                       <div className="flex flex-col items-center">
                          <div className={cn(
-                           "h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
+                           "h-9 w-9 rounded-lg flex items-center justify-center shrink-0 shadow-sm",
                            activity.passed ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
                          )}>
                             {activity.passed ? <CheckCircle2 className="h-5 w-5" /> : <AlertCircle className="h-5 w-5" />}
@@ -177,7 +177,7 @@ export default async function PerformancePage() {
 
            <div className="grid grid-cols-1 gap-4">
               {data.courseAnalysis.map((course) => (
-                <Card key={course.id} className="rounded-[2rem] border-none shadow-sm bg-white overflow-hidden group hover:shadow-md transition-all">
+                <Card key={course.id} className="rounded-2xl border-none shadow-sm bg-white overflow-hidden group hover:shadow-md transition-all">
                    <div className="p-6 md:p-8 flex flex-col md:flex-row items-center gap-8">
                       {/* Course Info */}
                       <div className="w-full md:w-1/3 space-y-2">
@@ -263,14 +263,14 @@ function MetricCard({ label, value, icon: Icon, color }: { label: string, value:
   };
 
   return (
-    <Card className="rounded-[2rem] border-none shadow-md bg-white p-6 group hover:-translate-y-1 transition-all duration-300">
+    <Card className="rounded-2xl border-none shadow-lg bg-white p-6 group hover:-translate-y-1 transition-all duration-300">
        <div className="flex items-center gap-4">
-          <div className={cn("h-14 w-14 rounded-2xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110", colors[color])}>
-             <Icon className="h-7 w-7" />
+          <div className={cn("h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-105", colors[color])}>
+             <Icon className="h-6 w-6" />
           </div>
           <div>
-             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">{label}</p>
-             <p className="text-3xl font-black text-slate-800 tracking-tighter leading-none">{value}</p>
+             <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.15em] mb-1 leading-none">{label}</p>
+             <p className="text-2xl font-black text-slate-800 tracking-tighter leading-none">{value}</p>
           </div>
        </div>
     </Card>
@@ -385,7 +385,7 @@ function TrendChart({ data }: { data: any[] }) {
 function EmptyState() {
   return (
     <div className="min-h-screen flex items-center justify-center p-6 bg-slate-50">
-       <Card className="max-w-md w-full rounded-[3rem] border-none shadow-2xl bg-white p-12 text-center space-y-8">
+       <Card className="max-w-md w-full rounded-3xl border-none shadow-2xl bg-white p-12 text-center space-y-8">
           <div className="h-24 w-24 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mx-auto">
              <TrendingUp className="h-12 w-12" />
           </div>

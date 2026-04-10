@@ -1,3 +1,4 @@
+import React, { cloneElement, ReactElement } from "react";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
@@ -11,21 +12,23 @@ import {
   ArrowLeft,
   ChevronRight,
   FileText,
-  BarChart3,
   AlertCircle,
   Target,
+  Layers,
+  Sparkles,
+  BarChart2,
+  ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { EnrollButton } from "@/components/courses/enroll-button";
 import { cn } from "@/lib/utils";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UserProgress = { isCompleted: boolean };
-type TestAttempt = { id: string };
+type TestAttempt = { id: string, passed: boolean, cheated?: boolean };
 
 type ModuleWithProgress = {
   id: string;
@@ -73,14 +76,6 @@ function formatDeadlineLabel(deadline: Date): string {
   return `${diffDays} Hari Lagi`;
 }
 
-function formatDeadlineDate(deadline: Date): string {
-  return new Date(deadline).toLocaleDateString("id-ID", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
-
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function StudentCourseDetailPage({
@@ -102,7 +97,14 @@ export default async function StudentCourseDetailPage({
         orderBy: { position: "asc" },
         include: { userProgress: { where: { userId } } },
       },
-      tests: { include: { attempts: { where: { userId }, orderBy: { createdAt: "desc" } } } },
+      tests: {
+        include: {
+          attempts: {
+            where: { userId },
+            orderBy: { createdAt: "desc" },
+          },
+        },
+      },
       enrollments: { where: { userId } },
     },
   })) as CourseDetail | null;
@@ -124,338 +126,471 @@ export default async function StudentCourseDetailPage({
   const isEnrolled = !!enrollment;
   const isCompleted = enrollment?.status === "COMPLETED";
 
-  // Deadline
   const deadlineDays = enrollment?.deadline
     ? formatDeadlineLabel(enrollment.deadline)
     : course.deadlineDuration
     ? `${course.deadlineDuration} Hari`
     : "Tanpa Batas";
+
   const isDeadlinePast =
     !!enrollment?.deadline && enrollment.deadline.getTime() < Date.now();
 
-  const isAllModulesCompleted = totalModules > 0 && completedModules === totalModules;
+  const isAllModulesCompleted =
+    totalModules > 0 && completedModules === totalModules;
 
-  // First incomplete module — for "Lanjutkan Belajar" CTA
   const nextModuleId =
     course.modules.find((m) => !m.userProgress[0]?.isCompleted)?.id ??
     course.modules[0]?.id;
+  
+  const latestPreAttempt = preTest?.attempts[0];
+  const preStatus = latestPreAttempt 
+    ? latestPreAttempt.cheated 
+      ? "KECURANGAN" as const 
+      : latestPreAttempt.passed ? "LULUS" as const : "GAGAL" as const
+    : null;
+
+  const latestPostAttempt = postTest?.attempts[0];
+  const postStatus = latestPostAttempt
+    ? latestPostAttempt.cheated
+      ? "KECURANGAN" as const
+      : latestPostAttempt.passed ? "LULUS" as const : "GAGAL" as const
+    : null;
+
+  // ─── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen bg-[#F4F6FB]">
-      {/* Top spacer (navbar clearance) */}
-      <div className="h-6 w-full" />
+    <div
+      className="min-h-screen"
+      style={{ background: "#F0F2F7", fontFamily: "'DM Sans', sans-serif" }}
+    >
+      {/* ── Top Accent Bar ── */}
+      <div className="h-1 w-full" style={{ background: "linear-gradient(90deg, #0F1C3F 0%, #E8A020 100%)" }} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-24 space-y-8">
-        {/* ── Navigation ── */}
-        <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 pb-24">
+
+        {/* ── Breadcrumb ── */}
+        <div className="flex items-center justify-between mb-8 flex-wrap gap-3">
           <Link
             href="/courses"
-            className="inline-flex items-center gap-1.5 text-[11px] font-extrabold text-slate-400 hover:text-indigo-600 uppercase tracking-widest transition-colors"
+            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest transition-all group"
+            style={{ color: "#5A6480" }}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <span
+              className="flex items-center justify-center h-8 w-8 rounded-full border border-slate-300 group-hover:border-[#0F1C3F] group-hover:bg-[#0F1C3F] transition-all"
+            >
+              <ArrowLeft className="h-3.5 w-3.5 group-hover:text-white transition-colors" />
+            </span>
             Katalog Kursus
           </Link>
 
           {!isEnrolled && (
-            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-700 rounded-xl px-3 py-1.5">
-              <Lock className="h-3.5 w-3.5 shrink-0" />
-              <span className="text-[10px] font-black uppercase tracking-widest">
-                Mode Pratinjau — Daftar Untuk Akses Penuh
-              </span>
+            <div
+              className="flex items-center gap-2 rounded-full px-4 py-2 text-xs font-bold"
+              style={{
+                background: "#FFF8E7",
+                border: "1px solid #E8A020",
+                color: "#B07D0C",
+              }}
+            >
+              <Lock className="h-3.5 w-3.5" />
+              Mode Pratinjau — Daftar untuk akses penuh
             </div>
           )}
         </div>
 
+        {/* ── Hero Banner ── */}
+        <div
+          className="relative rounded-3xl overflow-hidden mb-8 shadow-2xl"
+          style={{
+            background: "linear-gradient(135deg, #0F1C3F 0%, #1A2E5A 60%, #0F2847 100%)",
+          }}
+        >
+          {/* Decorative elements */}
+          <div
+            className="absolute top-0 right-0 w-[500px] h-[500px] rounded-full opacity-10 pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, #E8A020 0%, transparent 70%)",
+              transform: "translate(30%, -30%)",
+            }}
+          />
+          <div
+            className="absolute bottom-0 left-0 w-[300px] h-[300px] rounded-full opacity-5 pointer-events-none"
+            style={{
+              background: "radial-gradient(circle, #fff 0%, transparent 70%)",
+              transform: "translate(-30%, 30%)",
+            }}
+          />
+
+          {/* Grid overlay */}
+          <div
+            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            style={{
+              backgroundImage:
+                "repeating-linear-gradient(0deg, #fff 0px, transparent 1px, transparent 48px, #fff 49px), repeating-linear-gradient(90deg, #fff 0px, transparent 1px, transparent 48px, #fff 49px)",
+              backgroundSize: "48px 48px",
+            }}
+          />
+
+          <div className="relative z-10 p-8 md:p-12">
+            <div className="flex flex-wrap items-center gap-3 mb-5">
+              {course.category && (
+                <span
+                  className="text-[10px] font-black uppercase tracking-[0.2em] px-3 py-1.5 rounded-full"
+                  style={{
+                    background: "rgba(232,160,32,0.15)",
+                    border: "1px solid rgba(232,160,32,0.4)",
+                    color: "#E8A020",
+                  }}
+                >
+                  {course.category.name}
+                </span>
+              )}
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                #{course.id.slice(-8).toUpperCase()}
+              </span>
+            </div>
+
+            <h1 className="text-3xl md:text-4xl lg:text-[2.75rem] font-black text-white leading-[1.1] tracking-tight max-w-3xl mb-4"
+              style={{ fontFamily: "'Lexend Deca', 'DM Sans', sans-serif" }}
+            >
+              {course.title}
+            </h1>
+
+            {course.description && (
+              <p className="text-slate-300 text-base md:text-lg leading-relaxed max-w-2xl font-medium mb-8 opacity-80">
+                {course.description}
+              </p>
+            )}
+
+            {/* Stat Pills */}
+            <div className="flex flex-wrap gap-3">
+              <HeroPill
+                icon={<Layers className="h-4 w-4" style={{ color: "#7B9CFF" }} />}
+                label="Materi"
+                value={`${totalModules} Modul`}
+              />
+              <HeroPill
+                icon={<FileText className="h-4 w-4" style={{ color: "#A5F3C0" }} />}
+                label="Ujian"
+                value={`${course.tests.length} Test`}
+              />
+              <HeroPill
+                icon={<Target className="h-4 w-4" style={{ color: "#FBD38D" }} />}
+                label="Passing Score"
+                value={postTest?.passingScore ? `${postTest.passingScore}%` : "—"}
+              />
+              {enrollment?.deadline && (
+                <HeroPill
+                  icon={<Clock className="h-4 w-4" style={{ color: isDeadlinePast ? "#FC8181" : "#A5F3C0" }} />}
+                  label="Sisa Waktu"
+                  value={deadlineDays}
+                  valueStyle={isDeadlinePast ? { color: "#FC8181" } : {}}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+
         {/* ── Main Grid ── */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-          {/* ─────────────── LEFT COLUMN ─────────────── */}
-          <div className="lg:col-span-2 space-y-7">
-            {/* Hero Card */}
-            <div className="relative rounded-3xl bg-[#0F1C3F] overflow-hidden shadow-2xl">
-              {/* Decorative blobs */}
-              <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-indigo-500/20 blur-3xl pointer-events-none" />
-              <div className="absolute bottom-0 left-0 w-40 h-40 rounded-full bg-[#E8A020]/10 blur-2xl pointer-events-none" />
 
-              <div className="relative z-10 p-8 md:p-12 space-y-5">
-                <Badge className="bg-[#E8A020]/20 text-[#E8A020] border border-[#E8A020]/30 px-3 py-0.5 text-[10px] font-black uppercase tracking-widest hover:bg-[#E8A020]/20">
-                  {course.category?.name ?? "Kursus"}
-                </Badge>
-
-                <h1 className="text-3xl md:text-4xl font-black text-white leading-tight tracking-tight">
-                  {course.title}
-                </h1>
-
-                {course.description && (
-                  <p className="text-slate-300 text-base leading-relaxed max-w-2xl">
-                    {course.description}
-                  </p>
-                )}
-
-                {/* Stats Row */}
-                <div className="flex flex-wrap gap-5 pt-2">
-                  <StatPill
-                    icon={<BookOpen className="h-4 w-4 text-indigo-300" />}
-                    label="Kurikulum"
-                    value={`${totalModules} Modul · ${course.tests.length} Tes`}
-                    bg="bg-white/5"
-                  />
-
-                  {enrollment?.deadline && (
-                    <StatPill
-                      icon={<Clock className="h-4 w-4 text-rose-300" />}
-                      label={formatDeadlineDate(enrollment.deadline)}
-                      value={deadlineDays}
-                      bg={isDeadlinePast ? "bg-rose-500/20" : "bg-white/5"}
-                      valueClass={isDeadlinePast ? "text-rose-400" : "text-white"}
-                    />
-                  )}
-
-                  <StatPill
-                    icon={<BarChart3 className="h-4 w-4 text-emerald-300" />}
-                    label="Status"
-                    value={
-                      enrollment
-                        ? enrollment.status.replace(/_/g, " ")
-                        : "Belum Terdaftar"
-                    }
-                    bg="bg-white/5"
-                  />
-                </div>
+          {/* ─── LEFT: Curriculum ─── */}
+          <div className="lg:col-span-2 space-y-4">
+            {/* Section Header */}
+            <div className="flex items-center justify-between mb-2 px-1">
+              <div>
+                <h2
+                  className="text-xl font-black tracking-tight mb-0.5"
+                  style={{ color: "#0F1C3F", fontFamily: "'Lexend Deca', sans-serif" }}
+                >
+                  Jalur Pembelajaran
+                </h2>
+                <p className="text-sm font-medium" style={{ color: "#7A8599" }}>
+                  Selesaikan setiap tahap secara berurutan
+                </p>
+              </div>
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl text-[11px] font-black uppercase tracking-wider"
+                style={{
+                  background: "white",
+                  border: "1px solid #E2E6F0",
+                  color: "#0F1C3F",
+                  boxShadow: "0 1px 3px rgba(0,0,0,0.06)",
+                }}
+              >
+                <span
+                  className="inline-block h-2 w-2 rounded-full"
+                  style={{ background: "#10B981" }}
+                />
+                {completedModules}/{totalModules} Selesai
               </div>
             </div>
 
-            {/* Curriculum */}
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-xl font-black text-slate-800 tracking-tight">
-                  Kurikulum Belajar
-                </h2>
-                <span className="text-[11px] font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                  {totalModules} MATERI
-                </span>
-              </div>
+            {/* Learning Path Items */}
+            <div className="relative space-y-3">
+              {/* Vertical timeline line */}
+              <div
+                className="absolute left-[42px] top-10 w-0.5 pointer-events-none"
+                style={{
+                  bottom: "3rem",
+                  background: "linear-gradient(to bottom, #0F1C3F11 0%, #0F1C3F22 20%, #E8A02033 50%, #0F1C3F22 80%, #0F1C3F05 100%)",
+                }}
+              />
 
-              <div className="space-y-2.5">
-                {/* Pre-Test */}
-                {preTest && (
-                  <CurriculumItem
+              {/* ── Pre-Test ── */}
+              {preTest && (
+                <LearningStep
+                  href={
+                    isEnrolled
+                      ? preTest.attempts.length > 0
+                        ? `/courses/${course.id}/tests/${preTest.id}/result?attemptId=${preTest.attempts[0].id}`
+                        : `/courses/${course.id}/tests/${preTest.id}`
+                      : null
+                  }
+                  locked={!isEnrolled}
+                  done={preTest.attempts.length > 0}
+                  stepNumber="★"
+                  type="PRE-TEST"
+                  title={preTest.title}
+                  action={preTest.attempts.length > 0 ? "Lihat Hasil" : "Mulai Ujian"}
+                  meta={[
+                    { icon: <Clock className="h-3.5 w-3.5" />, text: `${preTest.duration} Menit` },
+                    {
+                      icon: <Target className="h-3.5 w-3.5" />,
+                      text: preTest.maxAttempts === 0 ? "Unlimited" : `${preTest.maxAttempts}× Percobaan`,
+                    },
+                  ]}
+                  variant="pretest"
+                  testStatus={preStatus}
+                />
+              )}
+
+              {/* ── Modules ── */}
+              {course.modules.map((module, index) => {
+                const isDone = module.userProgress[0]?.isCompleted === true;
+                return (
+                  <LearningStep
+                    key={module.id}
                     href={
                       isEnrolled
-                        ? preTest.attempts.length > 0
-                          ? `/courses/${course.id}/tests/${preTest.id}/result?attemptId=${preTest.attempts[0].id}`
-                          : `/courses/${course.id}/tests/${preTest.id}`
+                        ? `/courses/${course.id}/modules/${module.id}`
                         : null
                     }
                     locked={!isEnrolled}
-                    done={preTest.attempts.length > 0}
-                    icon={<FileText className="h-5 w-5" />}
-                    overline="Mulai Di Sini"
-                    title={preTest.title}
-                    action={preTest.attempts.length > 0 ? "Lihat Hasil" : "Mulai Ujian"}
-                    accentColor="indigo"
-                    duration={preTest.duration}
-                    maxAttempts={preTest.maxAttempts}
+                    done={isDone}
+                    stepNumber={String(index + 1).padStart(2, "0")}
+                    type={module.type === "VIDEO" ? "Video" : "Dokumen"}
+                    title={module.title}
+                    action={isDone ? "Ulangi Materi" : "Buka Materi"}
+                    variant="module"
                   />
-                )}
+                );
+              })}
 
-                {/* Modules */}
-                {course.modules.map((module, index) => {
-                  const isDone = module.userProgress[0]?.isCompleted === true;
-                  return (
-                    <CurriculumItem
-                      key={module.id}
-                      href={
-                        isEnrolled
-                          ? `/courses/${course.id}/modules/${module.id}`
-                          : null
-                      }
-                      locked={!isEnrolled}
-                      done={isDone}
-                      icon={
-                        isDone ? (
-                          <CheckCircle2 className="h-5 w-5" />
-                        ) : module.type === "VIDEO" ? (
-                          <PlayCircle className="h-5 w-5" />
-                        ) : (
-                          <span className="text-sm font-black">{index + 1}</span>
-                        )
-                      }
-                      overline={module.type}
-                      title={module.title}
-                      action="Buka Materi"
-                      accentColor="emerald"
-                    />
-                  );
-                })}
-
-                {postTest && (
-                  <div
-                    className={cn(
-                      "rounded-2xl border-2 border-dashed overflow-hidden transition-all",
-                      isEnrolled && isAllModulesCompleted
-                        ? "border-amber-400 bg-amber-50 hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
-                        : "border-slate-200 bg-slate-50/50 opacity-60"
-                    )}
-                  >
-                    {isEnrolled && isAllModulesCompleted ? (
-                      <Link
-                        href={
-                          postTest.attempts.length > 0
-                            ? `/courses/${course.id}/tests/${postTest.id}/result?attemptId=${postTest.attempts[0].id}`
-                            : `/courses/${course.id}/tests/${postTest.id}`
-                        }
-                        className="block"
-                      >
-                        <PostTestContent
-                          postTest={postTest}
-                          isEnrolled={isEnrolled}
-                          locked={false}
-                        />
-                      </Link>
-                    ) : (
-                      <PostTestContent
-                        postTest={postTest}
-                        isEnrolled={isEnrolled}
-                        locked={!isAllModulesCompleted}
-                      />
-                    )}
-                  </div>
-                )}
-              </div>
-            </section>
+              {/* ── Post-Test ── */}
+              {postTest && (
+                <LearningStep
+                  href={
+                    isEnrolled && isAllModulesCompleted
+                      ? postTest.attempts.length > 0
+                        ? `/courses/${course.id}/tests/${postTest.id}/result?attemptId=${postTest.attempts[0].id}`
+                        : `/courses/${course.id}/tests/${postTest.id}`
+                      : null
+                  }
+                  locked={!isAllModulesCompleted || !isEnrolled}
+                  done={postTest.attempts.length > 0}
+                  stepNumber="🏆"
+                  type="POST-TEST"
+                  title={postTest.title}
+                  action={postTest.attempts.length > 0 ? "Lihat Hasil" : "Ambil Ujian Akhir"}
+                  meta={[
+                    { icon: <Clock className="h-3.5 w-3.5" />, text: `${postTest.duration} Menit` },
+                    { icon: <ShieldCheck className="h-3.5 w-3.5" />, text: `Skor Lulus: ${postTest.passingScore ?? 0}%` },
+                  ]}
+                  lockReason={
+                    !isAllModulesCompleted
+                      ? "Selesaikan semua modul untuk membuka ujian akhir"
+                      : undefined
+                  }
+                  variant="posttest"
+                  testStatus={postStatus}
+                />
+              )}
+            </div>
           </div>
 
-          {/* ─────────────── RIGHT SIDEBAR ─────────────── */}
-          <aside className="space-y-4 lg:sticky lg:top-6">
-            {/* Progress Card */}
-            <Card className="rounded-3xl border-0 shadow-xl overflow-hidden bg-white">
-              <CardContent className="p-7 space-y-6">
-                {/* Progress circle-ish indicator */}
-                <div className="text-center space-y-1">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Progres Belajar
-                  </p>
-                  <p className="text-6xl font-black text-slate-900 tabular-nums">
-                    {progress}
-                    <span className="text-2xl text-slate-300">%</span>
-                  </p>
-                  <p className="text-xs text-slate-400 font-medium">
-                    {completedModules} dari {totalModules} modul selesai
-                  </p>
-                </div>
+          {/* ─── RIGHT: Sidebar ─── */}
+          <aside className="space-y-5 lg:sticky lg:top-8">
 
-                {/* Progress bar */}
-                <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-emerald-400 to-emerald-600 transition-all duration-1000"
-                    style={{ width: `${progress}%` }}
-                  />
-                </div>
+            {/* Control Center */}
+            <div
+              className="rounded-3xl overflow-hidden shadow-xl"
+              style={{
+                background: "white",
+                border: "1px solid #E2E6F0",
+              }}
+            >
+              {/* Gold header accent */}
+              <div
+                className="px-7 pt-6 pb-5"
+                style={{
+                  background: "linear-gradient(135deg, #0F1C3F 0%, #1A2E5A 100%)",
+                }}
+              >
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] mb-3" style={{ color: "#E8A020" }}>
+                  Progres Saya
+                </p>
 
-                <div className="h-px bg-slate-50" />
-
-                {/* Meta Info */}
-                <div className="space-y-3 text-sm">
-                  <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">
-                    Informasi Kursus
-                  </p>
-
-                  <InfoRow
-                    label="Batas Waktu"
-                    value={deadlineDays}
-                    valueClass={
-                      isDeadlinePast
-                        ? "text-rose-600"
-                        : enrollment?.deadline
-                        ? "text-amber-600"
-                        : "text-slate-600"
-                    }
-                  />
-
-                  <InfoRow
-                    label="Passing Score"
-                    value={
-                      postTest?.passingScore != null
-                        ? `${postTest.passingScore}%`
-                        : "—"
-                    }
-                    valueClass="text-emerald-600"
-                  />
-
-                  <InfoRow
-                    label="Pre-Test"
-                    value={
-                      preTest
-                        ? preTest.attempts.length > 0
-                          ? "✓ Selesai"
-                          : "Belum Dikerjakan"
-                        : "Tidak Ada"
-                    }
-                    valueClass={
-                      preTest?.attempts.length ? "text-emerald-600" : "text-slate-500"
-                    }
-                  />
-                </div>
-
-                {/* CTA Button */}
-                <div className="pt-1">
-                  {!isEnrolled ? (
-                    <EnrollButton courseId={course.id} />
-                  ) : isCompleted ? (
-                    <div className="w-full h-12 bg-emerald-50 text-emerald-600 font-black rounded-2xl flex items-center justify-center gap-2 border border-emerald-100">
-                      <Trophy className="h-4 w-4" />
-                      Lulus Kursus
+                {/* Circular Progress */}
+                <div className="flex items-center gap-5">
+                  <div className="relative h-20 w-20 shrink-0">
+                    <svg className="h-20 w-20 -rotate-90" viewBox="0 0 72 72">
+                      <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="6" />
+                      <circle
+                        cx="36"
+                        cy="36"
+                        r="30"
+                        fill="none"
+                        stroke="#E8A020"
+                        strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 30}`}
+                        strokeDashoffset={`${2 * Math.PI * 30 * (1 - progress / 100)}`}
+                        style={{ transition: "stroke-dashoffset 1s ease" }}
+                      />
+                    </svg>
+                    <div className="absolute inset-0 flex items-center justify-center flex-col">
+                      <span className="text-xl font-black text-white leading-none">{progress}%</span>
                     </div>
-                  ) : nextModuleId ? (
-                    <Link href={`/courses/${course.id}/modules/${nextModuleId}`}>
-                      <Button className="w-full h-12 bg-[#0F1C3F] hover:bg-[#162847] text-white font-black rounded-2xl shadow-md shadow-slate-300 gap-2">
-                        Lanjutkan Belajar
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
-                    </Link>
-                  ) : (
-                    <Button
-                      disabled
-                      className="w-full h-12 font-black rounded-2xl"
-                    >
-                      Belum Ada Materi
-                    </Button>
-                  )}
+                  </div>
+                  <div>
+                    <p className="text-2xl font-black text-white leading-none">
+                      {completedModules}
+                      <span className="text-base font-bold text-slate-400">/{totalModules}</span>
+                    </p>
+                    <p className="text-[11px] font-bold text-slate-400 mt-1">Modul Selesai</p>
+                    {isCompleted && (
+                      <span
+                        className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-wider mt-2 px-2 py-1 rounded-lg"
+                        style={{ background: "rgba(16,185,129,0.15)", color: "#34D399" }}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Lulus
+                      </span>
+                    )}
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
 
-            {/* Help Card */}
-            <div className="rounded-3xl bg-gradient-to-br from-[#0F1C3F] to-indigo-800 p-7 text-white space-y-3 shadow-xl relative overflow-hidden">
-              <div className="absolute -right-8 -top-8 w-28 h-28 rounded-full bg-white/5 blur-xl pointer-events-none" />
-              <div className="relative z-10 space-y-3">
-                <p className="text-[10px] font-black uppercase tracking-widest text-indigo-300">
-                  Butuh Bantuan?
-                </p>
-                <p className="text-sm text-indigo-100 leading-relaxed font-medium">
-                  Kendala teknis atau pertanyaan materi? Hubungi tim Training HC
-                  melalui portal support kami.
-                </p>
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="w-full font-bold h-9 rounded-xl text-slate-800"
-                >
-                  Hubungi Support
-                </Button>
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 gap-px" style={{ background: "#E8ECF5" }}>
+                <StatCell
+                  label="Sisa Waktu"
+                  value={deadlineDays}
+                  valueStyle={isDeadlinePast ? { color: "#EF4444" } : { color: "#0F1C3F" }}
+                />
+                <StatCell
+                  label="Passing Score"
+                  value={`${postTest?.passingScore ?? 0}%`}
+                />
+                <StatCell
+                  label="Pre-Test"
+                  value={preTest?.attempts.length ? "✓ Selesai" : "Belum"}
+                  valueStyle={preTest?.attempts.length ? { color: "#10B981" } : { color: "#94A3B8" }}
+                />
+                <StatCell
+                  label="Post-Test"
+                  value={postTest?.attempts.length ? "✓ Selesai" : "Belum"}
+                  valueStyle={postTest?.attempts.length ? { color: "#10B981" } : { color: "#94A3B8" }}
+                />
+              </div>
+
+              {/* CTA */}
+              <div className="p-6">
+                {!isEnrolled ? (
+                  <EnrollButton courseId={course.id} />
+                ) : isCompleted ? (
+                  <div
+                    className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 font-black text-sm"
+                    style={{ background: "#F0FDF4", border: "2px solid #86EFAC", color: "#16A34A" }}
+                  >
+                    <Trophy className="h-5 w-5" />
+                    KURSUS SELESAI
+                  </div>
+                ) : nextModuleId ? (
+                  <Link href={`/courses/${course.id}/modules/${nextModuleId}`} className="block group">
+                    <button
+                      className="w-full h-14 rounded-2xl font-black text-sm flex items-center justify-center gap-3 transition-all active:scale-[0.98] group-hover:brightness-110"
+                      style={{
+                        background: "linear-gradient(135deg, #0F1C3F 0%, #1A3060 100%)",
+                        color: "white",
+                        boxShadow: "0 4px 20px rgba(15,28,63,0.25)",
+                      }}
+                    >
+                      <span
+                        className="h-8 w-8 rounded-full flex items-center justify-center"
+                        style={{ background: "rgba(232,160,32,0.2)" }}
+                      >
+                        <PlayCircle className="h-4 w-4" style={{ color: "#E8A020" }} />
+                      </span>
+                      LANJUTKAN BELAJAR
+                    </button>
+                  </Link>
+                ) : (
+                  <button
+                    disabled
+                    className="w-full h-14 rounded-2xl font-black text-sm flex items-center justify-center gap-2 opacity-50 cursor-not-allowed"
+                    style={{ background: "#E2E6F0", color: "#94A3B8" }}
+                  >
+                    MATERI BELUM TERSEDIA
+                  </button>
+                )}
+
+                {isEnrolled && !isCompleted && (
+                  <p className="text-center text-[11px] font-medium mt-3" style={{ color: "#94A3B8" }}>
+                    {totalModules - completedModules} modul lagi untuk menyelesaikan kursus
+                  </p>
+                )}
               </div>
             </div>
 
-            {/* Deadline warning banner — only show if past */}
-            {isDeadlinePast && (
-              <div className="rounded-2xl bg-rose-50 border border-rose-200 p-4 flex items-start gap-3">
-                <AlertCircle className="h-4 w-4 text-rose-500 mt-0.5 shrink-0" />
-                <p className="text-xs text-rose-700 font-semibold leading-relaxed">
-                  Deadline kursus ini telah terlewat. Hubungi admin untuk
-                  perpanjangan akses.
-                </p>
+            {/* Info/Help Card */}
+            <div
+              className="rounded-3xl p-6 space-y-4"
+              style={{
+                background: "white",
+                border: "1px solid #E2E6F0",
+              }}
+            >
+              <div className="flex items-start gap-4">
+                <div
+                  className="h-10 w-10 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ background: "#EEF2FF" }}
+                >
+                  <AlertCircle className="h-5 w-5" style={{ color: "#0F1C3F" }} />
+                </div>
+                <div>
+                  <h4 className="font-black text-sm mb-1" style={{ color: "#0F1C3F" }}>
+                    Butuh Bantuan?
+                  </h4>
+                  <p className="text-xs leading-relaxed" style={{ color: "#7A8599" }}>
+                    Hubungi tim Training HC jika ada kendala teknis atau pertanyaan seputar materi.
+                  </p>
+                </div>
               </div>
-            )}
+              <button
+                className="w-full h-11 rounded-xl font-black text-xs transition-all hover:opacity-90 flex items-center justify-center gap-2"
+                style={{
+                  background: "#F0F2F7",
+                  color: "#0F1C3F",
+                  border: "1px solid #D6DBE8",
+                }}
+              >
+                <BarChart2 className="h-4 w-4" />
+                HUBUNGI SUPPORT
+              </button>
+            </div>
+
           </aside>
         </div>
       </div>
@@ -465,27 +600,33 @@ export default async function StudentCourseDetailPage({
 
 // ─── Sub-Components ───────────────────────────────────────────────────────────
 
-function StatPill({
+/** Hero stat pill for the banner */
+function HeroPill({
   icon,
   label,
   value,
-  bg,
-  valueClass = "text-white",
+  valueStyle = {},
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  bg: string;
-  valueClass?: string;
+  valueStyle?: React.CSSProperties;
 }) {
   return (
-    <div className={cn("flex items-center gap-3 rounded-2xl px-4 py-2.5", bg)}>
-      <div className="shrink-0">{icon}</div>
+    <div
+      className="flex items-center gap-2.5 rounded-2xl px-4 py-2.5"
+      style={{
+        background: "rgba(255,255,255,0.07)",
+        border: "1px solid rgba(255,255,255,0.1)",
+        backdropFilter: "blur(8px)",
+      }}
+    >
+      {icon}
       <div>
-        <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-none mb-0.5">
+        <p className="text-[9px] font-black uppercase tracking-widest leading-none mb-0.5 text-slate-400">
           {label}
         </p>
-        <p className={cn("text-sm font-bold capitalize leading-none", valueClass)}>
+        <p className="text-sm font-black leading-none text-white" style={valueStyle}>
           {value}
         </p>
       </div>
@@ -493,195 +634,217 @@ function StatPill({
   );
 }
 
-function CurriculumItem({
+/** Individual stat cell in sidebar */
+function StatCell({
+  label,
+  value,
+  valueStyle = {},
+}: {
+  label: string;
+  value: string;
+  valueStyle?: React.CSSProperties;
+}) {
+  return (
+    <div className="px-5 py-4 bg-white">
+      <p className="text-[9px] font-black uppercase tracking-widest mb-1" style={{ color: "#9AAABF" }}>
+        {label}
+      </p>
+      <p className="text-sm font-black" style={{ color: "#0F1C3F", ...valueStyle }}>
+        {value}
+      </p>
+    </div>
+  );
+}
+
+/** Learning path step card */
+function LearningStep({
   href,
   locked,
   done,
-  icon,
-  overline,
+  stepNumber,
+  type,
   title,
   action,
-  accentColor,
-  duration,
-  maxAttempts,
+  meta = [],
+  variant,
+  lockReason,
+  testStatus,
 }: {
   href: string | null;
   locked: boolean;
   done: boolean;
-  icon: React.ReactNode;
-  overline: string;
+  stepNumber: string;
+  type: string;
   title: string;
   action: string;
-  accentColor: "emerald" | "indigo";
-  duration?: number;
-  maxAttempts?: number;
+  meta?: { icon: React.ReactNode; text: string }[];
+  variant: "pretest" | "posttest" | "module";
+  lockReason?: string;
+  testStatus?: "LULUS" | "GAGAL" | "KECURANGAN" | null;
 }) {
-  const accent = {
-    emerald: {
-      hover: "hover:border-emerald-300 hover:shadow-emerald-50",
-      iconDone: "bg-emerald-500 text-white",
-      iconDefault: "bg-slate-100 text-slate-400 group-hover:bg-emerald-500 group-hover:text-white",
-      overline: "text-emerald-500",
-      chevron: "group-hover:text-emerald-500",
+  const variantStyles = {
+    pretest: {
+      stepBg: done ? "#10B981" : "#0F1C3F",
+      stepColor: "white",
+      typeBadgeBg: "#EEF2FF",
+      typeBadgeColor: "#3B52A4",
+      border: done ? "1px solid #86EFAC" : "1px solid #E2E8F0",
+      actionColor: "#3B52A4",
     },
-    indigo: {
-      hover: "hover:border-indigo-300 hover:shadow-indigo-50",
-      iconDone: "bg-emerald-500 text-white",
-      iconDefault: "bg-indigo-50 text-indigo-500 group-hover:bg-indigo-500 group-hover:text-white",
-      overline: "text-indigo-400",
-      chevron: "group-hover:text-indigo-500",
+    posttest: {
+      stepBg: done ? "#10B981" : locked ? "#CBD5E1" : "#E8A020",
+      stepColor: "white",
+      typeBadgeBg: "#FFF8E7",
+      typeBadgeColor: "#B07D0C",
+      border: done
+        ? "1px solid #86EFAC"
+        : locked
+        ? "1.5px dashed #E2E8F0"
+        : "1px solid #F6CE72",
+      actionColor: "#B07D0C",
     },
-  }[accentColor];
+    module: {
+      stepBg: done ? "#10B981" : "white",
+      stepColor: done ? "white" : "#0F1C3F",
+      typeBadgeBg: "#F1F5F9",
+      typeBadgeColor: "#475569",
+      border: done ? "1px solid #86EFAC" : "1px solid #E2E8F0",
+      actionColor: "#0F1C3F",
+    },
+  }[variant];
 
   const inner = (
-    <div className="flex items-center gap-4 p-4">
+    <div
+      className="relative flex items-center gap-5 px-6 py-5 rounded-[2rem] transition-all duration-300"
+      style={{
+        background: locked && variant !== "posttest" ? "#F8FAFC" : "white",
+        border: variantStyles.border,
+        opacity: locked && variant !== "posttest" ? 0.7 : 1,
+        boxShadow: locked ? "none" : "0 4px 12px rgba(15,28,63,0.03)",
+      }}
+    >
+      {/* Step Indicator */}
       <div
-        className={cn(
-          "h-11 w-11 shrink-0 rounded-xl flex items-center justify-center transition-colors duration-300",
-          done ? accent.iconDone : accent.iconDefault
-        )}
+        className="h-11 w-11 rounded-xl shrink-0 flex items-center justify-center font-black text-sm relative z-10 transition-all"
+        style={{
+          background: variantStyles.stepBg,
+          color: variantStyles.stepColor,
+          boxShadow: done ? "0 0 0 3px rgba(16,185,129,0.15)" : undefined,
+        }}
       >
-        {icon}
+        {done ? (
+          <CheckCircle2 className="h-5 w-5" />
+        ) : locked ? (
+          <Lock className="h-4 w-4" />
+        ) : (
+          <span>{stepNumber}</span>
+        )}
       </div>
+
+      {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className={cn("text-[9px] font-black uppercase tracking-widest mb-0.5", accent.overline)}>
-          {overline}
-        </p>
-        <h4 className="text-sm font-black text-slate-800 leading-tight truncate">
+        <div className="flex items-center gap-2 mb-1 flex-wrap">
+          <span
+            className="text-[9px] font-black uppercase tracking-[0.15em] px-2 py-0.5 rounded-md"
+            style={{
+              background: variantStyles.typeBadgeBg,
+              color: variantStyles.typeBadgeColor,
+            }}
+          >
+            {type}
+          </span>
+          {done && !testStatus && (
+            <span
+              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md"
+              style={{ background: "#F0FDF4", color: "#16A34A" }}
+            >
+              ✓ Selesai
+            </span>
+          )}
+          {testStatus === "LULUS" && (
+            <span
+              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md"
+              style={{ background: "#F0FDF4", color: "#16A34A" }}
+            >
+              ✓ Lulus
+            </span>
+          )}
+          {testStatus === "GAGAL" && (
+            <span
+              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md"
+              style={{ background: "#FFF0F0", color: "#EF4444" }}
+            >
+              ✕ Gagal
+            </span>
+          )}
+          {testStatus === "KECURANGAN" && (
+            <span
+              className="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-md shadow-sm"
+              style={{ background: "#450A0A", color: "#FECACA", border: "1px solid #7F1D1D" }}
+            >
+              ⚠ Kecurangan
+            </span>
+          )}
+        </div>
+
+        <h4
+          className="text-sm font-bold leading-snug truncate"
+          style={{ color: "#0F1C3F" }}
+        >
           {title}
         </h4>
-        {(duration !== undefined || maxAttempts !== undefined) && (
-          <div className="flex items-center gap-3 mt-1">
-            {duration !== undefined && (
-              <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
-                <Clock className="h-3 w-3" />
-                {duration} Menit
-              </div>
-            )}
-            {maxAttempts !== undefined && (
-              <div className="flex items-center gap-1 text-[9px] font-bold text-slate-400">
-                <BarChart3 className="h-3 w-3" />
-                {maxAttempts === 0 ? "Unlimited" : `${maxAttempts} Percobaan`}
-              </div>
-            )}
+
+        {meta.length > 0 && (
+          <div className="flex items-center gap-4 mt-1.5 flex-wrap">
+            {meta.map((m, i) => (
+              <span
+                key={i}
+                className="flex items-center gap-1.5 text-[10px] font-bold"
+                style={{ color: "#9AAABF" }}
+              >
+                {m.icon}
+                {m.text}
+              </span>
+            ))}
           </div>
         )}
-      </div>
-      <div className="flex items-center gap-1 shrink-0">
-        {done ? (
-          <span className="text-[10px] font-black text-emerald-500">
-            Selesai
-          </span>
-        ) : locked ? (
-          <Lock className="h-4 w-4 text-slate-300" />
-        ) : (
-          <span className={cn("text-[10px] font-bold text-slate-300 hidden group-hover:block", accent.chevron)}>
-            {action}
-          </span>
+
+        {lockReason && (
+          <p
+            className="text-[10px] font-bold mt-1.5 flex items-center gap-1"
+            style={{ color: "#F59E0B" }}
+          >
+            <Lock className="h-3 w-3" />
+            {lockReason}
+          </p>
         )}
-        <ChevronRight
-          className={cn(
-            "h-4 w-4 text-slate-200 transition-colors",
-            !locked && accent.chevron
-          )}
-        />
       </div>
+
+      {/* Action Indicator */}
+      {!locked && href && (
+        <div
+          className="shrink-0 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wider opacity-40 group-hover:opacity-100 transition-all group-hover:translate-x-1"
+          style={{ color: variantStyles.actionColor }}
+        >
+          <span className="hidden sm:inline">{action}</span>
+          <ChevronRight className="h-4 w-4" />
+        </div>
+      )}
     </div>
   );
 
-  const cardClass = cn(
-    "group bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden transition-all duration-200",
-    !locked && `${accent.hover} hover:shadow-md hover:-translate-y-0.5 cursor-pointer`,
-    locked && "opacity-50 grayscale cursor-not-allowed"
+  const wrapperClass = cn(
+    "group block transition-all duration-200",
+    !locked && href && "hover:-translate-y-0.5 hover:shadow-md cursor-pointer rounded-2xl"
   );
 
   if (!locked && href) {
     return (
-      <Link href={href} className={cardClass}>
+      <Link href={href} className={wrapperClass}>
         {inner}
       </Link>
     );
   }
 
-  return <div className={cardClass}>{inner}</div>;
-}
-
-function PostTestContent({
-  postTest,
-  isEnrolled,
-  locked,
-}: {
-  postTest: TestWithAttempts;
-  isEnrolled: boolean;
-  locked: boolean;
-}) {
-  return (
-    <div className="p-4 flex items-center gap-4">
-      <div
-        className={cn(
-          "h-11 w-11 shrink-0 rounded-xl flex items-center justify-center transition-colors duration-300",
-          postTest.attempts.length > 0
-            ? "bg-emerald-500 text-white"
-            : "bg-amber-100 text-amber-500 group-hover:bg-amber-500 group-hover:text-white"
-        )}
-      >
-        <Trophy className="h-5 w-5" />
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[9px] font-black text-amber-600 uppercase tracking-widest mb-0.5">
-          Final Challenge
-        </p>
-        <h4 className="text-sm font-black text-slate-800 leading-tight">
-          {postTest.title}
-        </h4>
-        <div className="flex items-center gap-3 mt-1 mb-1">
-          <div className="flex items-center gap-1 text-[9px] font-bold text-amber-600/70">
-            <Clock className="h-3 w-3" />
-            {postTest.duration} Menit
-          </div>
-          <div className="flex items-center gap-1 text-[9px] font-bold text-amber-600/70">
-            <Target className="h-3 w-3" />
-            {postTest.maxAttempts === 0 ? "Unlimited" : `${postTest.maxAttempts} Percobaan`}
-          </div>
-        </div>
-        {locked && (
-           <p className="text-[10px] text-rose-500 font-bold flex items-center gap-1">
-             <Lock className="h-3 w-3" /> Selesaikan semua modul untuk membuka
-           </p>
-        )}
-      </div>
-      {isEnrolled && !locked && (
-        <span
-          className={cn(
-            "shrink-0 text-[10px] font-black px-3 py-1.5 rounded-xl",
-            postTest.attempts.length > 0
-              ? "bg-emerald-100 text-emerald-700"
-              : "bg-amber-100 text-amber-700 group-hover:bg-amber-500 group-hover:text-white transition-colors"
-          )}
-        >
-          {postTest.attempts.length > 0 ? "Hasil Ujian" : "Ambil Post-Test"}
-        </span>
-      )}
-      {locked && (
-        <Lock className="h-5 w-5 text-slate-300 mr-2" />
-      )}
-    </div>
-  );
-}
-
-function InfoRow({
-  label,
-  value,
-  valueClass = "text-slate-700",
-}: {
-  label: string;
-  value: string;
-  valueClass?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-slate-400 font-medium">{label}</span>
-      <span className={cn("font-black text-right", valueClass)}>{value}</span>
-    </div>
-  );
+  return <div className={wrapperClass}>{inner}</div>;
 }

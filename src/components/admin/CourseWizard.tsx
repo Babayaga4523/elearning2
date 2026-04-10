@@ -39,7 +39,7 @@ const steps: Step[] = [
 
 interface CourseWizardProps {
   activeStep: number;
-  courseId: string;
+  courseId?: string;
 }
 
 export const CourseWizard = ({ activeStep, courseId }: CourseWizardProps) => {
@@ -55,7 +55,7 @@ export const CourseWizard = ({ activeStep, courseId }: CourseWizardProps) => {
               {/* Step Circle & Label */}
               <div className="flex flex-col items-center relative z-10">
                   <Link 
-                    href={`/admin/courses/${courseId}?step=${step.id}`}
+                    href={courseId ? `/admin/courses/${courseId}?step=${step.id}` : "#"}
                     className={cn(
                       "h-12 w-12 rounded-2xl flex items-center justify-center border-2 transition-all duration-500 shadow-sm hover:scale-105 active:scale-95",
                       isCompleted && "bg-emerald-500 border-emerald-500 text-white shadow-emerald-200",

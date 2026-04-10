@@ -27,10 +27,6 @@ export const Navbar = () => {
           <BarChart3 className="h-4 w-4" />
           Performa
         </Link>
-        <Link href="/dashboard/history" className="flex items-center gap-x-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors">
-          <History className="h-4 w-4" />
-          Transcript
-        </Link>
       </div>
 
       {/* Actions */}

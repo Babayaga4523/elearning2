@@ -140,14 +140,14 @@ export function TestClient({ test, courseId }: TestClientProps) {
             </div>
 
             {/* Question Card */}
-            <Card className="rounded-[2.5rem] border-none shadow-2xl shadow-slate-200/50 bg-white min-h-[400px] flex flex-col">
-               <CardContent className="p-8 md:p-12 flex-1 flex flex-col">
+            <Card className="rounded-3xl border-none shadow-2xl shadow-slate-200/50 bg-white min-h-[400px] flex flex-col">
+               <CardContent className="p-6 md:p-10 flex-1 flex flex-col">
                   
                   <div className="space-y-4 mb-10">
                     <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
                        <HelpCircle className="h-5 w-5" />
                     </div>
-                    <h3 className="text-2xl md:text-3xl font-black text-slate-800 leading-tight">
+                    <h3 className="text-xl md:text-2xl font-black text-slate-800 leading-tight">
                        {currentQuestion.text}
                     </h3>
                   </div>
@@ -174,7 +174,7 @@ export function TestClient({ test, courseId }: TestClientProps) {
                            )}>
                              {char}
                            </div>
-                           <span className="font-bold text-lg">{option.text}</span>
+                           <span className="font-bold text-base">{option.text}</span>
                            {isSelected && (
                              <div className="ml-auto">
                                 <CheckCircle2 className="h-6 w-6 text-white" />
@@ -193,7 +193,7 @@ export function TestClient({ test, courseId }: TestClientProps) {
                  variant="outline"
                  disabled={currentQuestionIndex === 0}
                  onClick={() => setCurrentQuestionIndex((prev) => prev - 1)}
-                 className="h-14 px-8 rounded-2xl font-bold border-none shadow-sm gap-2"
+                 className="h-14 px-8 rounded-xl font-bold border-none shadow-sm gap-2"
                >
                  <ChevronLeft className="h-5 w-5" /> Sebelumnya
                </Button>
@@ -216,7 +216,7 @@ export function TestClient({ test, courseId }: TestClientProps) {
                    disabled={isSubmitting}
                    onClick={handleSubmit}
                    className={cn(
-                     "h-14 px-10 rounded-2xl font-black gap-2 transition-all shadow-xl",
+                     "h-14 px-10 rounded-xl font-black gap-2 transition-all shadow-xl",
                      allAnswered ? "bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20" : "bg-slate-400"
                    )}
                  >
@@ -225,7 +225,7 @@ export function TestClient({ test, courseId }: TestClientProps) {
                ) : (
                  <Button
                    onClick={() => setCurrentQuestionIndex((prev) => prev + 1)}
-                   className="h-14 px-10 rounded-2xl bg-slate-900 hover:bg-slate-800 font-black gap-2 shadow-xl shadow-slate-900/20"
+                   className="h-14 px-10 rounded-xl bg-slate-900 hover:bg-slate-800 font-black gap-2 shadow-xl shadow-slate-900/20"
                  >
                    Lanjut <ChevronRight className="h-5 w-5" />
                  </Button>
@@ -233,7 +233,7 @@ export function TestClient({ test, courseId }: TestClientProps) {
             </div>
 
             {!allAnswered && currentQuestionIndex === totalQuestions - 1 && (
-               <div className="bg-amber-50 border border-amber-100 p-4 rounded-2xl flex items-center gap-3 text-amber-700 font-bold text-xs animate-in slide-in-from-bottom-2">
+               <div className="bg-amber-50 border border-amber-100 p-4 rounded-xl flex items-center gap-3 text-amber-700 font-bold text-xs animate-in slide-in-from-bottom-2">
                  <AlertCircle className="h-5 w-5 shrink-0" />
                  <span>Ada pertanyaan yang belum Anda jawab. Pastikan semua soal telah terisi sebelum mengakhiri ujian.</span>
                </div>

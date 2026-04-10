@@ -58,27 +58,27 @@ export function CatalogClient({ courses, categories }: CatalogClientProps) {
     <div className="w-full space-y-8 animate-fade-in-up md:p-10 p-6">
       
       {/* 1. Hero / Search Banner */}
-      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 rounded-[2.5rem] p-10 shadow-xl relative overflow-hidden flex flex-col items-center text-center">
+      <div className="bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-950 rounded-3xl p-8 shadow-xl relative overflow-hidden flex flex-col items-center text-center">
         <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
           <Compass className="w-96 h-96 -translate-y-20 translate-x-20" />
         </div>
         
-        <div className="relative z-10 space-y-6 max-w-3xl w-full mx-auto">
-          <h1 className="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200 tracking-tight">
+        <div className="relative z-10 space-y-4 max-w-3xl w-full mx-auto">
+          <h1 className="text-3xl md:text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white to-indigo-200 tracking-tight">
             Explore Course Catalog
           </h1>
-          <p className="text-indigo-200 font-medium text-lg max-w-xl mx-auto">
+          <p className="text-indigo-200 font-medium text-base max-w-xl mx-auto">
             Discover new skills and elevate your career. Access world-class premium curriculum developed for BNI Finance.
           </p>
 
-          <div className="relative w-full max-w-2xl mx-auto mt-8 group">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 h-6 w-6 text-slate-400 group-focus-within:text-primary transition-colors" />
+          <div className="relative w-full max-w-2xl mx-auto mt-6 group">
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 group-focus-within:text-primary transition-colors" />
             <input
               type="text"
               placeholder="Search for subjects, topics, or course names..."
               value={search}
               onChange={handleSearchChange}
-              className="w-full h-16 pl-16 pr-6 rounded-2xl bg-white text-slate-800 text-lg font-medium shadow-2xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-400"
+              className="w-full h-14 pl-14 pr-6 rounded-xl bg-white text-slate-800 text-base font-medium shadow-xl focus:outline-none focus:ring-4 focus:ring-primary/20 transition-all placeholder:text-slate-400"
             />
           </div>
         </div>
@@ -139,9 +139,9 @@ export function CatalogClient({ courses, categories }: CatalogClientProps) {
             </div>
 
             {filteredCourses.length === 0 ? (
-               <div className="bg-white rounded-[2rem] border-2 border-dashed border-slate-200 p-16 text-center flex flex-col items-center justify-center space-y-4">
+               <div className="bg-white rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center flex flex-col items-center justify-center space-y-4">
                   <div className="p-4 bg-slate-50 rounded-2xl">
-                    <Search className="h-10 w-10 text-slate-400" />
+                    <Search className="h-8 w-8 text-slate-400" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-800">No courses found</h3>
                   <p className="text-slate-500">We couldn't match any courses to your current filters.</p>
@@ -156,7 +156,7 @@ export function CatalogClient({ courses, categories }: CatalogClientProps) {
 
                    return (
                      <Link key={course.id} href={`/courses/${course.id}`} className="group">
-                        <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 overflow-hidden h-full flex flex-col relative">
+                        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm group-hover:shadow-2xl group-hover:-translate-y-2 transition-all duration-300 overflow-hidden h-full flex flex-col relative">
                            {/* Status Badge Overlays */}
                            <div className="absolute top-4 right-4 z-20 flex flex-col gap-2 items-end">
                              {isEnrolled && (
@@ -193,7 +193,7 @@ export function CatalogClient({ courses, categories }: CatalogClientProps) {
                            </div>
                            
                            <div className="p-6 flex-1 flex flex-col">
-                             <h3 className="text-xl font-black text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors mb-4">
+                             <h3 className="text-lg font-black text-slate-800 line-clamp-2 leading-snug group-hover:text-primary transition-colors mb-4">
                                {course.title}
                              </h3>
                              

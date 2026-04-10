@@ -125,7 +125,8 @@ export async function deleteTest(id: string) {
 export async function submitTest(
   testId: string, 
   answersData: { questionId: string, optionId: string }[],
-  startedAt?: Date
+  startedAt?: Date,
+  cheated: boolean = false
 ) {
   const session = await auth();
 
@@ -209,6 +210,7 @@ export async function submitTest(
         testId: testId,
         score,
         passed,
+        cheated,
         startedAt: startedAt ? new Date(startedAt) : null,
         completedAt: new Date(),
       },
