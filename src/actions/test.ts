@@ -140,6 +140,9 @@ export async function submitTest(
   const test = await db.test.findUnique({
     where: { id: testId },
     include: {
+      course: {
+        select: { deadlineDate: true }
+      },
       questions: {
         include: {
           options: true,
@@ -151,6 +154,18 @@ export async function submitTest(
   if (!test) throw new Error("Test tidak ditemukan");
 
   // 2. SERVER-SIDE ACCESS VALIDATION
+  const enrollment = await db.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: test.courseId } },
+  });
+
+  if (!enrollment) {
+    throw new Error("Not enrolled");
+  }
+
+  if (test.course.deadlineDate && test.course.deadlineDate.getTime() < Date.now()) {
+    throw new Error("DEADLINE_PASSED");
+  }
+
   // Rule A: Lulus = Kunci (passed tests are permanently locked)
   const bestPassedAttempt = await db.testAttempt.findFirst({
     where: { userId, testId, passed: true },

@@ -19,7 +19,7 @@ export default async function AdminSettingsPage() {
   ]);
 
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full min-w-0 space-y-6 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-500 md:space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-black text-slate-900 tracking-tight">Pengaturan Sistem</h1>

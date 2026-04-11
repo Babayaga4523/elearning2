@@ -52,13 +52,13 @@ type TestWithAttempts = {
 type Enrollment = {
   id: string;
   status: string;
-  deadline: Date | null;
 };
 
 type CourseDetail = {
   id: string;
   title: string;
   description: string | null;
+  deadlineDate: Date | null;
   deadlineDuration: number | null;
   category: { name: string } | null;
   modules: ModuleWithProgress[];
@@ -126,14 +126,12 @@ export default async function StudentCourseDetailPage({
   const isEnrolled = !!enrollment;
   const isCompleted = enrollment?.status === "COMPLETED";
 
-  const deadlineDays = enrollment?.deadline
-    ? formatDeadlineLabel(enrollment.deadline)
-    : course.deadlineDuration
-    ? `${course.deadlineDuration} Hari`
+  const deadlineDays = course.deadlineDate
+    ? formatDeadlineLabel(course.deadlineDate)
     : "Tanpa Batas";
 
   const isDeadlinePast =
-    !!enrollment?.deadline && enrollment.deadline.getTime() < Date.now();
+    !!course.deadlineDate && course.deadlineDate.getTime() < Date.now();
 
   const isAllModulesCompleted =
     totalModules > 0 && completedModules === totalModules;
@@ -279,7 +277,7 @@ export default async function StudentCourseDetailPage({
                 label="Passing Score"
                 value={postTest?.passingScore ? `${postTest.passingScore}%` : "—"}
               />
-              {enrollment?.deadline && (
+              {course.deadlineDate && (
                 <HeroPill
                   icon={<Clock className="h-4 w-4" style={{ color: isDeadlinePast ? "#FC8181" : "#A5F3C0" }} />}
                   label="Sisa Waktu"
@@ -341,13 +339,13 @@ export default async function StudentCourseDetailPage({
               {preTest && (
                 <LearningStep
                   href={
-                    isEnrolled
+                    isEnrolled && !isDeadlinePast
                       ? preTest.attempts.length > 0
                         ? `/courses/${course.id}/tests/${preTest.id}/result?attemptId=${preTest.attempts[0].id}`
                         : `/courses/${course.id}/tests/${preTest.id}`
                       : null
                   }
-                  locked={!isEnrolled}
+                  locked={!isEnrolled || isDeadlinePast}
                   done={preTest.attempts.length > 0}
                   stepNumber="★"
                   type="PRE-TEST"
@@ -360,6 +358,7 @@ export default async function StudentCourseDetailPage({
                       text: preTest.maxAttempts === 0 ? "Unlimited" : `${preTest.maxAttempts}× Percobaan`,
                     },
                   ]}
+                  lockReason={isDeadlinePast ? "Batas waktu kursus telah berakhir." : undefined}
                   variant="pretest"
                   testStatus={preStatus}
                 />
@@ -372,17 +371,18 @@ export default async function StudentCourseDetailPage({
                   <LearningStep
                     key={module.id}
                     href={
-                      isEnrolled
+                      isEnrolled && !isDeadlinePast
                         ? `/courses/${course.id}/modules/${module.id}`
                         : null
                     }
-                    locked={!isEnrolled}
+                    locked={!isEnrolled || isDeadlinePast}
                     done={isDone}
                     stepNumber={String(index + 1).padStart(2, "0")}
                     type={module.type === "VIDEO" ? "Video" : "Dokumen"}
                     title={module.title}
                     action={isDone ? "Ulangi Materi" : "Buka Materi"}
                     variant="module"
+                    lockReason={isDeadlinePast ? "Batas waktu kursus telah berakhir." : undefined}
                   />
                 );
               })}
@@ -391,13 +391,13 @@ export default async function StudentCourseDetailPage({
               {postTest && (
                 <LearningStep
                   href={
-                    isEnrolled && isAllModulesCompleted
+                    isEnrolled && isAllModulesCompleted && !isDeadlinePast
                       ? postTest.attempts.length > 0
                         ? `/courses/${course.id}/tests/${postTest.id}/result?attemptId=${postTest.attempts[0].id}`
                         : `/courses/${course.id}/tests/${postTest.id}`
                       : null
                   }
-                  locked={!isAllModulesCompleted || !isEnrolled}
+                  locked={!isAllModulesCompleted || !isEnrolled || isDeadlinePast}
                   done={postTest.attempts.length > 0}
                   stepNumber="🏆"
                   type="POST-TEST"
@@ -408,7 +408,9 @@ export default async function StudentCourseDetailPage({
                     { icon: <ShieldCheck className="h-3.5 w-3.5" />, text: `Skor Lulus: ${postTest.passingScore ?? 0}%` },
                   ]}
                   lockReason={
-                    !isAllModulesCompleted
+                    isDeadlinePast
+                      ? "Batas waktu kursus telah berakhir."
+                      : !isAllModulesCompleted
                       ? "Selesaikan semua modul untuk membuka ujian akhir"
                       : undefined
                   }
@@ -509,6 +511,14 @@ export default async function StudentCourseDetailPage({
               <div className="p-6">
                 {!isEnrolled ? (
                   <EnrollButton courseId={course.id} />
+                ) : isDeadlinePast ? (
+                  <div
+                    className="w-full h-14 rounded-2xl flex items-center justify-center gap-2 font-black text-[13px] px-1 opacity-80"
+                    style={{ background: "#FEE2E2", border: "2px solid #FCA5A5", color: "#B91C1C" }}
+                  >
+                    <AlertCircle className="h-5 w-5 shrink-0" />
+                    KURSUS NON-AKTIF (DEADLINE TERLEWAT)
+                  </div>
                 ) : isCompleted ? (
                   <div
                     className="w-full h-14 rounded-2xl flex items-center justify-center gap-3 font-black text-sm"

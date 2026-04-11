@@ -1,15 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { 
-  X, 
-  User, 
-  Mail, 
-  Hash, 
-  Building, 
-  MapPin, 
-  Save, 
-  Loader2 
+import {
+  X,
+  User,
+  Mail,
+  Hash,
+  Building,
+  MapPin,
+  Save,
+  Loader2,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -76,19 +77,31 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div 
-        className="w-full max-w-lg bg-white rounded-3xl shadow-2xl overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
+      <div
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl animate-in zoom-in-95 slide-in-from-bottom-4 duration-300"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="px-8 py-6 border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white flex items-center justify-between">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-gradient-to-r from-slate-50 to-white px-6 py-5 md:px-8">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-indigo-100 rounded-xl flex items-center justify-center">
-              <PencilIcon className="h-5 w-5 text-indigo-600" />
+            <div
+              className="flex h-10 w-10 items-center justify-center rounded-xl"
+              style={{
+                background: "linear-gradient(135deg, #0F1C3F, #1A3060)",
+                boxShadow: "0 2px 8px rgba(15,28,63,0.2)",
+              }}
+            >
+              <Pencil className="h-5 w-5" style={{ color: "#E8A020" }} />
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight">Edit Profil Karyawan</h2>
-              <p className="text-xs font-semibold text-slate-400 mt-0.5">Perbarui informasi dasar akun karyawan.</p>
+              <h2
+                className="text-lg font-black tracking-tight text-slate-900 md:text-xl"
+                style={{ fontFamily: "'Lexend Deca', sans-serif" }}
+              >
+                Edit profil karyawan
+              </h2>
+              <p className="mt-0.5 text-xs font-medium text-slate-500">
+                Perbarui informasi dasar akun karyawan.
+              </p>
             </div>
           </div>
           <button 
@@ -100,7 +113,11 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-8 space-y-5">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5 p-6 md:p-8"
+          style={{ fontFamily: "'DM Sans', sans-serif" }}
+        >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {/* Nama */}
             <div className="space-y-2 col-span-2">
@@ -171,23 +188,31 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
             </div>
           </div>
 
-          <div className="pt-6 flex items-center justify-end gap-3">
-            <Button 
+          <div className="flex items-center justify-end gap-3 pt-4">
+            <Button
               type="button"
-              variant="ghost" 
+              variant="ghost"
               onClick={onClose}
               disabled={isPending}
-              className="font-bold text-slate-500 h-11 rounded-xl px-6"
+              className="h-10 rounded-lg px-5 font-semibold text-slate-600"
             >
               Batal
             </Button>
-            <Button 
+            <Button
               type="submit"
               disabled={isPending}
-              className="font-black h-11 rounded-xl px-8 shadow-lg shadow-primary/20 gap-2"
+              className="h-10 gap-2 rounded-lg px-6 font-black text-white shadow-md"
+              style={{
+                background: "linear-gradient(135deg, #0F1C3F, #1A3060)",
+                boxShadow: "0 4px 14px rgba(15,28,63,0.25)",
+              }}
             >
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Simpan Perubahan
+              {isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <Save className="h-4 w-4 text-[#E8A020]" />
+              )}
+              Simpan perubahan
             </Button>
           </div>
         </form>
@@ -196,18 +221,3 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
   );
 }
 
-function PencilIcon({ className }: { className?: string }) {
-  return (
-    <svg 
-      className={className} 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="3" 
-      strokeLinecap="round" 
-      strokeLinejoin="round"
-    >
-      <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-    </svg>
-  );
-}

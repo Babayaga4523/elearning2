@@ -15,7 +15,6 @@ export default async function EnrollmentsPage() {
         courseId: true,
         status: true,
         createdAt: true,
-        deadline: true,
         user: {
           select: { id: true, name: true, email: true, department: true, nip: true, lokasi: true },
         },
@@ -23,6 +22,7 @@ export default async function EnrollmentsPage() {
           select: { 
             id: true, 
             title: true, 
+            deadlineDate: true,
             category: { select: { name: true } } 
           },
         },
@@ -30,7 +30,11 @@ export default async function EnrollmentsPage() {
     }),
     db.course.findMany({
       orderBy: { title: "asc" },
-      select: { id: true, title: true },
+      select: { 
+        id: true, 
+        title: true,
+        category: { select: { name: true } }
+      },
     }),
     (db.user as any).findMany({
       where: { role: "KARYAWAN" },
@@ -86,7 +90,7 @@ export default async function EnrollmentsPage() {
       courseCategory: e.course?.category?.name ?? "-",
       status: e.status as string,
       enrolledAt: e.createdAt.toISOString(),
-      deadline: e.deadline ? e.deadline.toISOString() : null,
+      courseDeadline: e.course?.deadlineDate ? e.course.deadlineDate.toISOString() : null,
       preScore: scores.preScore,
       postScore: scores.postScore,
       postPassed: scores.postPassed,
@@ -119,14 +123,34 @@ export default async function EnrollmentsPage() {
     nip: u.nip ?? "-",
   }));
 
+  // Fetch Scheduler Data
+  const [autoEnrollRules, deptConfigs] = await Promise.all([
+    (db as any).autoEnrollmentRule.findMany({
+      include: { course: { select: { title: true } } },
+      orderBy: { createdAt: "desc" },
+    }),
+    (db as any).departmentConfig.findMany({
+      orderBy: { departmentName: "asc" },
+    }),
+  ]);
+
+  // Normalize courses for EnrollModal
+  const normalizedCourses = courses.map((c: any) => ({
+    id: c.id,
+    title: c.title,
+    category: c.category?.name ?? "Tanpa Kategori",
+  }));
+
   return (
     <EnrollmentsClient
       enrollments={enrichedEnrollments}
-      courses={courses}
+      courses={normalizedCourses}
       users={normalizedUsers}
       departments={departments}
       existingEnrollments={existingEnrollmentPairs}
       stats={{ totalEnrollments, completed, inProgress, failed }}
+      autoEnrollRules={autoEnrollRules}
+      deptConfigs={deptConfigs}
     />
   );
 }

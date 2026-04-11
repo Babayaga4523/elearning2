@@ -1,6 +1,6 @@
 export default function CourseReportLoading() {
   return (
-    <div className="space-y-8 animate-pulse pb-10">
+    <div className="w-full min-w-0 space-y-6 animate-pulse pb-8 md:space-y-8 md:pb-10">
       {/* Header */}
       <div className="space-y-2">
         <div className="h-4 w-32 bg-slate-100 rounded" />

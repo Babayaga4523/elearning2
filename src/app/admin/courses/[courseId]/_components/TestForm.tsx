@@ -20,11 +20,11 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { upsertTest } from "../actions";
-import { ArrowLeft, Plus, Trash, CheckCircle2, Shuffle, Lock, Hash } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { ArrowLeft, Plus, Trash, Hash, Shuffle, CheckCircle2, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDraftDialog } from "@/components/admin/ConfirmDraftDialog";
+
+const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
 
 const formSchema = z.object({
   type: z.enum(["PRE", "POST"]),
@@ -33,13 +33,19 @@ const formSchema = z.object({
   maxAttempts: z.coerce.number().int().min(0),
   randomizeQuestions: z.boolean(),
   randomizeOptions: z.boolean(),
-  questions: z.array(z.object({
-    text: z.string().min(10, "Pertanyaan minimal 10 karakter"),
-    options: z.array(z.object({
-      text: z.string().min(1, "Opsi wajib diisi"),
-      isCorrect: z.boolean(),
-    })).min(2, "Minimal 2 opsi"),
-  })),
+  questions: z.array(
+    z.object({
+      text: z.string().min(10, "Pertanyaan minimal 10 karakter"),
+      options: z
+        .array(
+          z.object({
+            text: z.string().min(1, "Opsi wajib diisi"),
+            isCorrect: z.boolean(),
+          })
+        )
+        .min(2, "Minimal 2 opsi"),
+    })
+  ),
 });
 
 interface TestFormProps {
@@ -49,48 +55,60 @@ interface TestFormProps {
   isCoursePublished?: boolean;
 }
 
-export const TestForm = ({ courseId, initialData, type, isCoursePublished }: TestFormProps) => {
+export const TestForm = ({
+  courseId,
+  initialData,
+  type,
+  isCoursePublished,
+}: TestFormProps) => {
   const router = useRouter();
   const [showDraftConfirm, setShowDraftConfirm] = useState(false);
-  const [pendingValues, setPendingValues] = useState<z.infer<typeof formSchema> | null>(null);
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: initialData && initialData.questions && initialData.questions.length > 0 ? {
-      type: initialData.type,
-      duration: initialData.duration,
-      passingScore: initialData.passingScore,
-      maxAttempts: initialData.maxAttempts ?? 0,
-      randomizeQuestions: initialData.randomizeQuestions ?? false,
-      randomizeOptions: initialData.randomizeOptions ?? false,
-      questions: initialData.questions.map((q: any) => ({
-        text: q.text,
-        options: q.options.map((o: any) => ({
-          text: o.text,
-          isCorrect: o.isCorrect,
-        })),
-      })),
-    } : {
-      type: type === "POST_TEST" ? "POST" : "PRE",
-      duration: 0,
-      passingScore: 70,
-      maxAttempts: 0,
-      randomizeQuestions: false,
-      randomizeOptions: false,
-      questions: [{ 
-        text: "", 
-        options: [
-          { text: "", isCorrect: true }, 
-          { text: "", isCorrect: false }, 
-          { text: "", isCorrect: false }, 
-          { text: "", isCorrect: false }
-        ] 
-      }],
-    },
-  });
-
+  const [pendingValues, setPendingValues] =
+    useState<z.infer<typeof formSchema> | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
-  const { isDirty } = form.formState;
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues:
+      initialData?.questions?.length > 0
+        ? {
+            type: initialData.type,
+            duration: initialData.duration,
+            passingScore: initialData.passingScore,
+            maxAttempts: initialData.maxAttempts ?? 0,
+            randomizeQuestions: initialData.randomizeQuestions ?? false,
+            randomizeOptions: initialData.randomizeOptions ?? false,
+            questions: initialData.questions.map((q: any) => ({
+              text: q.text,
+              options: q.options.map((o: any) => ({
+                text: o.text,
+                isCorrect: o.isCorrect,
+              })),
+            })),
+          }
+        : {
+            type: type === "POST_TEST" ? "POST" : "PRE",
+            duration: 60,
+            passingScore: 70,
+            maxAttempts: 0,
+            randomizeQuestions: false,
+            randomizeOptions: false,
+            questions: [
+              {
+                text: "",
+                options: [
+                  { text: "", isCorrect: true },
+                  { text: "", isCorrect: false },
+                  { text: "", isCorrect: false },
+                  { text: "", isCorrect: false },
+                ],
+              },
+            ],
+          },
+  });
+
+  const { isDirty, isSubmitting } = form.formState;
 
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -124,31 +142,28 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
     name: "questions",
   });
 
-  const { isSubmitting } = form.formState;
-
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Check if this action would potentially revert a live course to draft
-    // Rule: If course is published AND (it's a POST test AND questions < 5)
     if (isCoursePublished && type === "POST_TEST") {
-       const isNowInvalid = values.questions.length < 5;
-       
-       if (isNowInvalid) {
-         setPendingValues(values);
-         setShowDraftConfirm(true);
-         return;
-       }
+      if (values.questions.length < 5) {
+        setPendingValues(values);
+        setShowDraftConfirm(true);
+        return;
+      }
     }
-
     try {
       const result = await upsertTest(courseId, values);
       if (result.success) {
-        toast.success(result.statusReverted ? "Kursus ditarik ke Draft & Tes disimpan" : "Tes berhasil disimpan");
+        toast.success(
+          result.statusReverted
+            ? "Kursus ditarik ke Draft & Tes disimpan"
+            : "Tes berhasil disimpan"
+        );
         router.push(`/admin/courses/${courseId}`);
         router.refresh();
       } else {
         toast.error("Gagal menyimpan tes");
       }
-    } catch (error) {
+    } catch {
       toast.error("Terjadi kesalahan");
     }
   };
@@ -163,55 +178,67 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
         router.push(`/admin/courses/${courseId}`);
         router.refresh();
       }
-    } catch (error) {
+    } catch {
       toast.error("Terjadi kesalahan");
     }
   };
 
   return (
     <>
+      <ConfirmDraftDialog
+        isOpen={showDraftConfirm}
+        onClose={() => setShowDraftConfirm(false)}
+        onConfirm={onConfirmSaveAsDraft}
+        warningDetails={[
+          "Post-Test minimal harus memiliki 5 soal untuk tetap Published.",
+          "Perubahan ini akan menarik kursus dari katalog publik.",
+        ]}
+      />
       <ConfirmDialog
         isOpen={showConfirmDialog}
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={handleConfirmExit}
       />
 
-      <div className="mb-8">
-        <button
-          type="button"
-          onClick={() => onNavigateWithCheck(`/admin/courses/${courseId}`)}
-          className="flex items-center text-sm font-bold text-slate-500 hover:text-slate-800 transition-colors group"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2 group-hover:-translate-x-1 transition-transform" />
-          Kembali ke Course Setup
-        </button>
-      </div>
+      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
+          <button
+            type="button"
+            onClick={() => onNavigateWithCheck(`/admin/courses/${courseId}`)}
+            className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
+          >
+            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
+            Kembali ke detail kursus
+          </button>
+        </div>
 
-      <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-          
-          {/* ─── Section 1: Basic Configuration ─── */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-50">
-              <div className="bg-primary/10 p-2.5 rounded-xl">
-                <Hash className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h3 className="font-black text-slate-800">Konfigurasi Dasar</h3>
-                <p className="text-xs text-slate-400 font-bold">Atur durasi, kelulusan, dan batas percobaan</p>
-              </div>
-            </div>
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-5 px-3 py-5 md:space-y-6 md:px-4 md:py-6"
+          >
+          <section className="space-y-4">
+          <SectionHeader step={1} title="Langkah 1: Pengaturan tes" badge="Umum & keamanan" />
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <ConfigCard accentColor="navy">
+            <CardHeading icon={<Hash className="h-4 w-4 text-[#0F1C3F]" />} label="Aturan penilaian" />
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-4">
               <FormField
                 control={form.control}
                 name="duration"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-slate-700">Durasi Tes (Menit)</FormLabel>
+                    <FieldLabel>Durasi pengerjaan</FieldLabel>
                     <FormControl>
-                      <Input {...field} type="number" disabled={isSubmitting} className="font-medium" />
+                      <Input
+                        {...field}
+                        type="number"
+                        placeholder="60"
+                        disabled={isSubmitting}
+                        className={inputCls}
+                      />
                     </FormControl>
+                    <FormDescription className={hintCls}>Dalam satuan menit</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -221,10 +248,17 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
                 name="passingScore"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-slate-700">Passing Score (%)</FormLabel>
+                    <FieldLabel>Passing score (%)</FieldLabel>
                     <FormControl>
-                      <Input {...field} type="number" disabled={isSubmitting} className="font-medium" />
+                      <Input
+                        {...field}
+                        type="number"
+                        placeholder="70"
+                        disabled={isSubmitting}
+                        className={inputCls}
+                      />
                     </FormControl>
+                    <FormDescription className={hintCls}>Nilai minimum 0–100</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -234,48 +268,38 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
                 name="maxAttempts"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="font-bold text-slate-700 flex items-center gap-2">
-                      <Lock className="h-3.5 w-3.5 text-rose-500" />
-                      Batas Percobaan
-                    </FormLabel>
+                    <FieldLabel>Batas percobaan</FieldLabel>
                     <FormControl>
-                      <Input {...field} type="number" min={0} disabled={isSubmitting} className="font-medium" />
+                      <Input
+                        {...field}
+                        type="number"
+                        disabled={isSubmitting}
+                        className={inputCls}
+                      />
                     </FormControl>
-                    <FormDescription className="text-xs text-slate-400">
-                      <strong>0</strong> = tidak terbatas
-                    </FormDescription>
+                    <FormDescription className={hintCls}>0 = tidak terbatas</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
-          </div>
+          </ConfigCard>
 
-          {/* ─── Section 2: Randomization Settings ─── */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-8 shadow-sm space-y-6">
-            <div className="flex items-center gap-3 pb-4 border-b border-slate-50">
-              <div className="bg-violet-50 p-2.5 rounded-xl">
-                <Shuffle className="h-5 w-5 text-violet-500" />
-              </div>
-              <div>
-                <h3 className="font-black text-slate-800">Pengacakan Soal</h3>
-                <p className="text-xs text-slate-400 font-bold">Mencegah kecurangan antar peserta</p>
-              </div>
-              <Badge variant="secondary" className="ml-auto text-[10px] font-black uppercase tracking-widest bg-violet-50 text-violet-600">
-                Anti-Cheat
-              </Badge>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Keamanan */}
+          <ConfigCard accentColor="amber">
+            <CardHeading icon={<Shuffle className="h-4 w-4 text-[#E8A020]" />} label="Kecurangan & keamanan" />
+            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <FormField
                 control={form.control}
                 name="randomizeQuestions"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between p-5 border rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                    <div className="space-y-1">
-                      <FormLabel className="font-bold text-slate-700 cursor-pointer">Acak Urutan Soal</FormLabel>
-                      <FormDescription className="text-xs text-slate-400">
-                        Setiap karyawan mendapat urutan soal yang berbeda
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                    <div className="min-w-0 pr-2">
+                      <FormLabel className="text-sm font-medium text-slate-900 cursor-pointer">
+                        Acak urutan soal
+                      </FormLabel>
+                      <FormDescription className={hintCls}>
+                        Urutan butir berbeda tiap peserta
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -283,7 +307,7 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isSubmitting}
-                        className="data-[state=checked]:bg-violet-500"
+                        className="data-[state=checked]:bg-[#0F1C3F] shrink-0"
                       />
                     </FormControl>
                   </FormItem>
@@ -293,11 +317,13 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
                 control={form.control}
                 name="randomizeOptions"
                 render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between p-5 border rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition-colors">
-                    <div className="space-y-1">
-                      <FormLabel className="font-bold text-slate-700 cursor-pointer">Acak Pilihan Jawaban</FormLabel>
-                      <FormDescription className="text-xs text-slate-400">
-                        Pilihan A/B/C/D diacak, kunci jawaban tetap aman
+                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
+                    <div className="min-w-0 pr-2">
+                      <FormLabel className="text-sm font-medium text-slate-900 cursor-pointer">
+                        Acak pilihan jawaban
+                      </FormLabel>
+                      <FormDescription className={hintCls}>
+                        Posisi opsi A/B/C/D diacak per soal
                       </FormDescription>
                     </div>
                     <FormControl>
@@ -305,205 +331,331 @@ export const TestForm = ({ courseId, initialData, type, isCoursePublished }: Tes
                         checked={field.value}
                         onCheckedChange={field.onChange}
                         disabled={isSubmitting}
-                        className="data-[state=checked]:bg-violet-500"
+                        className="data-[state=checked]:bg-[#0F1C3F] shrink-0"
                       />
                     </FormControl>
                   </FormItem>
                 )}
               />
             </div>
-          </div>
+          </ConfigCard>
+          </section>
 
-          {/* ─── Section 3: Questions ─── */}
-          <div className="space-y-6">
-            <div className="flex items-center justify-between border-b pb-4">
-              <div>
-                <h3 className="text-xl font-black text-slate-800 tracking-tight">Daftar Pertanyaan</h3>
-                <p className="text-sm text-slate-500 font-medium">Klik centang pada opsi untuk menentukan jawaban yang benar.</p>
-              </div>
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                disabled={isSubmitting}
-                className="font-bold border-slate-300 hover:bg-slate-50"
-                onClick={() => append({
+          <section className="space-y-4 border-t border-slate-100 pt-6 md:pt-8">
+            <SectionHeader
+              step={2}
+              title="Langkah 2: Daftar pertanyaan"
+              badge={`${fields.length} soal`}
+              badgeVariant="amber"
+            />
+
+          <div className="space-y-3">
+            {fields.map((field, index) => (
+              <QuestionCard
+                key={field.id}
+                index={index}
+                form={form}
+                isSubmitting={isSubmitting}
+                canDelete={fields.length > 1}
+                onRemove={() => remove(index)}
+              />
+            ))}
+
+            {/* Add question button */}
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() =>
+                append({
                   text: "",
                   options: [
                     { text: "", isCorrect: true },
                     { text: "", isCorrect: false },
                     { text: "", isCorrect: false },
-                    { text: "", isCorrect: false }
-                  ]
-                })}
+                    { text: "", isCorrect: false },
+                  ],
+                })
+              }
+              className="group flex w-full items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 py-3.5 text-slate-500 transition-colors hover:border-slate-400 hover:bg-slate-100 hover:text-slate-800"
+            >
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white">
+                <Plus className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium">Tambah pertanyaan</p>
+                <p className="text-xs text-slate-500">Tambah satu butir soal di akhir daftar</p>
+              </div>
+            </button>
+          </div>
+          </section>
+
+          <div className="sticky bottom-2 z-20 mt-6 flex flex-col gap-3 rounded-lg border border-slate-700 bg-[#0F1C3F] p-3 shadow-md sm:bottom-3 sm:flex-row sm:items-center sm:justify-between sm:p-4 md:mt-8 border-l-4 border-l-[#E8A020]">
+            <div className="min-w-0 text-sm text-slate-200">
+              <span className="font-medium text-white">{fields.length} pertanyaan</span>
+              <span className="text-slate-400"> · </span>
+              <span className="text-slate-300">Pastikan satu kunci benar per soal</span>
+            </div>
+            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end sm:gap-2">
+              <Button
+                variant="ghost"
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => onNavigateWithCheck("back")}
+                className="h-9 rounded-md px-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Tambah Pertanyaan
+                Batalkan
+              </Button>
+              <Button
+                type="submit"
+                disabled={isSubmitting}
+                className="flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E8A020] px-4 text-sm font-medium text-[#0F1C3F] hover:bg-[#d4921c]"
+              >
+                {isSubmitting ? (
+                  "Menyimpan…"
+                ) : (
+                  <>
+                    Simpan
+                    <Sparkles className="h-3.5 w-3.5 opacity-90" />
+                  </>
+                )}
               </Button>
             </div>
-
-            {fields.map((field, index) => (
-              <Card key={field.id} className="border-slate-200 overflow-hidden shadow-sm">
-                <CardContent className="p-6 space-y-4">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <FormField
-                        control={form.control}
-                        name={`questions.${index}.text`}
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel className="text-[10px] font-black uppercase text-slate-400 tracking-widest">Pertanyaan #{index + 1}</FormLabel>
-                            <FormControl>
-                              <Input
-                                {...field}
-                                disabled={isSubmitting}
-                                placeholder="Masukkan teks pertanyaan di sini..."
-                                className="font-bold border-none bg-slate-50 text-lg focus-visible:ring-2 focus-visible:ring-primary/20 px-4 py-6"
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    </div>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={isSubmitting}
-                      onClick={() => remove(index)}
-                      className="text-slate-300 hover:text-red-500 hover:bg-red-50 mt-6"
-                    >
-                      <Trash className="h-4 w-4" />
-                    </Button>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 relative">
-                    {form.watch(`questions.${index}.options`).map((_, optIndex) => (
-                      <div key={optIndex} className="flex items-center gap-3 group animate-in fade-in slide-in-from-bottom-2 duration-300" style={{ animationDelay: `${optIndex * 50}ms` }}>
-                        <div className="relative shrink-0">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            disabled={isSubmitting}
-                            className={cn(
-                              "h-11 w-11 rounded-xl transition-all duration-300 border-2",
-                              form.getValues(`questions.${index}.options.${optIndex}.isCorrect`)
-                                ? "text-white bg-emerald-500 border-emerald-500 shadow-lg shadow-emerald-200"
-                                : "text-slate-400 bg-white border-slate-100 hover:border-slate-300 hover:bg-slate-50"
-                            )}
-                            onClick={() => {
-                              const options = form.getValues(`questions.${index}.options`).map((opt, i) => ({
-                                ...opt,
-                                isCorrect: i === optIndex
-                              }));
-                              form.setValue(`questions.${index}.options`, options);
-                            }}
-                          >
-                            <span className="text-sm font-black">{["A", "B", "C", "D", "E", "F"][optIndex]}</span>
-                          </Button>
-                          {form.getValues(`questions.${index}.options.${optIndex}.isCorrect`) && (
-                            <div className="absolute -top-1 -right-1 bg-emerald-500 text-white rounded-full p-0.5 border-2 border-white">
-                              <CheckCircle2 className="h-3 w-3" />
-                            </div>
-                          )}
-                        </div>
-
-                        <FormField
-                          control={form.control}
-                          name={`questions.${index}.options.${optIndex}.text`}
-                          render={({ field }) => (
-                            <FormItem className="flex-1">
-                              <div className="relative group/input">
-                                <FormControl>
-                                  <Input
-                                    {...field}
-                                    disabled={isSubmitting}
-                                    placeholder={`Tuliskan opsi jawaban ${["A", "B", "C", "D", "E", "F"][optIndex]}...`}
-                                    className={cn(
-                                      "h-12 border-2 transition-all font-semibold rounded-xl pr-10",
-                                      form.getValues(`questions.${index}.options.${optIndex}.isCorrect`)
-                                        ? "bg-emerald-50/50 border-emerald-500/30 text-emerald-900"
-                                        : "bg-slate-50/50 border-slate-100 focus:border-primary/30 text-slate-700"
-                                    )}
-                                  />
-                                </FormControl>
-                                {form.watch(`questions.${index}.options`).length > 2 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      const currentOptions = form.getValues(`questions.${index}.options`);
-                                      const wasCorrect = currentOptions[optIndex].isCorrect;
-                                      const newOptions = currentOptions.filter((_, i) => i !== optIndex);
-                                      if (wasCorrect && newOptions.length > 0) {
-                                        newOptions[0].isCorrect = true;
-                                      }
-                                      form.setValue(`questions.${index}.options`, newOptions);
-                                    }}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-300 hover:text-red-500 opacity-0 group-hover/input:opacity-100 transition-opacity"
-                                  >
-                                    <Trash className="h-4 w-4" />
-                                  </button>
-                                )}
-                              </div>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                      </div>
-                    ))}
-
-                    {form.watch(`questions.${index}.options`).length < 6 && (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const currentOptions = form.getValues(`questions.${index}.options`);
-                          form.setValue(`questions.${index}.options`, [
-                            ...currentOptions,
-                            { text: "", isCorrect: false }
-                          ]);
-                        }}
-                        className="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-slate-200 rounded-xl text-slate-400 hover:border-primary/30 hover:text-primary transition-all text-sm font-bold"
-                      >
-                        <Plus className="h-4 w-4" /> Opsi Lainnya
-                      </button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          <div className="flex justify-end gap-4 pt-10 border-t items-center mt-12">
-            <Button
-              variant="ghost"
-              type="button"
-              disabled={isSubmitting}
-              onClick={() => onNavigateWithCheck("back")}
-              className="font-bold text-slate-500"
-            >
-              Batal
-            </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-              className="font-black px-10 bg-primary shadow-lg shadow-primary/20 hover:shadow-xl transition-all"
-            >
-              {isSubmitting ? "Menyimpan..." : "Simpan Seluruh Tes"}
-            </Button>
           </div>
         </form>
       </Form>
-      <ConfirmDraftDialog 
-        isOpen={showDraftConfirm}
-        onClose={() => setShowDraftConfirm(false)}
-        onConfirm={onConfirmSaveAsDraft}
-        warningDetails={[
-          "Post-Test minimal harus memiliki 5 soal untuk tetap Published.",
-          "Perubahan ini akan menarik kursus dari katalog publik."
-        ]}
-      />
+    </div>
     </>
   );
 };
+
+/* ─────────────────────────────────────────────
+   Sub-components
+───────────────────────────────────────────── */
+
+function SectionHeader({
+  step,
+  title,
+  badge,
+  badgeVariant = "ghost",
+}: {
+  step: number;
+  title: string;
+  badge: string;
+  badgeVariant?: "ghost" | "amber";
+}) {
+  return (
+    <div className="flex flex-col gap-2 rounded-lg bg-[#0F1C3F] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:py-2">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#E8A020] text-xs font-semibold text-[#0F1C3F]">
+          {step}
+        </div>
+        <span className="text-sm font-medium text-white">{title}</span>
+      </div>
+      <span
+        className={cn(
+          "w-fit shrink-0 rounded px-2 py-0.5 text-xs font-medium sm:ml-auto",
+          badgeVariant === "amber"
+            ? "bg-[#E8A020] text-[#0F1C3F]"
+            : "bg-white/15 text-white/80"
+        )}
+      >
+        {badge}
+      </span>
+    </div>
+  );
+}
+
+function ConfigCard({
+  children,
+  accentColor,
+}: {
+  children: React.ReactNode;
+  accentColor: "navy" | "amber";
+}) {
+  return (
+    <div
+      className={cn(
+        "space-y-3 rounded-lg border border-slate-200 bg-white p-4",
+        accentColor === "navy" ? "border-l-[3px] border-l-[#0F1C3F]" : "border-l-[3px] border-l-[#E8A020]"
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+function CardHeading({
+  icon,
+  label,
+}: {
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50">
+        {icon}
+      </div>
+      <span className="text-sm font-semibold text-slate-900">{label}</span>
+    </div>
+  );
+}
+
+function FieldLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <FormLabel className="text-sm font-medium text-slate-700">{children}</FormLabel>
+  );
+}
+
+function QuestionCard({
+  index,
+  form,
+  isSubmitting,
+  canDelete,
+  onRemove,
+}: {
+  index: number;
+  form: any;
+  isSubmitting: boolean;
+  canDelete: boolean;
+  onRemove: () => void;
+}) {
+  const options = form.watch(`questions.${index}.options`) as {
+    text: string;
+    isCorrect: boolean;
+  }[];
+
+  const setCorrect = (optIndex: number) => {
+    const updated = options.map((opt, i) => ({ ...opt, isCorrect: i === optIndex }));
+    form.setValue(`questions.${index}.options`, updated);
+  };
+
+  const removeOption = (optIndex: number) => {
+    const updated = options.filter((_, i) => i !== optIndex);
+    if (options[optIndex].isCorrect && updated.length > 0) updated[0].isCorrect = true;
+    form.setValue(`questions.${index}.options`, updated);
+  };
+
+  const addOption = () => {
+    form.setValue(`questions.${index}.options`, [
+      ...options,
+      { text: "", isCorrect: false },
+    ]);
+  };
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+      <div className="h-0.5 bg-[#0F1C3F]" />
+
+      <div className="space-y-3 p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#0F1C3F] text-xs font-semibold text-[#E8A020]">
+              {index + 1}
+            </div>
+            <span className="text-xs text-slate-500">Pertanyaan</span>
+          </div>
+          <button
+            type="button"
+            disabled={isSubmitting || !canDelete}
+            onClick={onRemove}
+            className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            <Trash className="h-4 w-4" />
+          </button>
+        </div>
+
+        <FormField
+          control={form.control}
+          name={`questions.${index}.text`}
+          render={({ field }) => (
+            <FormItem>
+              <FormControl>
+                <textarea
+                  {...field}
+                  disabled={isSubmitting}
+                  placeholder="Tulis pertanyaan (min. 10 karakter)"
+                  className="min-h-[4.5rem] w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-[#0F1C3F] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0F1C3F]/20"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2">
+          {options.map((opt, optIndex) => (
+            <div key={optIndex} className="flex items-center gap-2">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => setCorrect(optIndex)}
+                title={opt.isCorrect ? "Jawaban benar" : "Set sebagai kunci"}
+                className={cn(
+                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border text-sm font-medium transition-colors",
+                  opt.isCorrect
+                    ? "border-[#E8A020] bg-[#0F1C3F] text-[#E8A020]"
+                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
+                )}
+              >
+                {opt.isCorrect ? (
+                  <CheckCircle2 className="h-4 w-4" aria-hidden />
+                ) : (
+                  OPTION_LABELS[optIndex]
+                )}
+              </button>
+
+              <div className="group/opt relative flex-1">
+                <FormField
+                  control={form.control}
+                  name={`questions.${index}.options.${optIndex}.text`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input
+                          {...field}
+                          disabled={isSubmitting}
+                          placeholder={`Opsi ${OPTION_LABELS[optIndex]}`}
+                          className={cn(
+                            "h-9 rounded-md border pr-8 text-sm",
+                            opt.isCorrect
+                              ? "border-slate-300 bg-slate-50 focus-visible:ring-[#0F1C3F]/15"
+                              : "border-slate-200 bg-white"
+                          )}
+                        />
+                      </FormControl>
+                    </FormItem>
+                  )}
+                />
+                {options.length > 2 && (
+                  <button
+                    type="button"
+                    onClick={() => removeOption(optIndex)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 opacity-0 transition-opacity hover:text-rose-500 group-hover/opt:opacity-100"
+                  >
+                    <Trash className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+
+          {options.length < 6 && (
+            <button
+              type="button"
+              onClick={addOption}
+              className="flex h-9 items-center justify-center gap-1 rounded-md border border-dashed border-slate-300 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800"
+            >
+              <Plus className="h-3.5 w-3.5" /> Tambah opsi
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── Shared style constants ── */
+const inputCls =
+  "h-9 rounded-md border-slate-200 bg-white text-sm focus-visible:border-[#0F1C3F] focus-visible:ring-1 focus-visible:ring-[#0F1C3F]/20";
+const hintCls = "text-xs text-slate-500";

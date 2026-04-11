@@ -1,6 +1,6 @@
 export default function CourseSetupLoading() {
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-12 pb-20 animate-pulse">
+    <div className="w-full min-w-0 space-y-10 pb-12 animate-pulse">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-8 pb-8 border-b border-slate-100">
         <div className="space-y-3">
@@ -11,7 +11,7 @@ export default function CourseSetupLoading() {
           </div>
         </div>
         {/* Wizard steps skeleton */}
-        <div className="flex-1 max-w-2xl px-4 flex items-center gap-3">
+        <div className="flex min-w-0 max-w-full flex-1 items-center gap-3 px-0 md:max-w-2xl md:px-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="flex items-center gap-2 flex-1">
               <div className="h-8 w-8 bg-slate-200 rounded-full shrink-0" />

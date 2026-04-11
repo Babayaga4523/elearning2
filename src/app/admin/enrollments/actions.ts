@@ -1,10 +1,29 @@
 "use server";
 
-import { db } from "@/lib/db";
 import { revalidatePath } from "next/cache";
 
+import { db } from "@/lib/db";
+import { notifyCourseEnrollment } from "@/lib/notifications";
+
+async function notifyEnrolledUsers(userIds: string[], courseId: string) {
+  try {
+    const course = await db.course.findUnique({
+      where: { id: courseId },
+      select: { title: true },
+    });
+    if (!course) return;
+    await notifyCourseEnrollment({
+      userIds,
+      courseId,
+      courseTitle: course.title,
+    });
+  } catch {
+    /* notifikasi best-effort */
+  }
+}
+
 // ─── Enroll satu karyawan ke satu kursus ──────────────────────────────────
-export async function enrollUser(userId: string, courseId: string, deadline?: Date | null) {
+export async function enrollUser(userId: string, courseId: string) {
   try {
     const existing = await (db.enrollment as any).findUnique({
       where: { userId_courseId: { userId, courseId } },
@@ -13,8 +32,9 @@ export async function enrollUser(userId: string, courseId: string, deadline?: Da
       return { success: false, error: "Karyawan sudah terdaftar di kursus ini." };
     }
     await (db.enrollment as any).create({
-      data: { userId, courseId, deadline, status: "IN_PROGRESS" },
+      data: { userId, courseId, status: "IN_PROGRESS" },
     });
+    await notifyEnrolledUsers([userId], courseId);
     revalidatePath("/admin/enrollments");
     return { success: true };
   } catch (error: any) {
@@ -23,7 +43,7 @@ export async function enrollUser(userId: string, courseId: string, deadline?: Da
 }
 
 // ─── Enroll banyak karyawan sekaligus ──────────────────────────────────────
-export async function enrollMultipleUsers(userIds: string[], courseId: string, deadline?: Date | null) {
+export async function enrollMultipleUsers(userIds: string[], courseId: string) {
   try {
     if (userIds.length === 0) return { success: false, error: "Tidak ada karyawan yang dipilih." };
 
@@ -43,12 +63,12 @@ export async function enrollMultipleUsers(userIds: string[], courseId: string, d
       data: toEnroll.map((userId) => ({
         userId,
         courseId,
-        deadline,
         status: "IN_PROGRESS",
       })),
       skipDuplicates: true,
     });
 
+    await notifyEnrolledUsers(toEnroll, courseId);
     revalidatePath("/admin/enrollments");
     return { 
       success: true, 
@@ -61,7 +81,7 @@ export async function enrollMultipleUsers(userIds: string[], courseId: string, d
 }
 
 // ─── Enroll massal per departemen ke satu kursus ──────────────────────────
-export async function enrollDepartment(department: string, courseId: string, deadline?: Date | null) {
+export async function enrollDepartment(department: string, courseId: string) {
   try {
     // Ambil semua user di departemen tersebut (role KARYAWAN)
     const users = await (db.user as any).findMany({
@@ -94,12 +114,15 @@ export async function enrollDepartment(department: string, courseId: string, dea
       data: toEnroll.map((u: any) => ({
         userId: u.id,
         courseId,
-        deadline,
         status: "IN_PROGRESS",
       })),
       skipDuplicates: true,
     });
 
+    await notifyEnrolledUsers(
+      toEnroll.map((u: { id: string }) => u.id),
+      courseId
+    );
     revalidatePath("/admin/enrollments");
     return {
       success: true,
@@ -120,18 +143,50 @@ export async function unenrollUser(enrollmentId: string) {
   } catch (error: any) {
     return { success: false, error: error?.message ?? "Terjadi kesalahan." };
   }
-}
-
-// ─── Update deadline enrollment ─────────────────────────────────────────────
-export async function updateEnrollmentDeadline(enrollmentId: string, deadline: Date | null) {
+}// ─── Auto Enrollment Rules ────────────────────────────────────────────────
+export async function createAutoEnrollRule(courseId: string, department: string, bypassDeadline: boolean) {
   try {
-    await (db.enrollment as any).update({
-      where: { id: enrollmentId },
-      data: { deadline },
+    await (db as any).autoEnrollmentRule.create({
+      data: { courseId, department, bypassDeadline },
     });
     revalidatePath("/admin/enrollments");
     return { success: true };
   } catch (error: any) {
-    return { success: false, error: error?.message ?? "Terjadi kesalahan saat update deadline." };
+    return { success: false, error: error?.message ?? "Gagal membuat aturan." };
+  }
+}
+
+export async function deleteAutoEnrollRule(id: string) {
+  try {
+    await (db as any).autoEnrollmentRule.delete({ where: { id } });
+    revalidatePath("/admin/enrollments");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message ?? "Gagal menghapus aturan." };
+  }
+}
+
+// ─── Department Configs ───────────────────────────────────────────────────
+export async function upsertDepartmentConfig(departmentName: string, headName: string, headEmail: string) {
+  try {
+    await (db as any).departmentConfig.upsert({
+      where: { departmentName },
+      update: { headName, headEmail },
+      create: { departmentName, headName, headEmail },
+    });
+    revalidatePath("/admin/enrollments");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message ?? "Gagal menyimpan konfigurasi." };
+  }
+}
+
+export async function deleteDepartmentConfig(id: string) {
+  try {
+    await (db as any).departmentConfig.delete({ where: { id } });
+    revalidatePath("/admin/enrollments");
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error?.message ?? "Gagal menghapus konfigurasi." };
   }
 }

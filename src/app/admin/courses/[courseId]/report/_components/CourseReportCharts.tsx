@@ -1,16 +1,19 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from "@/components/ui/chart";
 
 interface CourseReportChartsProps {
   avgPre: number;
@@ -31,24 +34,58 @@ export default function CourseReportCharts({
   totalEnrolled,
   courseModulesLength,
 }: CourseReportChartsProps) {
+  // Config data for average comparison
   const comparisonData = [
     {
       name: "Rata-rata",
-      "Pre-Test": avgPre,
-      "Post-Test": avgPost,
-      "Passing Score": reportRows[0]?.prePassing ?? 70,
+      pre: avgPre,
+      post: avgPost,
+      passing: reportRows[0]?.prePassing ?? 70,
     },
   ];
+
+  const comparisonConfig = {
+    pre: {
+      label: "Pre-Test",
+      color: "hsl(var(--chart-1))", // BNI Navy
+    },
+    post: {
+      label: "Post-Test",
+      color: "hsl(var(--chart-2))", // BNI Gold
+    },
+    passing: {
+      label: "Passing Score",
+      color: "#94a3b8",
+    },
+  } satisfies ChartConfig;
+
+  const distributionConfig = {
+    pre: {
+      label: "Pre-Test",
+      color: "hsl(var(--chart-1))",
+    },
+    post: {
+      label: "Post-Test",
+      color: "hsl(var(--chart-2))",
+    },
+  } satisfies ChartConfig;
+
+  const progressConfig = {
+    completed: {
+      label: "Peserta Selesai",
+      color: "hsl(var(--chart-1))",
+    },
+  } satisfies ChartConfig;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
       {/* Pre vs Post Comparison */}
-      <Card className="border-slate-200 shadow-sm bg-white">
-        <CardHeader className="border-b border-slate-50 pb-4">
-          <CardTitle className="text-base font-black text-slate-800">
+      <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
+        <CardHeader className="border-b border-slate-50 pb-4 bg-slate-50/30">
+          <CardTitle className="text-base font-black text-[#0F1C3F]">
             Perbandingan Rata-rata Nilai
           </CardTitle>
-          <p className="text-xs text-slate-400 font-medium">Pre-Test vs Post-Test (nilai rata-rata)</p>
+          <p className="text-xs text-slate-400 font-medium">Pre-Test vs Post-Test (Hasil Akhir)</p>
         </CardHeader>
         <CardContent className="pt-6">
           {avgPre === 0 && avgPost === 0 ? (
@@ -56,31 +93,34 @@ export default function CourseReportCharts({
               Belum ada data nilai tes.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={comparisonData} barCategoryGap="30%">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="name" tick={{ fontSize: 12, fontWeight: 700, fill: "#94a3b8" }} />
-                <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: "#94a3b8" }} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 24px rgba(0,0,0,.08)" }}
+            <ChartContainer config={comparisonConfig} className="h-[220px] w-full">
+              <BarChart data={comparisonData}>
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="name"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tick={{ fontSize: 12, fontWeight: 700 }}
                 />
-                <Legend wrapperStyle={{ fontWeight: 700, fontSize: 12 }} />
-                <Bar dataKey="Pre-Test" fill="#818cf8" radius={[6, 6, 0, 0]} maxBarSize={60} />
-                <Bar dataKey="Post-Test" fill="#34d399" radius={[6, 6, 0, 0]} maxBarSize={60} />
-                <Bar dataKey="Passing Score" fill="#fbbf24" radius={[6, 6, 0, 0]} maxBarSize={20} />
+                <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="pre" fill="var(--color-pre)" radius={4} maxBarSize={50} />
+                <Bar dataKey="post" fill="var(--color-post)" radius={4} maxBarSize={50} />
+                <Bar dataKey="passing" fill="var(--color-passing)" radius={4} maxBarSize={15} />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           )}
         </CardContent>
       </Card>
 
       {/* Score Distribution */}
-      <Card className="border-slate-200 shadow-sm bg-white">
-        <CardHeader className="border-b border-slate-50 pb-4">
-          <CardTitle className="text-base font-black text-slate-800">
-            Distribusi Nilai Pre &amp; Post Test
+      <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
+        <CardHeader className="border-b border-slate-50 pb-4 bg-slate-50/30">
+          <CardTitle className="text-base font-black text-[#0F1C3F]">
+            Distribusi Nilai
           </CardTitle>
-          <p className="text-xs text-slate-400 font-medium">Sebaran nilai per rentang (semua percobaan)</p>
+          <p className="text-xs text-slate-400 font-medium">Rentang nilai Pre & Post Test</p>
         </CardHeader>
         <CardContent className="pt-6">
           {scoreDistribution.every((d) => d.pre === 0 && d.post === 0) ? (
@@ -88,29 +128,32 @@ export default function CourseReportCharts({
               Belum ada data nilai.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
+            <ChartContainer config={distributionConfig} className="h-[220px] w-full">
               <BarChart data={scoreDistribution}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="range" tick={{ fontSize: 10, fill: "#94a3b8" }} />
-                <YAxis tick={{ fontSize: 11, fill: "#94a3b8" }} allowDecimals={false} />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 24px rgba(0,0,0,.08)" }}
+                <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis
+                  dataKey="range"
+                  tickLine={false}
+                  tickMargin={10}
+                  axisLine={false}
+                  tick={{ fontSize: 10 }}
                 />
-                <Legend wrapperStyle={{ fontWeight: 700, fontSize: 12 }} />
-                <Bar dataKey="pre" name="Pre-Test" fill="#818cf8" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="post" name="Post-Test" fill="#34d399" radius={[4, 4, 0, 0]} />
+                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11 }} />
+                <ChartTooltip content={<ChartTooltipContent />} />
+                <Bar dataKey="pre" fill="var(--color-pre)" radius={4} />
+                <Bar dataKey="post" fill="var(--color-post)" radius={4} />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           )}
         </CardContent>
       </Card>
 
       {/* Module Completion */}
-      <Card className="border-slate-200 shadow-sm bg-white lg:col-span-2">
-        <CardHeader className="border-b border-slate-50 pb-4">
-          <CardTitle className="text-base font-black text-slate-800">Progress Modul</CardTitle>
+      <Card className="border-slate-200 shadow-sm bg-white lg:col-span-2 overflow-hidden">
+        <CardHeader className="border-b border-slate-50 pb-4 bg-slate-50/30">
+          <CardTitle className="text-base font-black text-[#0F1C3F]">Progress Modul</CardTitle>
           <p className="text-xs text-slate-400 font-medium">
-            Jumlah peserta yang menyelesaikan setiap modul
+            Peserta yang menyelesaikan setiap modul
           </p>
         </CardHeader>
         <CardContent className="pt-6">
@@ -119,23 +162,22 @@ export default function CourseReportCharts({
               Belum ada modul published.
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <BarChart data={moduleCompletion} layout="vertical">
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" horizontal={false} />
-                <XAxis type="number" domain={[0, totalEnrolled || 1]} tick={{ fontSize: 11, fill: "#94a3b8" }} />
+            <ChartContainer config={progressConfig} className="h-[250px] w-full">
+              <BarChart data={moduleCompletion} layout="vertical" margin={{ left: 20 }}>
+                <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis type="number" domain={[0, totalEnrolled || 1]} hide />
                 <YAxis
                   dataKey="name"
                   type="category"
                   width={140}
-                  tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 11, fontWeight: 600, fill: "#1e293b" }}
                 />
-                <Tooltip
-                  contentStyle={{ borderRadius: 12, border: "none", boxShadow: "0 4px 24px rgba(0,0,0,.08)" }}
-                  formatter={(v) => [v, "Peserta Selesai"]}
-                />
-                <Bar dataKey="completed" name="Selesai" fill="#6366f1" radius={[0, 6, 6, 0]} maxBarSize={28} />
+                <ChartTooltip cursor={false} content={<ChartTooltipContent hideLabel />} />
+                <Bar dataKey="completed" fill="var(--color-completed)" radius={[0, 4, 4, 0]} maxBarSize={30} />
               </BarChart>
-            </ResponsiveContainer>
+            </ChartContainer>
           )}
         </CardContent>
       </Card>

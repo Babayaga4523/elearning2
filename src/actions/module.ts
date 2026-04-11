@@ -13,6 +13,31 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
 
   const userId = session.user.id;
 
+  const module = await db.module.findUnique({
+    where: { id: moduleId },
+    include: {
+      course: {
+        select: { deadlineDate: true }
+      }
+    }
+  });
+
+  if (!module) {
+    throw new Error("Module not found");
+  }
+
+  const enrollment = await db.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: module.courseId } },
+  });
+
+  if (!enrollment) {
+    throw new Error("Not enrolled");
+  }
+
+  if (module.course.deadlineDate && module.course.deadlineDate.getTime() < Date.now()) {
+    throw new Error("DEADLINE_PASSED");
+  }
+
   const progress = await db.userProgress.upsert({
     where: {
       userId_moduleId: {
@@ -30,14 +55,8 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
     },
   });
 
-  const module = await db.module.findUnique({
-    where: { id: moduleId },
-  });
-
-  if (module) {
-    revalidatePath(`/courses/${module.courseId}/modules/${moduleId}`);
-    revalidatePath(`/courses/${module.courseId}`);
-  }
+  revalidatePath(`/courses/${module.courseId}/modules/${moduleId}`);
+  revalidatePath(`/courses/${module.courseId}`);
 
   return progress;
 }

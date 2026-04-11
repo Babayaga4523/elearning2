@@ -164,14 +164,9 @@ export function CatalogClient({ courses, categories }: CatalogClientProps) {
                                  <CheckCircle2 className="h-3 w-3 mr-1" /> Enrolled
                                </Badge>
                              )}
-                             {isEnrolled && course.enrollments[0]?.deadline && (
+                             {course.deadlineDate && (
                                <Badge className="bg-rose-500 text-white font-black border-none shadow-md shadow-rose-500/20 px-3 uppercase tracking-widest text-[9px] flex items-center">
-                                 <Clock className="h-3 w-3 mr-1" /> Deadline: {new Date(course.enrollments[0].deadline).toLocaleDateString()}
-                               </Badge>
-                             )}
-                             {!isEnrolled && course.deadlineDuration && (
-                               <Badge className="bg-amber-500 text-white font-black border-none shadow-md shadow-amber-500/20 px-3 uppercase tracking-widest text-[9px] flex items-center">
-                                 <Clock className="h-3 w-3 mr-1" /> {course.deadlineDuration} Hari Limit
+                                 <Clock className="h-3 w-3 mr-1" /> Deadline: {new Date(course.deadlineDate).toLocaleDateString()}
                                </Badge>
                              )}
                            </div>

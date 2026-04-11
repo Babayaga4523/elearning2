@@ -1,42 +1,48 @@
 "use client";
 
-import { 
-  Course, 
-  Module, 
-  Test, 
-  Question, 
-  Option 
+import {
+  Course,
+  Module,
+  Test,
+  Question,
+  Option,
 } from "@prisma/client";
-import { 
-  PlusCircle, 
-  GripVertical, 
-  Pencil, 
-  Trash, 
-  BookOpen, 
-  GraduationCap, 
-  Clock, 
+import {
+  PlusCircle,
+  GripVertical,
+  Pencil,
+  Trash,
+  BookOpen,
+  GraduationCap,
+  Clock,
   Trophy,
   FileVideo,
   FileText,
   LayoutDashboard,
-  MoreVertical
+  MoreVertical,
+  CheckCircle2,
+  AlertCircle,
+  Target,
+  Layers,
+  Eye,
+  EyeOff,
+  ArrowUpDown,
+  Sparkles,
+  Info,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ModuleFormModal } from "./ModuleFormModal";
 import { ConfirmDraftDialog } from "@/components/admin/ConfirmDraftDialog";
 import { deleteModule } from "../actions";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
 interface CourseSetupClientProps {
@@ -50,7 +56,7 @@ export const CourseSetupClient = ({
   course,
   modules,
   preTest,
-  postTest
+  postTest,
 }: CourseSetupClientProps) => {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState<string | null>(null);
@@ -58,13 +64,11 @@ export const CourseSetupClient = ({
   const [moduleToDelete, setModuleToDelete] = useState<string | null>(null);
 
   const onDeleteModule = async (moduleId: string) => {
-    // If course is published, warn before deleting
     if (course.isPublished) {
       setModuleToDelete(moduleId);
       setShowDraftConfirm(true);
       return;
     }
-    
     executeDelete(moduleId);
   };
 
@@ -73,12 +77,16 @@ export const CourseSetupClient = ({
       setIsDeleting(moduleId);
       const result = await deleteModule(course.id, moduleId);
       if (result.success) {
-        toast.success(result.statusReverted ? "Kursus ditarik ke Draft & Modul dihapus" : "Modul berhasil dihapus");
+        toast.success(
+          result.statusReverted
+            ? "Kursus ditarik ke Draft & Modul dihapus"
+            : "Modul berhasil dihapus"
+        );
         router.refresh();
       } else {
         toast.error("Gagal menghapus modul");
       }
-    } catch (error) {
+    } catch {
       toast.error("Terjadi kesalahan");
     } finally {
       setIsDeleting(null);
@@ -87,213 +95,645 @@ export const CourseSetupClient = ({
     }
   };
 
+  const publishedModules = modules.filter((m: any) => m.isPublished).length;
+  const draftModules = modules.length - publishedModules;
+  const hasPreTest = !!preTest;
+  const hasPostTest = !!postTest;
+  const isReadyToPublish =
+    modules.length > 0 && hasPreTest && hasPostTest;
+
+  // ── Readiness checklist items
+  const checklist = [
+    { label: "Minimal 1 modul ditambahkan", done: modules.length > 0 },
+    { label: "Pre-Test dikonfigurasi", done: hasPreTest },
+    { label: "Post-Test dikonfigurasi", done: hasPostTest },
+    { label: "Semua modul dipublikasikan", done: draftModules === 0 && modules.length > 0 },
+  ];
+
   return (
-    <div className="space-y-12 animate-in fade-in duration-1000">
-      
-      {/* 1. Module Management Section */}
-      <section className="space-y-6">
-        <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 bg-emerald-100 rounded-xl text-emerald-700 flex items-center justify-center shadow-inner">
-              <BookOpen className="h-5 w-5" />
+    <div
+      className="w-full min-w-0 space-y-0"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      {/* ══════════════════════════════════════════
+          READINESS BANNER
+      ══════════════════════════════════════════ */}
+      <div
+        className="relative mb-7 overflow-hidden rounded-3xl"
+        style={{
+          background: isReadyToPublish
+            ? "linear-gradient(135deg, #064E3B 0%, #065F46 100%)"
+            : "linear-gradient(135deg, #0F1C3F 0%, #1A2E5A 100%)",
+        }}
+      >
+        {/* Grid texture */}
+        <div
+          className="absolute inset-0 opacity-[0.03] pointer-events-none"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(0deg,#fff 0px,transparent 1px,transparent 40px,#fff 41px),repeating-linear-gradient(90deg,#fff 0px,transparent 1px,transparent 40px,#fff 41px)",
+            backgroundSize: "40px 40px",
+          }}
+        />
+
+        <div className="relative z-10 p-6 md:p-8 flex flex-col md:flex-row items-start md:items-center gap-6 justify-between">
+          {/* Left: status */}
+          <div className="flex items-center gap-4">
+            <div
+              className="h-12 w-12 rounded-2xl flex items-center justify-center shrink-0"
+              style={{
+                background: isReadyToPublish
+                  ? "rgba(52,211,153,0.15)"
+                  : "rgba(232,160,32,0.15)",
+                border: `1px solid ${isReadyToPublish ? "rgba(52,211,153,0.3)" : "rgba(232,160,32,0.3)"}`,
+              }}
+            >
+              {isReadyToPublish ? (
+                <Sparkles className="h-6 w-6" style={{ color: "#34D399" }} />
+              ) : (
+                <Info className="h-6 w-6" style={{ color: "#E8A020" }} />
+              )}
             </div>
             <div>
-              <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none">Modul Pembelajaran</h2>
-              <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Kurikulum Kursus</p>
+              <p
+                className="text-[10px] font-black uppercase tracking-[0.2em] mb-1"
+                style={{ color: isReadyToPublish ? "rgba(52,211,153,0.6)" : "rgba(232,160,32,0.6)" }}
+              >
+                {isReadyToPublish ? "Siap Dipublikasikan" : "Perlu Dilengkapi"}
+              </p>
+              <p
+                className="font-black text-white text-base"
+                style={{ fontFamily: "'Lexend Deca', sans-serif" }}
+              >
+                {isReadyToPublish
+                  ? "Semua komponen kursus sudah lengkap."
+                  : "Lengkapi komponen kursus sebelum publikasi."}
+              </p>
             </div>
           </div>
-          <ModuleFormModal>
-            <Button className="font-bold gap-2 px-6 rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-105">
-              <PlusCircle className="h-4 w-4" />
-              Tambah Modul
-            </Button>
-          </ModuleFormModal>
+
+          {/* Right: mini checklist */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 shrink-0">
+            {checklist.map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <div
+                  className="h-4 w-4 rounded-full flex items-center justify-center shrink-0"
+                  style={{
+                    background: item.done ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.08)",
+                    border: `1px solid ${item.done ? "rgba(52,211,153,0.4)" : "rgba(255,255,255,0.12)"}`,
+                  }}
+                >
+                  {item.done && (
+                    <CheckCircle2 className="h-2.5 w-2.5" style={{ color: "#34D399" }} />
+                  )}
+                </div>
+                <span
+                  className="text-[10px] font-bold"
+                  style={{ color: item.done ? "rgba(255,255,255,0.65)" : "rgba(255,255,255,0.3)" }}
+                >
+                  {item.label}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-7">
+
+        {/* ══════════════════════════════════════════
+            LEFT COLUMN — MODULES (2/3 width)
+        ══════════════════════════════════════════ */}
+        <div className="xl:col-span-2 space-y-4">
+
+          {/* Section header */}
+          <div
+            className="flex items-center justify-between p-5 rounded-2xl"
+            style={{
+              background: "white",
+              border: "1px solid #E2E6F0",
+              boxShadow: "0 1px 4px rgba(15,28,63,0.05)",
+            }}
+          >
+            <div className="flex items-center gap-3">
+              <div
+                className="h-10 w-10 rounded-xl flex items-center justify-center"
+                style={{ background: "#F0FDF4", color: "#059669" }}
+              >
+                <BookOpen className="h-5 w-5" />
+              </div>
+              <div>
+                <h2
+                  className="text-base font-black leading-none"
+                  style={{ color: "#0F1C3F", fontFamily: "'Lexend Deca', sans-serif" }}
+                >
+                  Modul Pembelajaran
+                </h2>
+                <div className="flex items-center gap-2 mt-1">
+                  <span
+                    className="text-[10px] font-black uppercase tracking-widest"
+                    style={{ color: "#9AAABF" }}
+                  >
+                    {modules.length} Total
+                  </span>
+                  {publishedModules > 0 && (
+                    <>
+                      <span style={{ color: "#D6DBE8" }}>·</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#10B981" }}>
+                        {publishedModules} Aktif
+                      </span>
+                    </>
+                  )}
+                  {draftModules > 0 && (
+                    <>
+                      <span style={{ color: "#D6DBE8" }}>·</span>
+                      <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: "#E8A020" }}>
+                        {draftModules} Draft
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <ModuleFormModal>
+              <button
+                className="flex items-center gap-2 h-10 px-5 rounded-xl font-black text-xs uppercase tracking-wider transition-all hover:brightness-110 active:scale-[0.97]"
+                style={{
+                  background: "linear-gradient(135deg, #0F1C3F, #1A3060)",
+                  color: "white",
+                  boxShadow: "0 2px 12px rgba(15,28,63,0.2)",
+                }}
+              >
+                <PlusCircle className="h-4 w-4" style={{ color: "#E8A020" }} />
+                Tambah Modul
+              </button>
+            </ModuleFormModal>
+          </div>
+
+          {/* Module list */}
+          {modules.length > 0 ? (
+            <div className="space-y-2.5">
+              {modules.map((module: any, index: number) => (
+                <ModuleRow
+                  key={module.id}
+                  module={module}
+                  index={index}
+                  courseId={course.id}
+                  isDeleting={isDeleting === module.id}
+                  onDelete={() => onDeleteModule(module.id)}
+                />
+              ))}
+            </div>
+          ) : (
+            <ModuleEmptyState />
+          )}
         </div>
 
+        {/* ══════════════════════════════════════════
+            RIGHT COLUMN — TESTS (1/3 width)
+        ══════════════════════════════════════════ */}
         <div className="space-y-4">
-          {modules.length > 0 ? (
-            modules.map((module: any, index: number) => (
-              <Card key={module.id} className="group hover:ring-2 hover:ring-primary/20 transition-all duration-500 border-slate-200 overflow-hidden rounded-2xl bg-white shadow-sm hover:shadow-xl">
-                <CardContent className="p-0">
-                  <div className="flex items-center p-5 gap-5">
-                    <div className="cursor-grab text-slate-300 hover:text-slate-500 transition-colors py-2 shrink-0">
-                      <GripVertical className="h-5 w-5" />
-                    </div>
-                    
-                    <div className={cn(
-                      "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-inner group-hover:scale-110 transition-transform duration-500",
-                      module.type === "VIDEO" ? "bg-rose-50 text-rose-600" : "bg-sky-50 text-sky-600"
-                    )}>
-                      {module.type === "VIDEO" ? <FileVideo className="h-6 w-6" /> : <FileText className="h-6 w-6" />}
-                    </div>
+          {/* Section header */}
+          <div
+            className="flex items-center gap-3 p-5 rounded-2xl"
+            style={{
+              background: "white",
+              border: "1px solid #E2E6F0",
+              boxShadow: "0 1px 4px rgba(15,28,63,0.05)",
+            }}
+          >
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: "#FFF8E7", color: "#E8A020" }}
+            >
+              <GraduationCap className="h-5 w-5" />
+            </div>
+            <div>
+              <h2
+                className="text-base font-black leading-none"
+                style={{ color: "#0F1C3F", fontFamily: "'Lexend Deca', sans-serif" }}
+              >
+                Evaluasi Belajar
+              </h2>
+              <p className="text-[10px] font-black uppercase tracking-widest mt-1" style={{ color: "#9AAABF" }}>
+                {[hasPreTest, hasPostTest].filter(Boolean).length}/2 Dikonfigurasi
+              </p>
+            </div>
+          </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                         <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">Modul {String(index + 1).padStart(2, '0')}</span>
-                         {module.isPublished ? (
-                           <Badge className="bg-emerald-50 text-emerald-600 border-none text-[8px] h-4 font-black">ACTIVE</Badge>
-                         ) : (
-                           <Badge className="bg-slate-100 text-slate-400 border-none text-[8px] h-4 font-black">DRAFT</Badge>
-                         )}
-                      </div>
-                      <h3 className="font-black text-slate-800 text-lg truncate group-hover:text-primary transition-colors">{module.title}</h3>
-                      <div className="flex items-center gap-3 mt-1 text-slate-400">
-                        <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
-                          <Clock className="h-3 w-3" />
-                          {module.duration} Menit
-                        </span>
-                        <div className="h-1 w-1 rounded-full bg-slate-200" />
-                        <span className="text-[10px] font-bold uppercase tracking-wider">
-                          {module.type}
-                        </span>
-                      </div>
-                    </div>
+          {/* Pre-Test */}
+          <TestCard
+            icon={<LayoutDashboard className="h-5 w-5" />}
+            label="Pre-Test"
+            sublabel="Tes Awal Kompetensi"
+            badge="Wajib"
+            test={preTest}
+            href={`/admin/courses/${course.id}/tests/${preTest?.id || "new"}?type=PRE`}
+            accentColor="#6366F1"
+            accentBg="#EEF2FF"
+            accentBorder="#C7D2FE"
+          />
 
-                    <div className="flex items-center gap-1 pr-2 opacity-0 group-hover:opacity-100 transition-opacity translate-x-2 group-hover:translate-x-0 group-hover:transition-all">
-                      <ModuleFormModal 
-                        initialData={module}
-                      >
-                        <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-primary hover:bg-primary/5 rounded-xl">
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                      </ModuleFormModal>
-                      
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 text-slate-400 hover:text-slate-800 rounded-xl">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="rounded-xl p-2 border-slate-100 shadow-xl">
-                          <DropdownMenuItem 
-                            className="text-red-600 font-bold gap-2 cursor-pointer focus:bg-red-50 focus:text-red-700 rounded-lg p-2.5"
-                            onClick={() => onDeleteModule(module.id)}
-                            disabled={isDeleting === module.id}
-                          >
-                            <Trash className="h-4 w-4" />
-                            Hapus Modul
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+          {/* Post-Test */}
+          <TestCard
+            icon={<Trophy className="h-5 w-5" />}
+            label="Post-Test"
+            sublabel="Ujian Akhir Kursus"
+            badge="Sertifikasi"
+            test={postTest}
+            href={`/admin/courses/${course.id}/tests/${postTest?.id || "new"}?type=POST`}
+            accentColor="#E8A020"
+            accentBg="#FFF8E7"
+            accentBorder="#F6CE72"
+          />
+
+          {/* Module quick-stats */}
+          {modules.length > 0 && (
+            <div
+              className="rounded-2xl p-5 space-y-3"
+              style={{
+                background: "white",
+                border: "1px solid #E2E6F0",
+                boxShadow: "0 1px 4px rgba(15,28,63,0.05)",
+              }}
+            >
+              <p
+                className="text-[10px] font-black uppercase tracking-widest"
+                style={{ color: "#9AAABF" }}
+              >
+                Ringkasan Modul
+              </p>
+              {[
+                {
+                  label: "Video",
+                  count: modules.filter((m: any) => m.type === "VIDEO").length,
+                  color: "#EF4444",
+                  bg: "#FFF0F0",
+                  icon: <FileVideo className="h-3.5 w-3.5" />,
+                },
+                {
+                  label: "Dokumen PDF",
+                  count: modules.filter((m: any) => m.type !== "VIDEO").length,
+                  color: "#0EA5E9",
+                  bg: "#F0F9FF",
+                  icon: <FileText className="h-3.5 w-3.5" />,
+                },
+                {
+                  label: "Total Durasi",
+                  count:
+                    modules.reduce((s: number, m: any) => s + (m.duration || 0), 0) + " menit",
+                  color: "#10B981",
+                  bg: "#F0FDF4",
+                  icon: <Clock className="h-3.5 w-3.5" />,
+                },
+              ].map((s) => (
+                <div key={s.label} className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="h-6 w-6 rounded-lg flex items-center justify-center"
+                      style={{ background: s.bg, color: s.color }}
+                    >
+                      {s.icon}
                     </div>
+                    <span className="text-xs font-bold" style={{ color: "#64748B" }}>
+                      {s.label}
+                    </span>
                   </div>
-                </CardContent>
-              </Card>
-            ) )
-          ) : (
-            <div className="border-2 border-dashed border-slate-200 bg-slate-50/50 rounded-3xl p-16 text-center group cursor-pointer hover:border-primary/30 transition-colors">
-               <div className="h-20 w-20 bg-slate-100 rounded-3xl flex items-center justify-center mx-auto mb-4 text-slate-300 group-hover:scale-110 group-hover:text-primary/30 transition-all duration-700">
-                  <PlusCircle className="h-10 w-10" />
-               </div>
-               <p className="text-slate-400 font-bold text-lg mb-1">Kurikulum masih kosong</p>
-               <p className="text-slate-400/60 font-medium text-sm">Klik tombol "Tambah Modul" untuk memulai menyusun materi.</p>
+                  <span className="text-xs font-black" style={{ color: "#0F1C3F" }}>
+                    {s.count}
+                  </span>
+                </div>
+              ))}
             </div>
           )}
         </div>
-      </section>
+      </div>
 
-      {/* 2. Assessment Section */}
-      <section className="space-y-6">
-        <div className="flex items-center gap-3 px-2">
-          <div className="h-10 w-10 bg-amber-100 rounded-xl text-amber-700 flex items-center justify-center shadow-inner">
-            <GraduationCap className="h-5 w-5" />
-          </div>
-          <div>
-            <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none">Evaluasi Belajar</h2>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Uji Kompetensi</p>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          {/* Pre-Test Card */}
-          <Card className="border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 rounded-3xl group bg-white border-b-4 border-b-slate-100 hover:border-b-indigo-500">
-            <CardHeader className="p-6 pb-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="h-10 w-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center shadow-sm">
-                   <LayoutDashboard className="h-5 w-5" />
-                </div>
-                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest border-indigo-100 text-indigo-600 bg-indigo-50/30 px-2">
-                  Required
-                </Badge>
-              </div>
-              <CardTitle className="text-xl font-black text-slate-800">Pre-Test</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 pt-2 space-y-4">
-              <div className="p-3 bg-slate-50 rounded-2xl flex items-center justify-between">
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Durasi</p>
-                  <p className="text-xs font-black text-slate-700">{preTest?.duration || 0}m</p>
-                </div>
-                <div className="h-6 w-[1px] bg-slate-200" />
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Min Score</p>
-                  <p className="text-xs font-black text-slate-700">{preTest?.passingScore || 0}%</p>
-                </div>
-                <div className="h-6 w-[1px] bg-slate-200" />
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Total</p>
-                  <p className="text-xs font-black text-slate-700">{preTest?.questions.length || 0} Soal</p>
-                </div>
-              </div>
-
-              <Button className="w-full h-12 rounded-xl font-black text-sm bg-indigo-600 hover:bg-indigo-700 shadow-xl shadow-indigo-100" asChild>
-                  <Link href={`/admin/courses/${course.id}/tests/${preTest?.id || 'new'}?type=PRE`}>
-                    {preTest ? 'Edit Pre-Test' : 'Setup Pre-Test'}
-                  </Link>
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* Post-Test Card */}
-          <Card className="border-slate-200 overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 rounded-3xl group bg-white border-b-4 border-b-slate-100 hover:border-b-amber-500">
-            <CardHeader className="p-6 pb-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="h-10 w-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shadow-sm">
-                   <Trophy className="h-5 w-5" />
-                </div>
-                <Badge variant="outline" className="text-[8px] font-black uppercase tracking-widest border-amber-100 text-amber-600 bg-amber-50/30 px-2">
-                  Certification
-                </Badge>
-              </div>
-              <CardTitle className="text-xl font-black text-slate-800">Post-Test</CardTitle>
-            </CardHeader>
-            <CardContent className="p-6 pt-2 space-y-4">
-              <div className="p-3 bg-slate-50 rounded-2xl flex items-center justify-between">
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Durasi</p>
-                  <p className="text-xs font-black text-slate-700">{postTest?.duration || 0}m</p>
-                </div>
-                <div className="h-6 w-[1px] bg-slate-200" />
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Min Score</p>
-                  <p className="text-xs font-black text-slate-700">{postTest?.passingScore || 0}%</p>
-                </div>
-                <div className="h-6 w-[1px] bg-slate-200" />
-                <div className="text-center">
-                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-tighter">Total</p>
-                  <p className="text-xs font-black text-slate-700">{postTest?.questions.length || 0} Soal</p>
-                </div>
-              </div>
-
-              <Button className="w-full h-12 rounded-xl font-black text-sm bg-amber-500 hover:bg-amber-600 shadow-xl shadow-amber-100" asChild>
-                  <Link href={`/admin/courses/${course.id}/tests/${postTest?.id || 'new'}?type=POST`}>
-                    {postTest ? 'Edit Post-Test' : 'Setup Post-Test'}
-                  </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </section>
-      
-      <ConfirmDraftDialog 
+      <ConfirmDraftDialog
         isOpen={showDraftConfirm}
         onClose={() => setShowDraftConfirm(false)}
         onConfirm={() => moduleToDelete && executeDelete(moduleToDelete)}
         warningDetails={[
           "Menghapus modul ini mungkin membuat kurikulum tidak memenuhi syarat publikasi.",
-          "Kursus akan ditarik ke Draft untuk menghindari ketidakkonsistenan materi bagi peserta."
+          "Kursus akan ditarik ke Draft untuk menghindari ketidakkonsistenan materi bagi peserta.",
         ]}
       />
     </div>
   );
 };
+
+// ─── ModuleRow ─────────────────────────────────────────────────────────────────
+
+function ModuleRow({
+  module,
+  index,
+  courseId,
+  isDeleting,
+  onDelete,
+}: {
+  module: any;
+  index: number;
+  courseId: string;
+  isDeleting: boolean;
+  onDelete: () => void;
+}) {
+  return (
+    <div
+      className="group rounded-2xl transition-all duration-200 hover:-translate-y-px hover:shadow-md"
+      style={{
+        background: "white",
+        border: "1px solid #E2E6F0",
+        boxShadow: "0 1px 3px rgba(15,28,63,0.04)",
+      }}
+    >
+      <div className="flex items-center gap-3 p-4">
+        {/* Drag handle */}
+        <ArrowUpDown
+          className="h-4 w-4 shrink-0 cursor-grab opacity-30 group-hover:opacity-60 transition-opacity"
+          style={{ color: "#0F1C3F" }}
+        />
+
+        {/* Step number */}
+        <div
+          className="h-7 w-7 rounded-xl flex items-center justify-center shrink-0 font-black text-xs"
+          style={{
+            background: module.isPublished ? "#0F1C3F" : "#F0F2F7",
+            color: module.isPublished ? "#E8A020" : "#B0BAD0",
+          }}
+        >
+          {String(index + 1).padStart(2, "0")}
+        </div>
+
+        {/* Type icon */}
+        <div
+          className="h-9 w-9 rounded-xl flex items-center justify-center shrink-0"
+          style={{
+            background: module.type === "VIDEO" ? "#FFF0F0" : "#F0F9FF",
+            color: module.type === "VIDEO" ? "#EF4444" : "#0EA5E9",
+          }}
+        >
+          {module.type === "VIDEO" ? (
+            <FileVideo className="h-4 w-4" />
+          ) : (
+            <FileText className="h-4 w-4" />
+          )}
+        </div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p
+              className="text-sm font-black truncate"
+              style={{ color: "#0F1C3F" }}
+            >
+              {module.title}
+            </p>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span
+              className="flex items-center gap-1 text-[10px] font-bold"
+              style={{ color: "#B0BAD0" }}
+            >
+              <Clock className="h-3 w-3" />
+              {module.duration || 0}m
+            </span>
+            <span style={{ color: "#E2E6F0" }}>·</span>
+            <span
+              className="text-[10px] font-black"
+              style={{ color: module.isPublished ? "#10B981" : "#94A3B8" }}
+            >
+              {module.isPublished ? "● Aktif" : "○ Draft"}
+            </span>
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center gap-1.5 shrink-0 opacity-0 group-hover:opacity-100 transition-all">
+          <ModuleFormModal initialData={module}>
+            <button
+              className="h-8 w-8 rounded-xl flex items-center justify-center transition-all hover:brightness-95"
+              style={{ background: "#EEF2FF", color: "#6366F1" }}
+              title="Edit modul"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </button>
+          </ModuleFormModal>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                className="h-8 w-8 rounded-xl flex items-center justify-center transition-all hover:brightness-95"
+                style={{ background: "#F8FAFC", color: "#94A3B8", border: "1px solid #E2E6F0" }}
+              >
+                <MoreVertical className="h-3.5 w-3.5" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent
+              align="end"
+              className="rounded-2xl p-1.5 shadow-xl"
+              style={{
+                background: "white",
+                border: "1px solid #E2E6F0",
+                minWidth: "160px",
+                boxShadow: "0 8px 32px rgba(15,28,63,0.12)",
+              }}
+            >
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/admin/courses/${courseId}/modules/${module.id}`}
+                  className="flex items-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5 font-bold text-sm transition-all"
+                  style={{ color: "#0F1C3F" }}
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  Lihat Modul
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator style={{ background: "#F0F2F7" }} />
+              <DropdownMenuItem
+                className="flex items-center gap-2.5 cursor-pointer rounded-xl px-3 py-2.5 font-black text-sm focus:bg-red-50"
+                style={{ color: "#EF4444" }}
+                onClick={onDelete}
+                disabled={isDeleting}
+              >
+                <Trash className="h-3.5 w-3.5" />
+                {isDeleting ? "Menghapus..." : "Hapus Modul"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ModuleEmptyState ──────────────────────────────────────────────────────────
+
+function ModuleEmptyState() {
+  return (
+    <div
+      className="flex flex-col items-center justify-center py-14 rounded-2xl text-center"
+      style={{ background: "white", border: "2px dashed #D6DBE8" }}
+    >
+      <div
+        className="h-14 w-14 rounded-2xl flex items-center justify-center mb-4"
+        style={{ background: "#F0F2F7" }}
+      >
+        <Layers className="h-6 w-6" style={{ color: "#C5CEDF" }} />
+      </div>
+      <p className="font-black text-sm mb-1" style={{ color: "#0F1C3F" }}>
+        Kurikulum masih kosong
+      </p>
+      <p className="text-xs font-medium mb-5" style={{ color: "#9AAABF" }}>
+        Tambahkan modul untuk mulai menyusun materi.
+      </p>
+      <ModuleFormModal>
+        <button
+          className="flex items-center gap-2 h-9 px-5 rounded-xl font-black text-xs uppercase tracking-wider transition-all hover:brightness-110"
+          style={{
+            background: "linear-gradient(135deg, #0F1C3F, #1A3060)",
+            color: "white",
+            boxShadow: "0 2px 12px rgba(15,28,63,0.2)",
+          }}
+        >
+          <PlusCircle className="h-3.5 w-3.5" style={{ color: "#E8A020" }} />
+          Tambah Modul Pertama
+        </button>
+      </ModuleFormModal>
+    </div>
+  );
+}
+
+// ─── TestCard ─────────────────────────────────────────────────────────────────
+
+function TestCard({
+  icon,
+  label,
+  sublabel,
+  badge,
+  test,
+  href,
+  accentColor,
+  accentBg,
+  accentBorder,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  sublabel: string;
+  badge: string;
+  test: any;
+  href: string;
+  accentColor: string;
+  accentBg: string;
+  accentBorder: string;
+}) {
+  const hasTest = !!test;
+  const questionCount = test?.questions?.length ?? 0;
+
+  return (
+    <div
+      className="rounded-2xl overflow-hidden transition-all hover:-translate-y-px hover:shadow-md group"
+      style={{
+        background: "white",
+        border: "1px solid #E2E6F0",
+        boxShadow: "0 1px 3px rgba(15,28,63,0.04)",
+      }}
+    >
+      {/* Top accent stripe */}
+      <div
+        className="h-1"
+        style={{ background: `linear-gradient(90deg, ${accentColor}, ${accentColor}55)` }}
+      />
+
+      <div className="p-5 space-y-4">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div
+              className="h-10 w-10 rounded-xl flex items-center justify-center"
+              style={{ background: accentBg, color: accentColor, border: `1px solid ${accentBorder}` }}
+            >
+              {icon}
+            </div>
+            <div>
+              <p className="text-[9px] font-black uppercase tracking-widest" style={{ color: "#B0BAD0" }}>
+                {sublabel}
+              </p>
+              <h3
+                className="font-black leading-none"
+                style={{ color: "#0F1C3F", fontFamily: "'Lexend Deca', sans-serif" }}
+              >
+                {label}
+              </h3>
+            </div>
+          </div>
+          <span
+            className="text-[9px] font-black uppercase tracking-widest px-2 py-1 rounded-lg"
+            style={{ background: accentBg, color: accentColor, border: `1px solid ${accentBorder}` }}
+          >
+            {badge}
+          </span>
+        </div>
+
+        {/* Stats row */}
+        <div className="grid grid-cols-3 gap-2">
+          {[
+            { label: "Durasi", value: `${test?.duration ?? 0}m` },
+            { label: "Min Score", value: `${test?.passingScore ?? 0}%` },
+            { label: "Soal", value: `${questionCount}` },
+          ].map((s) => (
+            <div
+              key={s.label}
+              className="text-center py-2 rounded-xl"
+              style={{ background: "#F8FAFC", border: "1px solid #EEF0F6" }}
+            >
+              <p className="text-sm font-black leading-none" style={{ color: "#0F1C3F" }}>
+                {s.value}
+              </p>
+              <p className="text-[9px] font-bold mt-0.5" style={{ color: "#B0BAD0" }}>
+                {s.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Status */}
+        <div
+          className="flex items-center gap-2 px-3 py-2 rounded-xl"
+          style={{
+            background: hasTest ? "#F0FDF4" : "#FFF8E7",
+            border: `1px solid ${hasTest ? "#BBF7D0" : "#F6CE72"}`,
+          }}
+        >
+          {hasTest ? (
+            <CheckCircle2 className="h-3.5 w-3.5 shrink-0" style={{ color: "#059669" }} />
+          ) : (
+            <AlertCircle className="h-3.5 w-3.5 shrink-0" style={{ color: "#E8A020" }} />
+          )}
+          <p className="text-[11px] font-bold" style={{ color: hasTest ? "#059669" : "#B07D0C" }}>
+            {hasTest ? `${questionCount} soal tersedia` : "Belum dikonfigurasi"}
+          </p>
+        </div>
+
+        {/* CTA */}
+        <Link href={href} className="block">
+          <button
+            className="w-full h-10 rounded-xl font-black text-xs uppercase tracking-wider flex items-center justify-center gap-2 transition-all hover:brightness-110 active:scale-[0.98]"
+            style={{
+              background: hasTest ? accentBg : accentColor,
+              color: hasTest ? accentColor : "white",
+              border: hasTest ? `1.5px solid ${accentBorder}` : "none",
+              boxShadow: hasTest ? "none" : `0 2px 10px ${accentColor}40`,
+            }}
+          >
+            {hasTest ? (
+              <><Pencil className="h-3.5 w-3.5" /> Edit {label}</>
+            ) : (
+              <><PlusCircle className="h-3.5 w-3.5" /> Setup {label}</>
+            )}
+          </button>
+        </Link>
+      </div>
+    </div>
+  );
+}

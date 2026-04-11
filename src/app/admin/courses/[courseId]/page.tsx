@@ -87,35 +87,32 @@ export default async function CourseIdPage({
   const isComplete = requiredFields.every(Boolean);
 
   return (
-    <div className="p-6 md:p-12 min-h-full bg-slate-50/50">
-      
-      {/* 1. Dashboard Premium Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-xl shadow-slate-200/50 animate-in fade-in slide-in-from-top-4 duration-700">
-        <div className="flex items-center gap-5">
-           <div className="bg-slate-900 h-14 w-14 rounded-2xl flex items-center justify-center shadow-lg transform -rotate-3 hover:rotate-0 transition-transform duration-500">
-              <Settings className="h-7 w-7 text-white" />
+    <div className="flex min-h-full w-full min-w-0 flex-col bg-slate-50/50 py-6 md:py-8">
+      <div className="mb-8 flex w-full min-w-0 flex-col gap-6 rounded-xl border border-slate-200 bg-white p-4 shadow-sm animate-in fade-in slide-in-from-top-4 duration-500 md:flex-row md:items-center md:justify-between md:p-6">
+        <div className="flex min-w-0 items-center gap-4">
+           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-slate-900 text-white shadow-md md:h-14 md:w-14">
+              <Settings className="h-6 w-6 md:h-7 md:w-7" />
            </div>
-           <div>
-              <Link href="/admin/courses" className="text-xs font-black text-slate-400 hover:text-primary transition-colors flex items-center gap-1 uppercase tracking-widest mb-1">
-                <ArrowLeft className="h-3 w-3" /> Kembali ke Katalog
+           <div className="min-w-0">
+              <Link href="/admin/courses" className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-slate-500 transition-colors hover:text-primary">
+                <ArrowLeft className="h-3 w-3 shrink-0" /> Kembali ke Katalog
               </Link>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight leading-none">Studio Kursus</h1>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Studio Kursus</h1>
            </div>
         </div>
 
-        {/* Central Wizard - Integrated into Header */}
-        <div className="flex-1 max-w-2xl px-4">
+        <div className="w-full min-w-0 max-w-full md:max-w-md md:flex-1 lg:max-w-2xl">
            <CourseWizard activeStep={activeStep} courseId={course.id} />
         </div>
 
-        <div className="flex items-center gap-3">
-           <Button variant="ghost" size="sm" asChild className="font-bold text-slate-500 hover:text-primary gap-2 h-11 px-5 rounded-xl">
+        <div className="flex shrink-0 flex-wrap items-center gap-2 md:gap-3">
+           <Button variant="ghost" size="sm" asChild className="h-10 gap-2 rounded-lg px-4 font-semibold text-slate-600 hover:text-primary">
              <Link href={`/courses/${course.id}`} target="_blank">
                <Eye className="h-4 w-4" />
                Preview
              </Link>
            </Button>
-           {activeStep === 3 && (
+           {activeStep === 4 && (
              <PublishButton 
                courseId={course.id}
                isPublished={course.isPublished}
@@ -125,22 +122,21 @@ export default async function CourseIdPage({
         </div>
       </div>
 
-      {/* 2. Main Studio Workspace */}
-      <div className="animate-in fade-in zoom-in-95 duration-700">
-        {activeStep === 1 && (
-           <div className="max-w-3xl mx-auto space-y-8">
+      <div className="w-full min-w-0 animate-in fade-in zoom-in-95 duration-700">
+        {activeStep === 3 && (
+           <div className="w-full max-w-3xl space-y-6 md:space-y-8">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 bg-primary/10 rounded-xl text-primary flex items-center justify-center shadow-inner">
-                   <LayoutDashboard className="h-5 w-5" />
+                   <Settings className="h-5 w-5" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none">Informasi Utama</h2>
-                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Detail Katalog Kursus</p>
+                  <h2 className="text-xl font-black text-slate-800 tracking-tight leading-none">Pengaturan Kursus</h2>
+                  <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-1">Detail & Deadline</p>
                 </div>
               </div>
 
-              <Card className="border-slate-100 rounded-[2.5rem] shadow-2xl shadow-slate-200/40 overflow-hidden bg-white">
-                <CardContent className="p-8 space-y-8">
+              <Card className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <CardContent className="space-y-6 p-5 md:space-y-8 md:p-6">
                    <CourseTitleForm initialData={course} courseId={course.id} />
                    <div className="h-[1px] w-full bg-slate-50" />
                    <CourseDescriptionForm initialData={course} courseId={course.id} />
@@ -158,10 +154,13 @@ export default async function CourseIdPage({
                 </CardContent>
               </Card>
               
-              <div className="flex justify-end">
+              <div className="flex justify-between">
+                <Button variant="ghost" asChild className="font-bold px-10 h-14 rounded-2xl">
+                   <Link href={`?step=2`}>Kembali</Link>
+                </Button>
                 <Button asChild className="font-black px-10 h-14 rounded-2xl shadow-xl shadow-primary/20">
-                   <Link href={`?step=2`}>
-                     Lanjut ke Kurikulum
+                   <Link href={`?step=4`}>
+                     Lanjut ke Publikasi
                    </Link>
                 </Button>
               </div>
@@ -169,37 +168,34 @@ export default async function CourseIdPage({
         )}
 
         {activeStep === 2 && (
-          <div className="max-w-5xl mx-auto">
+          <div className="w-full min-w-0">
             <CourseSetupClient
               course={course}
               modules={course.modules}
               preTest={preTest}
               postTest={postTest}
             />
-            <div className="flex justify-between mt-12">
-                <Button variant="ghost" asChild className="font-bold px-10 h-14 rounded-2xl">
-                   <Link href={`?step=1`}>Kembali</Link>
-                </Button>
+            <div className="flex justify-end mt-12">
                 <Button asChild className="font-black px-10 h-14 rounded-2xl shadow-xl shadow-primary/20">
-                   <Link href={`?step=3`}>Lihat Review & Publikasi</Link>
+                   <Link href={`?step=3`}>Lanjut ke Pengaturan</Link>
                 </Button>
             </div>
           </div>
         )}
 
-        {activeStep === 3 && (
-          <div className="max-w-4xl mx-auto space-y-8">
-             <div className="text-center space-y-4 mb-12">
-               <h2 className="text-4xl font-black text-slate-900 tracking-tight">Review & Publikasi</h2>
-               <p className="text-slate-500 font-medium">Pastikan semua komponen sudah siap sebelum kursus ditayangkan ke peserta.</p>
+        {activeStep === 4 && (
+          <div className="w-full min-w-0 max-w-6xl space-y-6 md:space-y-8">
+             <div className="mb-8 space-y-2 text-center md:mb-10">
+               <h2 className="text-2xl font-bold tracking-tight text-slate-900 md:text-3xl">Review & Publikasi</h2>
+               <p className="text-sm font-medium text-slate-600 md:text-base">Pastikan semua komponen sudah siap sebelum kursus ditayangkan ke peserta.</p>
              </div>
 
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+             <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                 <Card className={cn(
-                  "rounded-[2rem] border-2 shadow-xl transition-all",
-                  isComplete ? "border-emerald-100 bg-emerald-50/20" : "border-slate-100 bg-white"
+                  "rounded-xl border-2 shadow-sm transition-all",
+                  isComplete ? "border-emerald-100 bg-emerald-50/20" : "border-slate-200 bg-white"
                 )}>
-                   <CardContent className="p-8 space-y-6">
+                   <CardContent className="space-y-5 p-5 md:p-6">
                       <div className="flex items-center justify-between">
                          <h3 className="font-black text-slate-800">Status Kelengkapan</h3>
                          <Badge className={cn("font-black", isComplete ? "bg-emerald-500" : "bg-amber-500")}>
@@ -209,7 +205,7 @@ export default async function CourseIdPage({
                       
                       <div className="space-y-4">
                          {[
-                           { label: "Informasi Identitas", ok: !!(course.title && course.description && course.categoryId), link: "?step=1" },
+                           { label: "Informasi Identitas", ok: !!(course.title && course.description && course.categoryId), link: "?step=3" },
                            { label: "Modul Pembelajaran (Min. 1 Active)", ok: course.modules.some(m => m.isPublished), link: "?step=2" },
                            { label: "Post-Test (Min. 5 Soal & Kunci)", ok: postTestValid, link: postTest ? `/admin/courses/${course.id}/tests/${postTest.id}?type=POST` : "?step=2" },
                          ].map((item, i) => (
@@ -227,8 +223,8 @@ export default async function CourseIdPage({
                    </CardContent>
                 </Card>
 
-                <Card className="rounded-[2rem] border border-slate-100 shadow-xl bg-slate-900 text-white overflow-hidden">
-                   <CardContent className="p-8 space-y-6 flex flex-col h-full">
+                <Card className="overflow-hidden rounded-xl border border-slate-800 bg-slate-900 text-white shadow-sm">
+                   <CardContent className="flex h-full flex-col space-y-5 p-5 md:p-6">
                       <div className="p-4 bg-white/10 rounded-2xl">
                          <Settings className="h-8 w-8 text-white" />
                       </div>
@@ -254,7 +250,7 @@ export default async function CourseIdPage({
              
              <div className="flex justify-start">
                 <Button variant="ghost" asChild className="font-bold px-10 h-14 rounded-2xl">
-                   <Link href={`?step=2`}>Kembali ke Kurikulum</Link>
+                   <Link href={`?step=3`}>Kembali ke Pengaturan</Link>
                 </Button>
              </div>
           </div>

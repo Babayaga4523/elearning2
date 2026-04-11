@@ -16,6 +16,9 @@ export default async function TestPlayerPage({
   const test = await db.test.findUnique({
     where: { id: params.testId },
     include: {
+      course: {
+        select: { deadlineDate: true }
+      },
       questions: {
         include: { options: true },
         orderBy: { createdAt: "asc" },
@@ -29,7 +32,9 @@ export default async function TestPlayerPage({
     where: { userId_courseId: { userId, courseId: params.courseId } },
   });
 
-  if (!enrollment) return redirect(`/courses/${params.courseId}`);
+  if (!enrollment || (test.course.deadlineDate && test.course.deadlineDate.getTime() < Date.now())) {
+    return redirect(`/courses/${params.courseId}`);
+  }
 
   const attempts = await db.testAttempt.findMany({
     where: { userId, testId: params.testId },

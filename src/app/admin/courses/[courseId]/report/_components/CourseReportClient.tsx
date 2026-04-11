@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { toast } from "react-hot-toast";
 
 // Lazy load charts
 const CourseReportCharts = dynamic(() => import("./CourseReportCharts"), {
@@ -87,174 +88,178 @@ export function CourseReportClient({
 
   // Export to Excel (Dynamic Import)
   const handleExport = useCallback(async () => {
-    // Dynamic import to keep ExcelJS out of main bundle
-    const [ExcelJS, { saveAs }] = await Promise.all([
-      import("exceljs"),
-      import("file-saver")
-    ]);
-
-    const workbook = new ExcelJS.Workbook();
-    const sheet = workbook.addWorksheet("Laporan Pelatihan");
-
-    // ─── 1. Metadata Workbook ───────────────────────────────────────
-    workbook.creator = "HCMS E-Learning";
-    workbook.created = new Date();
-
-    // ─── 2. Judul Laporan (Row 1-2) ────────────────────────────────
-    sheet.mergeCells("A1:N1");
-    const titleCell = sheet.getCell("A1");
-    titleCell.value = `Laporan Pelatihan: ${course.title}`;
-    titleCell.font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
-    titleCell.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FF0F1C3F" }, // Navy brand color
-    };
-    titleCell.alignment = { horizontal: "center", vertical: "middle" };
-    sheet.getRow(1).height = 30;
-
-    // Sub-judul: tanggal export
-    sheet.mergeCells("A2:N2");
-    const subTitle = sheet.getCell("A2");
-    subTitle.value = `Diekspor pada: ${new Date().toLocaleDateString("id-ID", {
-      day: "2-digit", month: "long", year: "numeric",
-    })}`;
-    subTitle.font = { italic: true, size: 10, color: { argb: "FF555555" } };
-    subTitle.alignment = { horizontal: "center" };
-    sheet.getRow(2).height = 18;
-
-    // ─── 3. Header Kolom (Row 3) ────────────────────────────────────
-    const preTestTitle = reportRows[0]?.preTestTitle ?? "Pre-Test";
-    const postTestTitle = reportRows[0]?.postTestTitle ?? "Post-Test";
-
-    const headers = [
-      { header: "No. Induk Pegawai", key: "nip", width: 22 },
-      { header: "Nama", key: "name", width: 25 },
-      { header: "Email", key: "email", width: 30 },
-      { header: "Departemen", key: "department", width: 20 },
-      { header: "Lokasi", key: "lokasi", width: 20 },
-      { header: "Status", key: "status", width: 12 },
-      { header: "Tgl Daftar", key: "enrolledAt", width: 15 },
-      { header: "Progress (%)", key: "moduleProgress", width: 14 },
-      { header: "Modul Selesai", key: "completedModules", width: 14 },
-      { header: "Total Modul", key: "totalModules", width: 12 },
-      { header: `Nilai ${preTestTitle}`, key: "preScore", width: 18 },
-      { header: `Lulus ${preTestTitle}`, key: "preTestPassed", width: 16 },
-      { header: `Nilai ${postTestTitle}`, key: "postScore", width: 18 },
-      { header: `Lulus ${postTestTitle}`, key: "postTestPassed", width: 16 },
-    ];
-
-    const headerRow = sheet.getRow(3);
-    headerRow.values = headers.map((h) => h.header);
-    headerRow.height = 24;
-
-    headers.forEach((h, i) => {
-      sheet.getColumn(i + 1).width = h.width;
-      const cell = headerRow.getCell(i + 1);
-      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
-      cell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE8A020" }, // BNI Gold
-      };
-      cell.alignment = { horizontal: "center", vertical: "middle" };
-      cell.border = {
-        top: { style: "thin", color: { argb: "FFCCCCCC" } },
-        bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
-        left: { style: "thin", color: { argb: "FFCCCCCC" } },
-        right: { style: "thin", color: { argb: "FFCCCCCC" } },
-      };
-    });
-
-    // ─── 4. Isi Data ────────────────────────────────────────────────
-    reportRows.forEach((r, index) => {
-      const statusLabel =
-        r.status === "COMPLETED" ? "Selesai"
-        : r.status === "FAILED" ? "Gagal"
-        : "Berjalan";
-
-      const row = sheet.addRow([
-        r.nip,
-        r.name,
-        r.email,
-        r.department,
-        r.lokasi,
-        statusLabel,
-        new Date(r.enrolledAt).toLocaleDateString("id-ID"),
-        r.moduleProgress,
-        r.completedModules,
-        r.totalModules,
-        r.preScore ?? "-",
-        r.preTestPassed === null ? "-" : r.preTestPassed ? "Ya" : "Tidak",
-        r.postScore ?? "-",
-        r.postTestPassed === null ? "-" : r.postTestPassed ? "Ya" : "Tidak",
+    try {
+      const toastId = toast.loading("Menyiapkan dokumen Excel...");
+      
+      // Dynamic import with robustness for ESM/CJS differences
+      const [ExcelJSModule, FileSaverModule] = await Promise.all([
+        import("exceljs"),
+        import("file-saver")
       ]);
 
-      // Zebra stripe (baris selang-seling)
-      const isEven = index % 2 === 0;
-      const bgColor = isEven ? "FFF5F7FA" : "FFFFFFFF";
+      const ExcelJS = ExcelJSModule.default || ExcelJSModule;
+      const saveAs = FileSaverModule.saveAs || FileSaverModule.default || FileSaverModule;
 
-      row.height = 18;
-      row.eachCell({ includeEmpty: true }, (cell: any) => {
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
-        cell.font = { size: 10 };
-        cell.alignment = { vertical: "middle", wrapText: false };
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("Laporan Pelatihan");
+
+      // ─── 1. Metadata ─────────────────────────────────────────────
+      workbook.creator = "HCMS BNI Finance";
+      workbook.created = new Date();
+
+      // ─── 2. Definisi Kolom (Hanya Mapping & Lebar) ───────────────
+      // Menggunakan key agar addRow({ key: value }) berfungsi
+      sheet.columns = [
+        { key: "nip", width: 20 },
+        { key: "name", width: 30 },
+        { key: "email", width: 30 },
+        { key: "department", width: 25 },
+        { key: "lokasi", width: 20 },
+        { key: "status", width: 15 },
+        { key: "enrolledAt", width: 15 },
+        { key: "moduleProgress", width: 15 },
+        { key: "completedModules", width: 15 },
+        { key: "totalModules", width: 12 },
+        { key: "preScore", width: 15 },
+        { key: "preTestPassed", width: 15 },
+        { key: "postScore", width: 15 },
+        { key: "postTestPassed", width: 15 },
+      ];
+
+      // ─── 3. Judul Navy (Row 1) ──────────────────────────────────
+      sheet.mergeCells("A1:N1");
+      const titleCell = sheet.getCell("A1");
+      titleCell.value = `LAPORAN HASIL PELATIHAN: ${course.title.toUpperCase()}`;
+      titleCell.font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
+      titleCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF0F1C3F" },
+      };
+      titleCell.alignment = { horizontal: "center", vertical: "middle" };
+      sheet.getRow(1).height = 35;
+
+      // Sub-judul (Row 2)
+      sheet.mergeCells("A2:N2");
+      const subTitleCell = sheet.getCell("A2");
+      subTitleCell.value = `Tanggal Unduh: ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
+      subTitleCell.font = { italic: true, size: 10, color: { argb: "FF444444" } };
+      subTitleCell.alignment = { horizontal: "center" };
+      sheet.getRow(2).height = 20;
+
+      // ─── 4. Header Gold (Row 3) ─────────────────────────────────
+      const preTitle = reportRows[0]?.preTestTitle ?? "PRE-TEST";
+      const postTitle = reportRows[0]?.postTestTitle ?? "POST-TEST";
+
+      const headerValues = [
+        "NIP", "NAMA KARYAWAN", "EMAIL", "DEPARTEMEN", "LOKASI", 
+        "STATUS", "TGL DAFTAR", "PROGRESS (%)", "MODUL LULUS", "TOTAL MODUL",
+        `NILAI ${preTitle}`, `LULUS ${preTitle}`, `NILAI ${postTitle}`, `LULUS ${postTitle}`
+      ];
+
+      const headerRow = sheet.getRow(3);
+      headerRow.values = headerValues;
+      headerRow.height = 25;
+      headerRow.eachCell((cell) => {
+        cell.font = { bold: true, color: { argb: "FF0F1C3F" } }; // Navy text on Gold
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "FFE8A020" }, // BNI Gold
+        };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
         cell.border = {
-          bottom: { style: "hair", color: { argb: "FFDDDDDD" } },
-          right: { style: "hair", color: { argb: "FFDDDDDD" } },
+          top: { style: "thin", color: { argb: "FFCCCCCC" } },
+          bottom: { style: "thin", color: { argb: "FFCCCCCC" } },
+          left: { style: "thin", color: { argb: "FFCCCCCC" } },
+          right: { style: "thin", color: { argb: "FFCCCCCC" } },
         };
       });
 
-      // ─── Conditional: warna status ──────────────────────────────
-      const statusCell = row.getCell(6); // status is column 6
-      if (r.status === "COMPLETED") {
-        statusCell.font = { size: 10, bold: true, color: { argb: "FF166534" } }; // hijau
-        statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDCFCE7" } };
-      } else if (r.status === "FAILED") {
-        statusCell.font = { size: 10, bold: true, color: { argb: "FF991B1B" } }; // merah
-        statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
-      } else {
-        statusCell.font = { size: 10, bold: true, color: { argb: "FF92400E" } }; // kuning
-        statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEF9C3" } };
-      }
-      statusCell.alignment = { horizontal: "center", vertical: "middle" };
+      // ─── 4. Isi Data ────────────────────────────────────────────────
+      reportRows.forEach((r, index) => {
+        const statusLabel =
+          r.status === "COMPLETED" ? "Selesai"
+          : r.status === "FAILED" ? "Gagal"
+          : "Berjalan";
 
-      // ─── Conditional: warna lulus/tidak ─────────────────────────
-      const preTestPassedCell = row.getCell(12);
-      if (r.preTestPassed === true) {
-        preTestPassedCell.font = { size: 10, color: { argb: "FF166534" } };
-      } else if (r.preTestPassed === false) {
-        preTestPassedCell.font = { size: 10, color: { argb: "FF991B1B" } };
-      }
-      preTestPassedCell.alignment = { horizontal: "center", vertical: "middle" };
+        const row = sheet.addRow({
+          nip: r.nip,
+          name: r.name,
+          email: r.email,
+          department: r.department,
+          lokasi: r.lokasi,
+          status: statusLabel,
+          enrolledAt: new Date(r.enrolledAt).toLocaleDateString("id-ID"),
+          moduleProgress: r.moduleProgress,
+          completedModules: r.completedModules,
+          totalModules: r.totalModules,
+          preScore: r.preScore ?? "-",
+          preTestPassed: r.preTestPassed === null ? "-" : r.preTestPassed ? "Ya" : "Tidak",
+          postScore: r.postScore ?? "-",
+          postTestPassed: r.postTestPassed === null ? "-" : r.postTestPassed ? "Ya" : "Tidak",
+        });
 
-      const postTestPassedCell = row.getCell(14);
-      if (r.postTestPassed === true) {
-        postTestPassedCell.font = { size: 10, color: { argb: "FF166534" } };
-      } else if (r.postTestPassed === false) {
-        postTestPassedCell.font = { size: 10, color: { argb: "FF991B1B" } };
-      }
-      postTestPassedCell.alignment = { horizontal: "center", vertical: "middle" };
+        const isEven = index % 2 === 0;
+        const bgColor = isEven ? "FFF5F7FA" : "FFFFFFFF";
 
-      // ─── Format progress sebagai angka ──────────────────────────
-      row.getCell(8).alignment = { horizontal: "center", vertical: "middle" }; // moduleProgress
-      row.getCell(9).alignment = { horizontal: "center", vertical: "middle" }; // completedModules
-      row.getCell(10).alignment = { horizontal: "center", vertical: "middle" }; // totalModules
-      row.getCell(11).alignment = { horizontal: "center", vertical: "middle" }; // preScore
-      row.getCell(13).alignment = { horizontal: "center", vertical: "middle" }; // postScore
-    });
+        row.height = 18;
+        row.eachCell({ includeEmpty: true }, (cell: any) => {
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: bgColor } };
+          cell.font = { size: 10 };
+          cell.alignment = { vertical: "middle", wrapText: false };
+          cell.border = {
+            bottom: { style: "hair", color: { argb: "FFDDDDDD" } },
+            right: { style: "hair", color: { argb: "FFDDDDDD" } },
+          };
+        });
 
-    // ─── 5. Freeze pane & Auto Filter ──────────────────────────────
-    sheet.views = [{ state: "frozen", xSplit: 0, ySplit: 3 }]; // freeze 3 baris atas
-    sheet.autoFilter = { from: "A3", to: `N3` };
+        // ─── Conditional: warna status ──────────────────────────────
+        const statusCell = row.getCell(6); 
+        if (r.status === "COMPLETED") {
+          statusCell.font = { size: 10, bold: true, color: { argb: "FF166534" } };
+          statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDCFCE7" } };
+        } else if (r.status === "FAILED") {
+          statusCell.font = { size: 10, bold: true, color: { argb: "FF991B1B" } };
+          statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
+        }
+        statusCell.alignment = { horizontal: "center", vertical: "middle" };
 
-    // ─── 6. Export ──────────────────────────────────────────────────
-    const buffer = await workbook.xlsx.writeBuffer();
-    const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    });
-    saveAs(blob, `Laporan_${course.title.replace(/\s+/g, "_")}_${Date.now()}.xlsx`);
-  }, [reportRows, course.title]);
+        const preCell = row.getCell(12);
+        if (r.preTestPassed === true) preCell.font = { color: { argb: "FF166534" } };
+        else if (r.preTestPassed === false) preCell.font = { color: { argb: "FF991B1B" } };
+        preCell.alignment = { horizontal: "center" };
+
+        const postCell = row.getCell(14);
+        if (r.postTestPassed === true) postCell.font = { color: { argb: "FF166534" } };
+        else if (r.postTestPassed === false) postCell.font = { color: { argb: "FF991B1B" } };
+        postCell.alignment = { horizontal: "center" };
+
+        [8, 9, 10, 11, 13].forEach(col => {
+          row.getCell(col).alignment = { horizontal: "center" };
+        });
+      });
+
+      // ─── 5. Freeze pane & Auto Filter ──────────────────────────────
+      sheet.views = [{ state: "frozen", xSplit: 0, ySplit: 3 }]; 
+      sheet.autoFilter = { from: "A3", to: `N3` };
+
+      // ─── 6. Export ──────────────────────────────────────────────────
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      
+      const safeTitle = course.title.replace(/[^a-z0-9]/gi, "_").substring(0, 50);
+      saveAs(blob, `Laporan_${safeTitle}_${Date.now()}.xlsx`);
+      
+      toast.dismiss(toastId);
+      toast.success("Laporan berhasil diunduh.");
+    } catch (error) {
+      console.error("Export Error:", error);
+      toast.error("Gagal mengekspor laporan. Silakan coba lagi.");
+    }
+  }, [reportRows, course.title, course.tests.length]);
 
   const summaryCards = [
     {
@@ -301,7 +306,7 @@ export function CourseReportClient({
   ];
 
   return (
-    <div className="space-y-8 pb-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="w-full min-w-0 space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 md:space-y-8 md:pb-10">
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div className="space-y-2">

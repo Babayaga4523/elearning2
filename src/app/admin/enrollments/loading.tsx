@@ -1,6 +1,6 @@
 export default function EnrollmentsLoading() {
   return (
-    <div className="space-y-8 animate-pulse pb-10">
+    <div className="w-full min-w-0 space-y-6 animate-pulse pb-8 md:space-y-8 md:pb-10">
       <div className="space-y-2">
         <div className="h-9 w-64 bg-slate-200 rounded-lg" />
         <div className="h-4 w-48 bg-slate-100 rounded" />

@@ -4,7 +4,7 @@
 
 export default function AdminLoading() {
   return (
-    <div className="space-y-8 animate-pulse">
+    <div className="w-full min-w-0 space-y-6 animate-pulse md:space-y-8">
       {/* Header Skeleton */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="space-y-2">

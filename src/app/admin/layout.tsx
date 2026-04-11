@@ -1,6 +1,7 @@
 import { Sidebar } from "@/components/admin/sidebar";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
+import { AdminNavbar } from "@/components/admin/admin-navbar";
 
 const AdminLayout = async ({
   children
@@ -14,21 +15,17 @@ const AdminLayout = async ({
   }
 
   return ( 
-    <div className="h-full">
-      <div className="hidden md:flex h-full w-64 flex-col fixed inset-y-0 z-50">
+    <div className="h-full bg-[#F0F2F7]">
+      <div className="hidden md:flex h-full w-72 flex-col fixed inset-y-0 z-50 transition-all duration-500">
         <Sidebar />
       </div>
-      <main className="md:pl-64 pt-20 h-full">
-        <div className="flex h-20 items-center px-10 border-b fixed inset-y-0 w-full bg-white z-[40]">
-           <h2 className="text-xl font-semibold text-slate-700">Administrator Console</h2>
-           <div className="ml-auto flex items-center space-x-4">
-             <span className="text-sm font-medium text-slate-500">{session.user.name}</span>
-             <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center font-bold text-slate-600">
-               {session.user.name?.charAt(0)}
-             </div>
-           </div>
-        </div>
-        <div className="p-10">
+      <main className="md:pl-72 h-full min-h-screen flex flex-col transition-all duration-500">
+        <AdminNavbar 
+          userName={session.user.name ?? "Admin"} 
+          userEmail={session.user.email ?? ""} 
+        />
+        {/* Padding horizontal simetris agar jarak kiri–kanan area konten sama */}
+        <div className="flex-1 animate-in fade-in duration-700 px-4 pb-4 pt-4 md:px-6 md:pb-8 md:pt-6 lg:px-8 lg:pb-10 lg:pt-8">
           {children}
         </div>
       </main>

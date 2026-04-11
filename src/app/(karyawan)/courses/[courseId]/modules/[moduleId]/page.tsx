@@ -42,6 +42,14 @@ export default async function ModulePlayerPage({
   const module = course.modules.find((m) => m.id === params.moduleId);
   if (!module) return redirect(`/courses/${params.courseId}`);
 
+  const enrollment = await db.enrollment.findUnique({
+    where: { userId_courseId: { userId, courseId: params.courseId } },
+  });
+
+  if (!enrollment || (course.deadlineDate && course.deadlineDate.getTime() < Date.now())) {
+    return redirect(`/courses/${params.courseId}`);
+  }
+
   const isCompleted = module.userProgress[0]?.isCompleted ?? false;
   const currentIndex = course.modules.findIndex((m) => m.id === params.moduleId);
   const prevModule = currentIndex > 0 ? course.modules[currentIndex - 1] : null;

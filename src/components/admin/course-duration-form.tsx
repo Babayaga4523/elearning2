@@ -23,15 +23,13 @@ import { cn } from "@/lib/utils";
 
 interface CourseDurationFormProps {
   initialData: {
-    deadlineDuration: number | null;
+    deadlineDate: Date | null;
   };
   courseId: string;
 }
 
 const formSchema = z.object({
-  deadlineDuration: z.coerce.number().min(0, {
-    message: "Duration must be 0 or more",
-  }),
+  deadlineDate: z.string().optional().or(z.literal("")),
 });
 
 export const CourseDurationForm = ({
@@ -46,7 +44,9 @@ export const CourseDurationForm = ({
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      deadlineDuration: initialData.deadlineDuration || 0,
+      deadlineDate: initialData.deadlineDate 
+        ? new Date(initialData.deadlineDate).toISOString().split('T')[0] 
+        : "",
     },
   });
 
@@ -54,8 +54,13 @@ export const CourseDurationForm = ({
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      await updateCourse(courseId, values);
-      toast.success("Duration updated");
+      // Convert empty string to null for Prisma
+      const data = {
+        deadlineDate: values.deadlineDate ? new Date(values.deadlineDate) : null
+      };
+
+      await updateCourse(courseId, data);
+      toast.success("Deadline updated");
       toggleEdit();
       router.refresh();
     } catch {
@@ -68,14 +73,14 @@ export const CourseDurationForm = ({
       <div className="font-bold flex items-center justify-between text-slate-700">
         <div className="flex items-center gap-2">
           <Clock className="h-4 w-4 text-primary" />
-          Durasi Penyelesaian (Hari)
+          Batas Waktu Penyelesaian (Tanggal)
         </div>
         <Button onClick={toggleEdit} variant="ghost" className="text-primary hover:text-primary hover:bg-primary/5 font-black text-xs uppercase tracking-widest">
           {isEditing ? (
             <>Batal</>
           ) : (
             <>
-              Ubah Durasi
+              Ubah Tanggal
             </>
           )}
         </Button>
@@ -83,10 +88,14 @@ export const CourseDurationForm = ({
       {!isEditing && (
         <div className={cn(
           "text-sm mt-3 font-medium flex items-center gap-2",
-          !initialData.deadlineDuration ? "text-slate-400 italic" : "text-slate-700 font-black"
+          !initialData.deadlineDate ? "text-slate-400 italic" : "text-slate-700 font-black"
         )}>
-          {initialData.deadlineDuration 
-            ? `${initialData.deadlineDuration} Hari` 
+          {initialData.deadlineDate 
+            ? new Date(initialData.deadlineDate).toLocaleDateString('id-ID', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+              }) 
             : "Belum diatur (Tanpa Deadline)"}
         </div>
       )}
@@ -98,20 +107,19 @@ export const CourseDurationForm = ({
           >
             <FormField
               control={form.control}
-              name="deadlineDuration"
+              name="deadlineDate"
               render={({ field }) => (
                 <FormItem>
                   <FormControl>
                     <Input
-                      type="number"
+                      type="date"
                       disabled={isSubmitting}
-                      placeholder="Contoh: 7 (untuk 1 minggu)"
                       className="bg-white rounded-xl h-12 font-bold"
                       {...field}
                     />
                   </FormControl>
                   <FormDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">
-                    Tentukan berapa hari user harus menyelesaikan kursus ini setelah mereka mendaftar. (0 = Tanpa Limit)
+                    Tentukan tanggal batas akhir bagi semua peserta untuk menyelesaikan kursus ini. Kosongkan untuk tanpa batas.
                   </FormDescription>
                   <FormMessage />
                 </FormItem>

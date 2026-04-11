@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { BookOpen, History, Compass, LayoutDashboard, BarChart3 } from "lucide-react";
+import { BookOpen, Compass, LayoutDashboard, BarChart3, Bell } from "lucide-react";
+
 import { LogoutButton } from "@/components/auth/logout-button";
+import { NotificationBellLink } from "@/components/notifications/notification-bell-link";
 
 export const Navbar = () => {
   return (
@@ -27,10 +29,15 @@ export const Navbar = () => {
           <BarChart3 className="h-4 w-4" />
           Performa
         </Link>
+        <Link href="/notifications" className="flex items-center gap-x-2 text-sm font-bold text-slate-500 hover:text-primary transition-colors">
+          <Bell className="h-4 w-4" />
+          Notifikasi
+        </Link>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-x-4">
+      <div className="flex items-center gap-x-3 sm:gap-x-4">
+        <NotificationBellLink variant="karyawan" />
         <LogoutButton className="h-10 px-4 text-sm bg-slate-50 border shadow-sm hidden sm:flex" />
       </div>
     </nav>

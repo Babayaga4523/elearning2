@@ -5,7 +5,8 @@ import {
   Check, 
   BookOpen, 
   LayoutGrid, 
-  Globe 
+  Globe,
+  Settings
 } from "lucide-react";
 import Link from "next/link";
 
@@ -20,17 +21,23 @@ const steps: Step[] = [
   {
     id: 1,
     label: "Identitas",
-    description: "Nama & Judul",
+    description: "Siapkan Kursus",
     icon: BookOpen
   },
   {
     id: 2,
     label: "Kurikulum",
-    description: "Modul & Tes",
+    description: "Materi & Tes",
     icon: LayoutGrid
   },
   {
     id: 3,
+    label: "Pengaturan",
+    description: "Detail & Deadline",
+    icon: Settings
+  },
+  {
+    id: 4,
     label: "Publikasi",
     description: "Review & Live",
     icon: Globe

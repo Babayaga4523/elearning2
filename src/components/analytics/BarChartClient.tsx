@@ -1,15 +1,20 @@
 "use client";
 
 import {
-  BarChart,
   Bar,
+  BarChart,
+  CartesianGrid,
   XAxis,
   YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
 } from "recharts";
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 
 type CourseStats = {
   title: string;
@@ -25,42 +30,73 @@ export function BarChartClient({ data }: { data: CourseStats[] }) {
     displayName: d.title.length > 20 ? d.title.substring(0, 17) + "..." : d.title,
   }));
 
+  const chartConfig = {
+    lulus: {
+      label: "Lulus",
+      color: "hsl(var(--chart-4))", // Success Emerald
+    },
+    gagal: {
+      label: "Gagal",
+      color: "hsl(var(--destructive))", // Destructive Rose
+    },
+    proses: {
+      label: "In Progress",
+      color: "hsl(var(--chart-2))", // BNI Gold
+    },
+  } satisfies ChartConfig;
+
   return (
-    <div className="w-full h-[350px]">
-      <ResponsiveContainer width="100%" height="100%">
+    <div className="w-full">
+      <ChartContainer config={chartConfig} className="h-[350px] w-full">
         <BarChart
           data={formattedData}
           margin={{
             top: 20,
-            right: 30,
-            left: 20,
+            right: 10,
+            left: 10,
             bottom: 60,
           }}
         >
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+          <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis 
             dataKey="displayName" 
             angle={-45} 
             textAnchor="end" 
             interval={0}
             height={80}
-            tick={{ fontSize: 11, fill: "#64748b" }}
+            tickLine={false}
+            axisLine={false}
+            tick={{ fontSize: 11, fontWeight: 600, fill: "#64748b" }}
           />
-          <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
-          <Tooltip 
-            cursor={{ fill: "#f1f5f9" }}
-            contentStyle={{ 
-              borderRadius: "8px", 
-              border: "1px solid #e2e8f0",
-              boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)"
-            }}
+          <YAxis 
+            tick={{ fontSize: 11, fill: "#64748b" }} 
+            axisLine={false} 
+            tickLine={false} 
           />
-          <Legend wrapperStyle={{ paddingTop: "20px" }} />
-          <Bar dataKey="lulus" name="Lulus" fill="#10b981" radius={[4, 4, 0, 0]} stackId="a" />
-          <Bar dataKey="gagal" name="Gagal" fill="#ef4444" radius={[0, 0, 0, 0]} stackId="a" />
-          <Bar dataKey="proses" name="In Progress" fill="#f59e0b" radius={[4, 4, 0, 0]} stackId="a" />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <ChartLegend content={<ChartLegendContent />} className="pt-4" />
+          <Bar 
+            dataKey="lulus" 
+            fill="var(--color-lulus)" 
+            radius={[2, 2, 0, 0]} 
+            stackId="a" 
+            maxBarSize={40}
+          />
+          <Bar 
+            dataKey="gagal" 
+            fill="var(--color-gagal)" 
+            stackId="a" 
+            maxBarSize={40}
+          />
+          <Bar 
+            dataKey="proses" 
+            fill="var(--color-proses)" 
+            radius={[4, 4, 0, 0]} 
+            stackId="a" 
+            maxBarSize={40}
+          />
         </BarChart>
-      </ResponsiveContainer>
+      </ChartContainer>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 export default function CoursesLoading() {
   return (
-    <div className="space-y-6 animate-pulse">
+    <div className="w-full min-w-0 space-y-6 animate-pulse">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-2">

@@ -1,6 +1,6 @@
 export default function UsersLoading() {
   return (
-    <div className="space-y-8 animate-pulse">
+    <div className="w-full min-w-0 space-y-6 animate-pulse md:space-y-8">
       <div className="space-y-2">
         <div className="h-9 w-56 bg-slate-200 rounded-lg" />
         <div className="h-4 w-80 bg-slate-100 rounded-md" />
