@@ -17,7 +17,7 @@ async function test() {
   console.log("\nCourses Sample:", JSON.stringify(courses, null, 2));
 
   // 2. Check Enrollments
-  const enrollments = await prisma.enrollment.findMany({
+  const enrollments = await (prisma.enrollment as any).findMany({
     take: 5,
     select: {
       id: true,
