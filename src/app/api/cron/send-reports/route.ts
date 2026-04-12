@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runDepartmentalReports } from "@/lib/scheduler";
+import { runDepartmentalReports, runDeadlineMonitoring, runProactiveReminders } from "@/lib/scheduler";
 
 export async function GET(req: Request) {
   const authHeader = req.headers.get("authorization");
@@ -10,11 +10,16 @@ export async function GET(req: Request) {
   }
 
   try {
-    const results = await runDepartmentalReports();
+    const proactiveResults = await runProactiveReminders();
+    const reportResults = await runDepartmentalReports();
+    const deadlineResults = await runDeadlineMonitoring();
+
     return NextResponse.json({
       success: true,
       timestamp: new Date().toISOString(),
-      ...results
+      proactiveReminders: proactiveResults,
+      reports: reportResults,
+      deadlineMonitoring: deadlineResults
     });
   } catch (err: any) {
     return NextResponse.json({ 

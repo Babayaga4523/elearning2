@@ -16,6 +16,8 @@ import {
   Trash2,
   Pencil,
   FileText,
+  Bell,
+  Activity,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -38,7 +40,9 @@ const EnrollmentScheduler = dynamic(() => import("./EnrollmentScheduler").then(m
   loading: () => <div className="h-64 animate-pulse bg-slate-50 rounded-3xl" />
 });
 
-import { unenrollUser } from "../actions";
+import { unenrollUser, pokeParticipant } from "../actions";
+import { useTransition } from "react";
+import { EnrollmentHistoryTooltip } from "./EnrollmentHistoryTooltip";
 
 interface EnrollmentRow {
   id: string;
@@ -53,7 +57,14 @@ interface EnrollmentRow {
   courseCategory: string;
   status: string;
   enrolledAt: string;
+  deadline: string | null;
+  reportedAt: string | null;
+  source: string;
   courseDeadline: string | null;
+  remindedAt7d: string | null;
+  remindedAt3d: string | null;
+  remindedAt1d: string | null;
+  escalatedAt: string | null;
   preScore: number | null;
   postScore: number | null;
   postPassed: boolean | null;
@@ -109,6 +120,7 @@ export function EnrollmentsClient({
   const [activeTab, setActiveTab] = useState<"list" | "scheduler">("list");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "COMPLETED" | "IN_PROGRESS" | "FAILED">("all");
+  const [sourceFilter, setSourceFilter] = useState<"all" | "MANUAL" | "AUTO" | "BULK">("all");
   const [courseFilter, setCourseFilter] = useState("all");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingEnrollment, setEditingEnrollment] = useState<{
@@ -117,6 +129,8 @@ export function EnrollmentsClient({
     courseId: string;
   } | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const [pokingId, setPokingId] = useState<string | null>(null);
 
   const handleOpenEnrollModal = () => {
     setEditingEnrollment(null);
@@ -140,8 +154,9 @@ export function EnrollmentsClient({
       e.userDept.toLowerCase().includes(search.toLowerCase()) ||
       e.courseTitle.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || e.status === statusFilter;
+    const matchSource = sourceFilter === "all" || e.source === sourceFilter;
     const matchCourse = courseFilter === "all" || e.courseId === courseFilter;
-    return matchSearch && matchStatus && matchCourse;
+    return matchSearch && matchStatus && matchSource && matchCourse;
   });
 
   const summaryCards = [
@@ -186,6 +201,19 @@ export function EnrollmentsClient({
       toast.error(result.error ?? "Gagal menghapus enrollment.");
     }
     setDeletingId(null);
+  };
+  
+  const handlePoke = async (id: string, name: string) => {
+    setPokingId(id);
+    startTransition(async () => {
+      const result = await pokeParticipant(id);
+      if (result.success) {
+        toast.success(`Colekan berhasil dikirim ke ${name}`);
+      } else {
+        toast.error(result.error || "Gagal mengirim colekan");
+      }
+      setPokingId(null);
+    });
   };
 
   const handleExport = useCallback(async () => {
@@ -494,6 +522,25 @@ export function EnrollmentsClient({
               <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none" style={{ color: "#9AAABF" }} />
             </div>
 
+            {/* Source Filter */}
+            <div className="relative min-w-[130px]">
+              <select
+                value={sourceFilter}
+                onChange={(e) => setSourceFilter(e.target.value as any)}
+                className="w-full h-10 pl-4 pr-10 rounded-xl text-[11px] font-black uppercase tracking-wider appearance-none outline-none cursor-pointer transition-all"
+                style={{
+                  background: "#F8FAFC",
+                  color: "#0F1C3F",
+                }}
+              >
+                <option value="all">Semua Sumber</option>
+                <option value="MANUAL">Manual</option>
+                <option value="BULK">Bulk</option>
+                <option value="AUTO">Otomatis</option>
+              </select>
+              <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-3 w-3 pointer-events-none" style={{ color: "#9AAABF" }} />
+            </div>
+
             {/* Status Tabs */}
             <div
               className="flex items-center gap-1 p-1 rounded-xl shrink-0"
@@ -550,9 +597,11 @@ export function EnrollmentsClient({
                     <tr style={{ background: "#FBFBFC", borderBottom: "1px solid #F0F2F7" }}>
                       <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest" style={{ color: "#B0BAD0" }}>Karyawan</th>
                       <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest" style={{ color: "#B0BAD0" }}>Kursus</th>
-                      <th className="px-4 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Timeline</th>
+                      <th className="px-4 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Sumber</th>
+                      <th className="px-4 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Tenggat</th>
                       <th className="px-4 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Nilai</th>
                       <th className="px-4 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Status</th>
+                      <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Laporan</th>
                       <th className="px-6 py-4 text-[9px] font-black uppercase tracking-widest text-center" style={{ color: "#B0BAD0" }}>Opsi</th>
                     </tr>
                   </thead>
@@ -593,30 +642,32 @@ export function EnrollmentsClient({
                             </div>
                           </td>
                           <td className="px-4 py-4">
+                            <div className="flex justify-center">
+                              <Badge 
+                                className={cn(
+                                  "font-black text-[9px] uppercase tracking-tighter",
+                                  row.source === "AUTO" ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
+                                  row.source === "BULK" ? "bg-purple-50 text-purple-600 border-purple-200" :
+                                  "bg-blue-50 text-blue-600 border-blue-200"
+                                )}
+                              >
+                                {row.source}
+                              </Badge>
+                            </div>
+                          </td>
+                          <td className="px-4 py-4">
                             <div className="text-center space-y-0.5">
-                              <p className="text-[9px] font-bold" style={{ color: "#D1D5DB" }}>
-                                {new Date(row.enrolledAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
-                              </p>
                               {row.courseDeadline ? (
-                                <div className="flex flex-col items-center">
-                                  <span 
-                                    className="text-[10px] font-black px-1.5 py-0.5"
-                                    style={{ 
-                                      color: isExpired ? "#EF4444" : "#0F1C3F",
-                                    }}
-                                  >
-                                    {new Date(row.courseDeadline).toLocaleDateString("id-ID", {
-                                      day: "numeric",
-                                      month: "short",
-                                      year: "numeric",
-                                    })}
-                                  </span>
-                                  {isExpired && (
-                                    <span className="text-[7px] font-black uppercase" style={{ color: "#EF4444" }}>EXPIRED</span>
-                                  )}
-                                </div>
+                                <>
+                                  <p className="font-bold text-[11px]" style={{ color: isExpired ? "#EF4444" : "#0F1C3F" }}>
+                                    {new Date(row.courseDeadline).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                                  </p>
+                                  <p className="text-[9px] font-medium" style={{ color: isExpired ? "#EF4444" : "#B0BAD0" }}>
+                                    {isExpired ? "Terlewati" : `${Math.ceil((new Date(row.courseDeadline).getTime() - new Date().getTime()) / (1000 * 3600 * 24))} hari lagi`}
+                                  </p>
+                                </>
                               ) : (
-                                <span className="text-[10px] font-bold" style={{ color: "#E2E6F0" }}>—</span>
+                                <p className="text-[10px] italic font-medium text-slate-300">No deadline</p>
                               )}
                             </div>
                           </td>
@@ -636,15 +687,32 @@ export function EnrollmentsClient({
                             </div>
                           </td>
                           <td className="px-4 py-4 text-center">
-                            <span 
-                              className="inline-block text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg"
-                              style={{ 
-                                backgroundColor: row.status === "COMPLETED" ? "#F0FDF4" : row.status === "FAILED" ? "#FFF0F0" : "#F5F7FF",
-                                color: row.status === "COMPLETED" ? "#059669" : row.status === "FAILED" ? "#EF4444" : "#6366F1"
-                              }}
-                            >
-                              {STATUS_LABEL[row.status]}
-                            </span>
+                            <EnrollmentHistoryTooltip data={row}>
+                              <Badge className={cn("font-black text-[9px]", STATUS_CLASS[row.status])}>
+                                {STATUS_LABEL[row.status]}
+                              </Badge>
+                            </EnrollmentHistoryTooltip>
+                          </td>
+                          <td className="px-6 py-4">
+                            <EnrollmentHistoryTooltip data={row}>
+                              <div className="flex flex-col items-center gap-1">
+                                {row.reportedAt || row.escalatedAt ? (
+                                  <>
+                                    <Badge className={cn(
+                                      "text-white font-black text-[8px] uppercase tracking-tighter",
+                                      row.escalatedAt ? "bg-rose-500" : "bg-emerald-500"
+                                    )}>
+                                      {row.escalatedAt ? "Eskalasi" : "Dilaporkan"}
+                                    </Badge>
+                                    <p className="text-[8px] font-bold text-slate-400">
+                                      {new Date(row.escalatedAt || row.reportedAt!).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}
+                                    </p>
+                                  </>
+                                ) : (
+                                  <Badge className="bg-slate-100 text-slate-400 font-bold text-[8px] uppercase tracking-tighter">Belum</Badge>
+                                )}
+                              </div>
+                            </EnrollmentHistoryTooltip>
                           </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center justify-center gap-1">
@@ -657,6 +725,15 @@ export function EnrollmentsClient({
                                   <TrendingUp className="h-4 w-4" />
                                 </button>
                               </Link>
+                              <button
+                                onClick={() => handlePoke(row.id, row.userName)}
+                                disabled={isPending && pokingId === row.id}
+                                className="h-8 w-8 rounded-xl flex items-center justify-center transition-all hover:bg-amber-50 disabled:opacity-30 group/poke"
+                                style={{ color: "#B0BAD0" }}
+                                title="Kirim Pengingat Manual (Poke)"
+                              >
+                                <Bell className={cn("h-4 w-4 transition-all", (isPending && pokingId === row.id) ? "animate-bounce text-amber-500" : "group-hover/poke:text-amber-500")} />
+                              </button>
                               <button
                                 onClick={() => handleDelete(row.id)}
                                 disabled={deletingId === row.id}

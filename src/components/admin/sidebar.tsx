@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Building2,
   Bell,
+  Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -60,6 +61,13 @@ const routes = [
     href: "/admin/notifications",
     color: "text-amber-400",
     bgColor: "bg-amber-400/10",
+  },
+  {
+    label: "Log Sistem",
+    icon: Activity,
+    href: "/admin/logs",
+    color: "text-rose-500",
+    bgColor: "bg-rose-500/10",
   },
   {
     label: "Pengaturan",

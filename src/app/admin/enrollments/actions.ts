@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 
 import { db } from "@/lib/db";
 import { notifyCourseEnrollment } from "@/lib/notifications";
+import { createEnrollment, batchCreateEnrollments } from "@/lib/enrollment";
 
 async function notifyEnrolledUsers(userIds: string[], courseId: string) {
   try {
@@ -31,8 +32,10 @@ export async function enrollUser(userId: string, courseId: string) {
     if (existing) {
       return { success: false, error: "Karyawan sudah terdaftar di kursus ini." };
     }
-    await (db.enrollment as any).create({
-      data: { userId, courseId, status: "IN_PROGRESS" },
+    await createEnrollment({
+      userId,
+      courseId,
+      source: "MANUAL",
     });
     await notifyEnrolledUsers([userId], courseId);
     revalidatePath("/admin/enrollments");
@@ -59,13 +62,10 @@ export async function enrollMultipleUsers(userIds: string[], courseId: string) {
       return { success: false, error: "Semua karyawan yang dipilih sudah terdaftar." };
     }
 
-    await (db.enrollment as any).createMany({
-      data: toEnroll.map((userId) => ({
-        userId,
-        courseId,
-        status: "IN_PROGRESS",
-      })),
-      skipDuplicates: true,
+    const { count } = await batchCreateEnrollments({
+      userIds: toEnroll,
+      courseId,
+      source: "BULK",
     });
 
     await notifyEnrolledUsers(toEnroll, courseId);
@@ -110,13 +110,10 @@ export async function enrollDepartment(department: string, courseId: string) {
     }
 
     // Buat enrollment massal
-    await (db.enrollment as any).createMany({
-      data: toEnroll.map((u: any) => ({
-        userId: u.id,
-        courseId,
-        status: "IN_PROGRESS",
-      })),
-      skipDuplicates: true,
+    const { count } = await batchCreateEnrollments({
+      userIds: toEnroll.map((u: any) => (u as any).id),
+      courseId,
+      source: "BULK",
     });
 
     await notifyEnrolledUsers(
@@ -190,3 +187,86 @@ export async function deleteDepartmentConfig(id: string) {
     return { success: false, error: error?.message ?? "Gagal menghapus konfigurasi." };
   }
 }
+
+// ─── Manual Poke (Tier 5) ──────────────────────────────────────────────────
+import { sendEmailWithAttachment } from "@/lib/email";
+
+export async function pokeParticipant(enrollmentId: string) {
+  const session = await auth();
+  if (!session || session.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  const startTime = Date.now();
+  try {
+    const enrollment = await db.enrollment.findUnique({
+      where: { id: enrollmentId },
+      include: {
+        user: { select: { id: true, name: true, email: true } },
+        course: { select: { title: true } },
+      },
+    });
+
+    if (!enrollment) return { success: false, error: "Enrollment tidak ditemukan." };
+    if (!enrollment.user.email) return { success: false, error: "User tidak memiliki email." };
+
+    // 1. Create System Notification
+    await (db as any).notification.create({
+      data: {
+        userId: enrollment.user.id,
+        type: "SYSTEM",
+        title: "Colekan Admin: Selesaikan Pelatihan",
+        body: `Admin meminta Anda segera menyelesaikan pelatihan "${enrollment.course.title}".`,
+        href: `/courses`,
+      },
+    });
+
+    // 2. Send Email
+    await sendEmailWithAttachment({
+      to: enrollment.user.email,
+      subject: `[Mendesak] Tindak Lanjut Pelatihan: ${enrollment.course.title}`,
+      html: `
+        <div style="font-family: sans-serif; color: #0F1C3F;">
+          <div style="background-color: #0F1C3F; padding: 20px; text-align: center;">
+            <h1 style="color: #E8A020; margin: 0;">Colekan Admin</h1>
+          </div>
+          <div style="padding: 20px; border: 1px solid #e2e8f0;">
+            <p>Halo <b>${enrollment.user.name}</b>,</p>
+            <p>Admin Learning & Development baru saja memberikan "colekan" manual terkait pelatihan <b>"${enrollment.course.title}"</b>.</p>
+            <p>Kami melihat Anda belum menyelesaikan pelatihan ini. Mohon segera login dan tuntaskan materi sebelum batas waktu berakhir.</p>
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${process.env.NEXTAUTH_URL}/courses" style="background-color: #0F1C3F; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login ke E-Learning</a>
+            </div>
+            <hr />
+            <p style="font-size: 12px; color: #64748b;">Pesan ini dikirim secara manual oleh Administrator melalui BNI Finance E-Learning System.</p>
+          </div>
+        </div>
+      `,
+    });
+
+    // 3. Log the manual action (Tier 6 requirement)
+    await (db as any).schedulerLog.create({
+      data: {
+        jobName: "MANUAL_POKE",
+        status: "SUCCESS",
+        message: `Poke manual dikirim ke ${enrollment.user.email} (${enrollment.user.name}) untuk kursus ${enrollment.course.title}`,
+        duration: Date.now() - startTime,
+      }
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    // Log the failure
+    await (db as any).schedulerLog.create({
+      data: {
+        jobName: "MANUAL_POKE",
+        status: "FAILED",
+        message: `Gagal mengirim poke: ${error.message}`,
+        duration: Date.now() - startTime,
+      }
+    });
+
+    return { success: false, error: error.message };
+  }
+}
+import { auth } from "@/auth";

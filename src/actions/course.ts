@@ -35,6 +35,19 @@ export async function updateCourse(id: string, values: any) {
     data: { ...values },
   });
 
+  // Jika deadlineDate diubah secara global, perbarui semua enrollment yang IN_PROGRESS
+  if (values.deadlineDate !== undefined) {
+    await (db.enrollment as any).updateMany({
+      where: { 
+        courseId: id,
+        status: "IN_PROGRESS"
+      },
+      data: {
+        deadline: values.deadlineDate
+      }
+    });
+  }
+
   revalidatePath(`/admin/courses/${id}`);
   revalidatePath("/admin/courses");
   return course;

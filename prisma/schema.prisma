@@ -142,7 +142,14 @@ model Enrollment {
   courseId  String
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
-  status    EnrollmentStatus @default(IN_PROGRESS)
+  status     EnrollmentStatus @default(IN_PROGRESS)
+  deadline   DateTime?
+  reportedAt    DateTime?
+  source        String           @default("MANUAL")
+  remindedAt7d  DateTime?
+  remindedAt3d  DateTime?
+  remindedAt1d  DateTime?
+  escalatedAt   DateTime?
   course    Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
   user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -250,4 +257,17 @@ model DepartmentConfig {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+model SchedulerLog {
+  id               String   @id @default(cuid())
+  jobName          String
+  status           String   // SUCCESS, FAILED
+  message          String?
+  duration         Int?     // milliseconds
+  failedRecipients Json?    // List of emails that failed
+  createdAt        DateTime @default(now())
+
+  @@index([jobName])
+  @@index([createdAt])
 }
