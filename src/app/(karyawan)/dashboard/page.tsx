@@ -8,11 +8,12 @@ import {
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
-// New Modular Components
+// Modular Components
 import { DashboardHero } from "./_components/DashboardHero";
 import { KPIGrid } from "./_components/KPIGrid";
 import { CourseCard } from "./_components/CourseCard";
 import { ExploreCourses, EmptyState } from "./_components/ExploreCourses";
+import { UrgentAlerts } from "./_components/UrgentAlerts";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -24,20 +25,21 @@ export default async function DashboardPage() {
   const isAdmin = session?.user?.role === "ADMIN";
   const userId = session.user.id;
 
-  // Data Fetching
+  // 1. Fetch Basic Data
   const enrollments = await db.enrollment.findMany({
     where: { userId },
     include: {
       course: {
         include: {
-          modules: { where: { isPublished: true } },
+          modules: { where: { isPublished: true }, orderBy: { position: "asc" } },
           category: true,
         },
       },
     },
+    orderBy: { deadline: "asc" }
   });
 
-  const completedModuleIds = await db.userProgress.findMany({
+  const completedModuleIdsRaw = await db.userProgress.findMany({
     where: { userId, isCompleted: true },
     select: { moduleId: true, module: { select: { courseId: true } } },
   });
@@ -57,11 +59,63 @@ export default async function DashboardPage() {
     }
   });
 
+  // 2. Logic: Completed Counts
   const completedByCourse: Record<string, number> = {};
-  for (const progress of completedModuleIds) {
+  const completedModuleIds = new Set(completedModuleIdsRaw.map(p => p.moduleId));
+  
+  for (const progress of completedModuleIdsRaw) {
     const courseId = progress.module.courseId;
     completedByCourse[courseId] = (completedByCourse[courseId] || 0) + 1;
   }
+
+  // 3. Logic: Resume Learning (Find last active or next module)
+  const lastProgress = await db.userProgress.findFirst({
+    where: { userId },
+    orderBy: { updatedAt: "desc" },
+    include: { 
+      module: { 
+        include: { 
+          course: { 
+            include: { 
+              modules: { where: { isPublished: true }, orderBy: { position: "asc" } } 
+            } 
+          } 
+        } 
+      } 
+    }
+  });
+
+  let resumeData = null;
+  if (lastProgress) {
+    const currentCourseModules = lastProgress.module.course.modules;
+    const currentModuleIndex = currentCourseModules.findIndex(m => m.id === lastProgress.moduleId);
+    
+    // If current is completed, try to find next
+    if (lastProgress.isCompleted && currentModuleIndex < currentCourseModules.length - 1) {
+       const nextModule = currentCourseModules[currentModuleIndex + 1];
+       resumeData = {
+         title: nextModule.title,
+         href: `/courses/${lastProgress.module.courseId}/modules/${nextModule.id}`
+       };
+    } else {
+       // Otherwise resume current
+       resumeData = {
+         title: lastProgress.module.title,
+         href: `/courses/${lastProgress.module.courseId}/modules/${lastProgress.moduleId}`
+       };
+    }
+  }
+
+  // 4. Logic: Urgent Deadlines (<= 3 days)
+  const today = new Date();
+  const threeDaysFromNow = new Date();
+  threeDaysFromNow.setDate(today.getDate() + 3);
+
+  const urgentEnrollments = enrollments.filter(en => 
+    en.status === "IN_PROGRESS" && 
+    en.deadline && 
+    new Date(en.deadline) <= threeDaysFromNow
+  );
 
   const coursesWithProgress = enrollments.map((en: any) => {
     const publishedModulesCount = en.course.modules.length;
@@ -84,9 +138,8 @@ export default async function DashboardPage() {
       {/* Decorative Background Glows */}
       <div className="absolute top-0 left-0 w-[600px] h-[600px] bg-blue-400/10 rounded-full blur-[120px] -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
       <div className="absolute top-1/4 right-0 w-[500px] h-[500px] bg-indigo-400/10 rounded-full blur-[120px] translate-x-1/3 pointer-events-none" />
-      <div className="absolute bottom-0 left-1/4 w-[400px] h-[400px] bg-emerald-400/10 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="relative z-10 p-6 md:p-10 max-w-7xl mx-auto space-y-12 animate-fade-in-up">
+      
+      <div className="relative z-10 p-6 md:p-10 max-w-7xl mx-auto space-y-10 animate-fade-in-up">
         
         {/* Admin Warning Section */}
         {isAdmin && (
@@ -97,24 +150,30 @@ export default async function DashboardPage() {
               </div>
               <div className="space-y-1">
                 <p className="font-black text-base tracking-tight text-amber-900">Administrator Session</p>
-                <p className="text-xs opacity-70 font-medium leading-relaxed">Anda sedang melihat tata letak akun karyawan. Beralih ke Admin Console untuk manajemen penuh.</p>
+                <p className="text-xs opacity-70 font-medium leading-relaxed">Anda sedang melihat tata letak akun karyawan.</p>
               </div>
             </div>
             <Link href="/admin">
-              <Button size="sm" className="h-14 px-8 rounded-xl bg-amber-600 hover:bg-amber-700 text-white border-0 text-sm flex items-center gap-3 font-black whitespace-nowrap shadow-xl shadow-amber-600/30 transition-all hover:scale-105 active:scale-95">
-                Admin Console <ArrowRight className="h-5 w-5" />
+              <Button size="sm" className="h-12 px-6 rounded-xl bg-amber-600 hover:bg-amber-700 text-white border-0 text-xs flex items-center gap-3 font-black shadow-xl shadow-amber-600/20">
+                Admin Console <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
           </div>
         )}
 
+        {/* URGENT ALERTS SECTION */}
+        <UrgentAlerts urgentEnrollments={urgentEnrollments} />
+
         {/* HERO SECTION */}
-        <DashboardHero userName={session.user.name || "Karyawan"} />
+        <DashboardHero 
+          userName={session.user.name || "Karyawan"} 
+          resumeData={resumeData}
+        />
 
         {/* KPI METRICS GRID */}
         <KPIGrid 
           activeCourses={coursesWithProgress.length}
-          modulesDone={completedModuleIds.length}
+          modulesDone={completedModuleIdsRaw.length}
           testsPassed={uniquePassedTestsCount}
         />
 
