@@ -1,3 +1,8 @@
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Sparkles, Target, ArrowRight } from "lucide-react";
+import Link from "next/link";
+
 interface DashboardHeroProps {
   userName: string;
   resumeData: {
@@ -65,5 +70,3 @@ export const DashboardHero = ({ userName, resumeData }: DashboardHeroProps) => {
     </div>
   );
 };
-import Link from "next/link";
-import { ArrowRight } from "lucide-react";

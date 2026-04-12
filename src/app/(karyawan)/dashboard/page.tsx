@@ -26,7 +26,7 @@ export default async function DashboardPage() {
   const userId = session.user.id;
 
   // 1. Fetch Basic Data
-  const enrollments = await db.enrollment.findMany({
+  const enrollments = await (db.enrollment as any).findMany({
     where: { userId },
     include: {
       course: {
@@ -111,7 +111,7 @@ export default async function DashboardPage() {
   const threeDaysFromNow = new Date();
   threeDaysFromNow.setDate(today.getDate() + 3);
 
-  const urgentEnrollments = enrollments.filter(en => 
+  const urgentEnrollments = (enrollments as any[]).filter(en => 
     en.status === "IN_PROGRESS" && 
     en.deadline && 
     new Date(en.deadline) <= threeDaysFromNow
