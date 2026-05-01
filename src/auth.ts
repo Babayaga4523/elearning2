@@ -1,0 +1,190 @@
+import NextAuth from "next-auth";
+import { PrismaAdapter } from "@auth/prisma-adapter";
+import { db } from "@/lib/db";
+import authConfig from "./auth.config";
+import Credentials from "next-auth/providers/credentials";
+import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+
+const authOptions: any = {
+  ...authConfig,
+  adapter: PrismaAdapter(db),
+  session: { strategy: "jwt" },
+  providers: [
+    Credentials({
+      async authorize(credentials) {
+        // Move imports inside to avoid top-level evaluation issues in RSC
+        const bcrypt = await import("bcryptjs");
+        const { z } = await import("zod");
+        
+        const LoginSchema = z.object({
+          email: z.string().email(),
+          password: z.string().min(1),
+        });
+
+        const validatedFields = LoginSchema.safeParse(credentials);
+
+        if (validatedFields.success) {
+          const { email, password } = validatedFields.data;
+          
+          console.log("[AUTH] Attempting login for:", email);
+
+          const user = await db.user.findUnique({
+            where: { email }
+          });
+          
+          if (!user) {
+            console.log("[AUTH] User not found:", email);
+            return null;
+          }
+
+          if (!user.password) {
+            console.log("[AUTH] User has no password set:", email);
+            return null;
+          }
+
+          const passwordsMatch = await bcrypt.compare(
+            password,
+            user.password,
+          );
+
+          if (passwordsMatch) {
+            console.log("[AUTH] Login successful:", email);
+            return user;
+          } else {
+            console.log("[AUTH] Password mismatch for:", email);
+            return null;
+          }
+        } else {
+          console.log("[AUTH] Invalid fields:", validatedFields.error.flatten());
+          return null;
+        }
+      },
+    }),
+    MicrosoftEntraID({
+      clientId: process.env.AUTH_MICROSOFT_ENTRA_ID_ID,
+      clientSecret: process.env.AUTH_MICROSOFT_ENTRA_ID_SECRET,
+      issuer: `https://login.microsoftonline.com/${process.env.AUTH_MICROSOFT_ENTRA_ID_TENANT_ID}/v2.0`,
+    }),
+  ],
+  callbacks: {
+    async signIn({ user, account, profile }: any) {
+      if (account?.provider === "microsoft-entra-id") {
+        const email = user.email!;
+        const allowedDomain = process.env.ALLOWED_DOMAIN || "bnif.co.id";
+
+        // 1. Defense in Depth: Domain Validation
+        if (!email.endsWith(`@${allowedDomain}`)) {
+          console.log("[AUTH] Domain validation failed for:", email);
+          return false;
+        }
+
+        // 2. JIT Provisioning (User Creation/Update)
+        const existingUser = await db.user.findUnique({
+          where: { email }
+        });
+
+        if (!existingUser) {
+          // Create new user with Microsoft auth
+          await db.user.create({
+            data: {
+              email,
+              name: profile?.name ?? user.name ?? "",
+              image: user.image ?? null,
+              roles: ["KARYAWAN"], // Default role for new users
+              authMethod: "MICROSOFT",
+              lastLoginAt: new Date(),
+              lastLoginMethod: "MICROSOFT",
+              password: null, // SSO user has no local password
+            }
+          });
+          console.log("[AUTH] New Microsoft user created:", email);
+        } else {
+          // Update existing user's last login info
+          await db.user.update({
+            where: { email },
+            data: {
+              name: profile?.name ?? user.name ?? existingUser.name,
+              image: user.image ?? existingUser.image,
+              lastLoginAt: new Date(),
+              lastLoginMethod: "MICROSOFT",
+            }
+          });
+          console.log("[AUTH] Existing user logged in via Microsoft:", email);
+        }
+      } else if (account?.provider === "credentials") {
+        // Manual login - update last login info
+        const email = user.email!;
+        await db.user.update({
+          where: { email },
+          data: {
+            lastLoginAt: new Date(),
+            lastLoginMethod: "MANUAL",
+          }
+        });
+        console.log("[AUTH] User logged in via credentials:", email);
+      }
+      return true;
+    },
+    async session({ token, session }: { token: any, session: any }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+      if (token.role && session.user) {
+        session.user.role = token.role;
+      }
+      if (token.roles && session.user) {
+        session.user.roles = token.roles;
+      }
+      if (token.activeRole && session.user) {
+        session.user.activeRole = token.activeRole;
+      }
+      if (token.nip && session.user) {
+        session.user.nip = token.nip;
+      }
+      return session;
+    },
+    async jwt({ token, trigger, session }: { token: any, trigger?: string, session?: any }) {
+      // Handle session updates from update() method
+      if (trigger === "update" && session) {
+        if (session.activeRole) {
+          token.activeRole = session.activeRole
+        }
+        if (session.roles) {
+          token.roles = session.roles
+        }
+        return token
+      }
+
+      if (!token.sub) return token;
+      
+      // Fetch fresh data from DB to ensure roles are current
+      const existingUser = await db.user.findUnique({
+        where: { id: token.sub },
+        select: { 
+          id: true, 
+          role: true, 
+          roles: true, 
+          activeRole: true,
+          nip: true,
+        },
+      });
+
+      if (existingUser) {
+        token.sub = existingUser.id;
+        token.role = existingUser.role; // Legacy field
+        token.roles = existingUser.roles; // New multi-role field
+        token.activeRole = existingUser.activeRole;
+        token.nip = existingUser.nip;
+      }
+      
+      return token;
+    },
+  },
+};
+
+export const {
+  handlers: { GET, POST },
+  auth,
+  signIn,
+  signOut,
+} = NextAuth(authOptions);

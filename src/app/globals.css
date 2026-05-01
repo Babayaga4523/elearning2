@@ -1,0 +1,244 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+@layer base {
+  :root {
+    --background: 220 20% 95%;       /* #F0F2F7 */
+    --foreground: 219 67% 16%;       /* #0F1C3F Navy */
+    --card: 0 0% 100%;
+    --card-foreground: 219 67% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 219 67% 16%;
+    --primary: 219 67% 16%;          /* #0F1C3F Navy */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 36 77% 51%;         /* #E8A020 Gold */
+    --secondary-foreground: 0 0% 100%;
+    --muted: 220 14% 90%;
+    --muted-foreground: 220 10% 45%;
+    --accent: 220 14% 90%;
+    --accent-foreground: 219 67% 16%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 87%;
+    --input: 220 13% 87%;
+    --ring: 36 77% 51%;              /* Gold untuk focus ring */
+    --radius: 0.75rem;               /* rounded-xl default */
+    --chart-1: 219 67% 16%;
+    --chart-2: 36 77% 51%;
+    --chart-3: 199 89% 48%;
+    --chart-4: 142 71% 45%;
+    --chart-5: 24 94% 50%;
+  }
+
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+
+    --chart-1: 222 62% 15%;
+    --chart-2: 39 84% 52%;
+    --chart-3: 199 89% 48%;
+    --chart-4: 142 71% 45%;
+    --chart-5: 24 94% 50%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Premium Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out forwards;
+}
+
+.glass-morphism {
+  @apply bg-white/70 backdrop-blur-md border border-white/20;
+}
+
+/* Custom Scrollbar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Dark Sidebar Scrollbar */
+.dark-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 160, 32, 0.6);
+}
+
+/* FullCalendar Navy/Gold Theme Override */
+.fc {
+  font-family: 'Lexend Deca', 'DM Sans', sans-serif;
+  --fc-button-bg-color: #0F1C3F !important;
+  --fc-button-border-color: #0F1C3F !important;
+  --fc-button-hover-bg-color: #E8A020 !important;
+  --fc-button-hover-border-color: #E8A020 !important;
+  --fc-button-active-bg-color: #E8A020 !important;
+  --fc-button-active-border-color: #E8A020 !important;
+  --fc-today-bg-color: rgba(232, 160, 32, 0.1) !important;
+  --fc-event-border-color: transparent !important;
+}
+
+/* Header toolbar */
+.fc .fc-toolbar-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #0F1C3F;
+  letter-spacing: -0.025em;
+}
+
+.fc .fc-button {
+  background-color: #0F1C3F !important;
+  border-color: #0F1C3F !important;
+  border-radius: 0.5rem !important;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  padding: 0.5rem 1rem !important;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+.fc .fc-button-group {
+  gap: 0.4rem;
+}
+
+.fc .fc-toolbar-chunk {
+  display: flex;
+  gap: 0.4rem;
+}
+
+
+/* Day cells */
+.fc .fc-daygrid-day.fc-day-today {
+  background-color: rgba(232, 160, 32, 0.05) !important;
+}
+
+.fc .fc-col-header-cell-cushion {
+  color: #475569;
+  font-weight: 800;
+  text-transform: uppercase;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  padding: 0.75rem !important;
+}
+
+.fc .fc-daygrid-day-number {
+  color: #0F1C3F;
+  font-weight: 800;
+  font-size: 0.9rem;
+  padding: 0.5rem 0.75rem !important;
+}
+
+/* Events */
+.fc-event {
+  border-radius: 0.4rem !important;
+  border: none !important;
+  font-size: 0.7rem !important;
+  font-weight: 700 !important;
+  padding: 3px 6px !important;
+  margin: 1px 4px !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-event:hover {
+  transform: translateY(-1px) scale(1.01);
+  filter: brightness(1.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+.fc-h-event .fc-event-main {
+  color: white !important;
+  padding: 2px;
+}
+
+/* Border grid */
+.fc .fc-scrollgrid {
+  border-radius: 0.75rem;
+  overflow: hidden;
+  border-color: #e2e8f0 !important;
+}
+
+.fc td, .fc th {
+  border-color: #f1f5f9 !important;
+}
+
+
+
+/* Suppress hydration warnings from browser extensions in development */
+@media screen {
+  /* This will be removed in production builds */
+  [fdprocessedidat] {
+    /* Browser extension attribute - safe to ignore */
+  }
+}

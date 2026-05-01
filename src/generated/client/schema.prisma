@@ -1,0 +1,441 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/client"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String     @id @default(cuid())
+  name          String?
+  email         String?    @unique
+  emailVerified DateTime?
+  image         String?
+  password      String?
+  role          UserRole   @default(KARYAWAN) // Legacy field - kept for backward compatibility
+  roles         UserRole[] @default([KARYAWAN]) // New multi-role field
+  activeRole    UserRole? // Currently active role
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  department    String?
+  lokasi        String?
+  nip           String?    @unique
+
+  // Auth metadata
+  authMethod      AuthMethod  @default(MANUAL)
+  lastLoginAt     DateTime?
+  lastLoginMethod AuthMethod?
+
+  approvedEnrollments Enrollment[]    @relation("ApprovedEnrollments")
+  enrollments         Enrollment[]    @relation("UserEnrollments")
+  notifications       Notification[]
+  testAttempts        TestAttempt[]
+  userProgress        UserProgress[]
+  videoProgress       VideoProgress[]
+  pdfProgress         PDFProgress[]
+}
+
+model Course {
+  id                String               @id @default(cuid())
+  userId            String
+  title             String
+  description       String?
+  imageUrl          String?
+  isPublished       Boolean              @default(false)
+  categoryId        String?
+  deadlineDuration  Int?
+  deadlineDate      DateTime?
+  lockAfterDeadline Boolean              @default(false) // Kunci akses setelah deadline
+  gracePeriodDays   Int? // Hari tambahan setelah deadline (opsional)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+  isVisible         Boolean              @default(true)
+  autoEnrollRules   AutoEnrollmentRule[]
+  category          Category?            @relation(fields: [categoryId], references: [id])
+  enrollments       Enrollment[]
+  modules           Module[]
+  tests             Test[]
+
+  @@index([categoryId])
+}
+
+model Category {
+  id      String   @id @default(cuid())
+  name    String   @unique
+  courses Course[]
+}
+
+model Module {
+  id               String          @id @default(cuid())
+  title            String
+  description      String?
+  position         Int             @default(0)
+  isPublished      Boolean         @default(false)
+  isFree           Boolean         @default(false)
+  courseId         String
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  duration         Int             @default(0)
+  type             ModuleType      @default(VIDEO)
+  url              String?
+  pdfUrl           String?
+  sharepointUrl    String?
+  videoUrl         String?
+  fileSize         BigInt?
+  originalFilename String?
+  course           Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  userProgress     UserProgress[]
+  videoProgress    VideoProgress[]
+  pdfProgress      PDFProgress[]
+
+  @@index([courseId])
+}
+
+model Test {
+  id                 String        @id @default(cuid())
+  title              String
+  type               TestType
+  courseId           String
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  duration           Int           @default(30)
+  passingScore       Int           @default(70)
+  maxAttempts        Int           @default(0)
+  randomizeQuestions Boolean       @default(false)
+  randomizeOptions   Boolean       @default(false)
+  questions          Question[]
+  course             Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attempts           TestAttempt[]
+
+  @@index([courseId])
+}
+
+model Question {
+  id        String       @id @default(cuid())
+  text      String
+  testId    String
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @default(now()) @updatedAt
+  options   Option[]
+  test      Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers   TestAnswer[]
+
+  @@index([testId])
+}
+
+model Option {
+  id          String       @id @default(cuid())
+  text        String
+  isCorrect   Boolean      @default(false)
+  questionId  String
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @default(now()) @updatedAt
+  question    Question     @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  testAnswers TestAnswer[]
+
+  @@index([questionId])
+}
+
+model UserProgress {
+  id          String   @id @default(cuid())
+  userId      String
+  moduleId    String
+  isCompleted Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([moduleId])
+}
+
+model Enrollment {
+  id            String           @id @default(cuid())
+  userId        String
+  courseId      String
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+  status        EnrollmentStatus @default(PENDING)
+  deadline      DateTime?
+  reportedAt    DateTime?
+  source        String           @default("MANUAL")
+  remindedAt7d  DateTime?
+  remindedAt3d  DateTime?
+  remindedAt1d  DateTime?
+  escalatedAt   DateTime?
+  approvedAt    DateTime?
+  approvedById  String?
+  rejectionNote String?
+
+  // Tracking post-test attempts & cheating
+  postTestAttempts    Int     @default(0)
+  maxPostTestAttempts Int     @default(3)
+  hasCheatedPostTest  Boolean @default(false)
+  cheatedAtAttempt    Int? // curang di percobaan ke berapa
+
+  // Tracking pre-test cheating (NEW)
+  hasCheatedPreTest    Boolean @default(false)
+  preTestCheatingCount Int     @default(0)
+
+  approvedBy   User?         @relation("ApprovedEnrollments", fields: [approvedById], references: [id])
+  course       Course        @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  user         User          @relation("UserEnrollments", fields: [userId], references: [id], onDelete: Cascade)
+  testSessions TestSession[]
+  testAttempts TestAttempt[]
+
+  @@unique([userId, courseId])
+  @@index([userId, courseId])
+  @@index([status])
+  @@index([courseId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType @default(SYSTEM)
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model TestAttempt {
+  id               String            @id @default(cuid())
+  userId           String
+  testId           String
+  enrollmentId     String? // link to enrollment for post-test tracking
+  attemptNumber    Int               @default(1) // percobaan ke berapa
+  score            Float?
+  passed           Boolean           @default(false)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  completedAt      DateTime?
+  startedAt        DateTime?
+  cheatedReason    String?
+  isCheated        Boolean           @default(false)
+  cheatedAt        DateTime?
+  forceSubmittedAt DateTime?
+  status           TestAttemptStatus @default(ONGOING)
+  timeSpent        Int               @default(0)
+  violationCount   Int               @default(0)
+  violationLogs    Json?
+  answers          TestAnswer[]
+  test             Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment       Enrollment?       @relation(fields: [enrollmentId], references: [id])
+
+  @@index([userId])
+  @@index([testId])
+  @@index([enrollmentId])
+  @@index([isCheated])
+  @@index([attemptNumber])
+}
+
+model TestSession {
+  id               String            @id @default(cuid())
+  testId           String
+  userId           String
+  enrollmentId     String? // untuk link ke enrollment
+  attemptNumber    Int               @default(1)
+  isCheated        Boolean           @default(false)
+  cheatedAt        DateTime?
+  forceSubmittedAt DateTime?
+  score            Float?
+  status           TestAttemptStatus @default(ONGOING)
+  startedAt        DateTime          @default(now())
+  submittedAt      DateTime?
+
+  enrollment Enrollment? @relation(fields: [enrollmentId], references: [id])
+
+  @@index([testId, userId])
+  @@index([enrollmentId])
+  @@index([status])
+}
+
+model TestViolationLog {
+  id        String   @id @default(cuid())
+  testId    String
+  userId    String
+  type      String
+  timestamp DateTime
+  detail    String?
+
+  @@index([testId, userId])
+}
+
+model TestAnswer {
+  id               String      @id @default(cuid())
+  testAttemptId    String
+  questionId       String
+  selectedOptionId String?
+  isCorrect        Boolean
+  createdAt        DateTime    @default(now())
+  question         Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  selectedOption   Option?     @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)
+  testAttempt      TestAttempt @relation(fields: [testAttemptId], references: [id], onDelete: Cascade)
+
+  @@unique([testAttemptId, questionId])
+  @@index([testAttemptId])
+}
+
+model AutoEnrollmentRule {
+  id             String   @id @default(cuid())
+  courseId       String
+  department     String
+  isActive       Boolean  @default(true)
+  bypassDeadline Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  course         Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@index([courseId])
+  @@index([department])
+}
+
+model DepartmentConfig {
+  id             String   @id @default(cuid())
+  departmentName String   @unique
+  headEmail      String
+  headName       String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model SchedulerLog {
+  id               String   @id @default(cuid())
+  jobName          String
+  status           String
+  message          String?
+  duration         Int?
+  failedRecipients Json?
+  metadata         Json? // NEW: For retry queue and additional data
+  createdAt        DateTime @default(now())
+
+  @@index([jobName])
+  @@index([createdAt])
+  @@index([jobName, status])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ipAddress String
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+  @@index([ipAddress, createdAt])
+}
+
+model VideoProgress {
+  id       String @id @default(cuid())
+  userId   String
+  moduleId String
+
+  // Progress tracking
+  currentTime    Float   @default(0) // Current playback position in seconds
+  duration       Float   @default(0) // Total video duration in seconds
+  completionRate Float   @default(0) // Percentage (0-100)
+  completed      Boolean @default(false) // True if completionRate >= 95
+
+  // Metadata
+  watchCount     Int      @default(0) // Number of times video was played
+  totalWatchTime Float    @default(0) // Total time spent watching (seconds)
+  lastWatched    DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+  @@index([completed])
+  @@index([lastWatched])
+}
+
+model PDFProgress {
+  id       String @id @default(cuid())
+  userId   String
+  moduleId String
+
+  // Progress tracking
+  currentPage    Int     @default(1) // Current page number
+  totalPages     Int     @default(0) // Total pages in PDF
+  pagesViewed    Json    @default("[]") // Array of page numbers viewed
+  scrollPosition Json    @default("{}") // Object: { pageNum: scrollY }
+  completionRate Float   @default(0) // Percentage (0-100)
+  completed      Boolean @default(false) // True if completionRate >= 90
+
+  // Metadata
+  readCount     Int      @default(0) // Number of times PDF was opened
+  totalReadTime Float    @default(0) // Total time spent reading (seconds)
+  lastRead      DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Relations
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module Module @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, moduleId])
+  @@index([userId])
+  @@index([moduleId])
+  @@index([completed])
+  @@index([lastRead])
+}
+
+enum UserRole {
+  ADMIN
+  KARYAWAN
+  SUPER_ADMIN
+}
+
+enum AuthMethod {
+  MICROSOFT
+  MANUAL
+}
+
+enum ModuleType {
+  VIDEO
+  PDF
+}
+
+enum TestType {
+  PRE
+  POST
+}
+
+enum TestAttemptStatus {
+  ONGOING
+  SUBMITTED
+  FORCE_SUBMITTED
+}
+
+enum EnrollmentStatus {
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  PENDING
+  REJECTED
+  CHEATING
+}
+
+enum NotificationType {
+  SYSTEM
+  ENROLLMENT
+  COURSE_UPDATE
+  REMINDER
+}
