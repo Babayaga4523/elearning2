@@ -22,7 +22,7 @@ import { TestStepWithModal } from "@/components/courses/test-step-with-modal";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UserProgress = { isCompleted: boolean };
-type TestAttempt = { id: string, passed: boolean, isCheated?: boolean };
+type TestAttempt = { id: string, passed: boolean, isCheated?: boolean, score: number | null };
 
 type ModuleWithProgress = {
   id: string;
@@ -150,6 +150,15 @@ export default async function StudentCourseDetailPage({
     ? null
     : course.modules.find((m) => !m.userProgress[0]?.isCompleted)?.id;
   
+  // Calculate best scores for pre-test and post-test
+  const preBestScore = preTest?.attempts.length 
+    ? Math.max(...preTest.attempts.filter(a => !a.isCheated && a.score !== null).map(a => a.score!))
+    : null;
+  
+  const postBestScore = postTest?.attempts.length
+    ? Math.max(...postTest.attempts.filter(a => !a.isCheated && a.score !== null).map(a => a.score!))
+    : null;
+
   const latestPreAttempt = preTest?.attempts[0];
   const preStatus = latestPreAttempt 
     ? latestPreAttempt.isCheated 
@@ -264,6 +273,7 @@ export default async function StudentCourseDetailPage({
                   done={preTest.attempts.length > 0}
                   lockReason={isDeadlinePast ? "Batas waktu kursus telah berakhir" : undefined}
                   testStatus={preStatus}
+                  bestScore={preBestScore}
                   testInfo={{
                     duration: preTest.duration,
                     passingScore: preTest.passingScore ?? 70,
@@ -322,6 +332,7 @@ export default async function StudentCourseDetailPage({
                       : undefined
                   }
                   testStatus={postStatus}
+                  bestScore={postBestScore}
                   testInfo={{
                     duration: postTest.duration,
                     passingScore: postTest.passingScore ?? 70,

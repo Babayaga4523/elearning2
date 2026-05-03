@@ -16,6 +16,7 @@ interface TestStepWithModalProps {
   done: boolean;
   lockReason?: string;
   testStatus?: "LULUS" | "GAGAL" | "KECURANGAN" | null;
+  bestScore?: number | null;
   testInfo: {
     duration: number;
     passingScore: number;
@@ -36,6 +37,7 @@ export function TestStepWithModal({
   done,
   lockReason,
   testStatus,
+  bestScore,
   testInfo,
   resultUrl,
 }: TestStepWithModalProps) {
@@ -162,6 +164,20 @@ export function TestStepWithModal({
                     </div>
                   )}
                 </div>
+                {/* Best Score Display */}
+                {bestScore !== null && bestScore !== undefined && !isNaN(bestScore) && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <div className={cn(
+                      "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-bold",
+                      bestScore >= testInfo.passingScore
+                        ? "bg-green-50 text-green-700 border border-green-200"
+                        : "bg-red-50 text-red-700 border border-red-200"
+                    )}>
+                      <span>⭐</span>
+                      <span>Nilai Terbaik: {Number(bestScore).toFixed(0)}</span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {lockReason && (
