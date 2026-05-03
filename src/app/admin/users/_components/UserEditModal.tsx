@@ -45,6 +45,7 @@ interface UserEditModalProps {
     lokasi: string | null;
     role?: UserRole;
     roles?: UserRole[];
+    lockedAt?: Date | null;
   } | null;
 }
 
@@ -57,7 +58,8 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
     department: "",
     lokasi: "",
     password: "",
-    roles: [] as UserRole[]
+    roles: [] as UserRole[],
+    isLocked: false,
   });
 
   const [showPassword, setShowPassword] = useState(false);
@@ -71,7 +73,8 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
         department: user.department || "",
         lokasi: user.lokasi || "",
         password: "",
-        roles: user.roles || (user.role ? [user.role as UserRole] : [UserRole.KARYAWAN])
+        roles: user.roles || (user.role ? [user.role as UserRole] : [UserRole.KARYAWAN]),
+        isLocked: !!user.lockedAt,
       });
     }
   }, [user, isOpen]);
@@ -313,6 +316,29 @@ export function UserEditModal({ isOpen, onClose, user }: UserEditModalProps) {
                   </label>
                 </div>
               </div>
+              
+              {/* Lock Account */}
+              <div className="mt-4 pt-3 border-t">
+                <div className="flex items-center space-x-2 p-2 rounded-md border border-red-200 bg-red-50/50 hover:bg-red-50 transition-colors">
+                  <Checkbox
+                    id="is-locked"
+                    checked={formData.isLocked}
+                    onCheckedChange={(checked) => setFormData({...formData, isLocked: !!checked})}
+                    className="h-4 w-4 border-red-300 text-red-600 data-[state=checked]:bg-red-600"
+                  />
+                  <label
+                    htmlFor="is-locked"
+                    className="flex-1 flex items-center gap-2 text-xs font-medium cursor-pointer"
+                  >
+                    <Lock className="h-3.5 w-3.5 text-red-600" />
+                    <div>
+                      <div className="text-red-900">Kunci Akun (Suspend)</div>
+                      <div className="text-[10px] text-red-600/70">Mencegah user untuk login atau mengakses sistem</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+              
               <p className="text-[10px] text-slate-500 mt-2">
                 * User harus memiliki minimal 1 role
               </p>

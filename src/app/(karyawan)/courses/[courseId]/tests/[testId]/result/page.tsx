@@ -2,28 +2,17 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import {
-  Trophy,
-  XCircle,
   ArrowLeft,
-  RefreshCcw,
-  CheckCircle2,
-  ChevronRight,
-  Clock,
+  CheckCircle,
   Target,
+  Timer,
   CalendarDays,
-  BookOpen,
-  AlertTriangle,
-  Award,
-  Flame,
-  Medal,
+  Trophy,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
 import Link from "next/link";
 import { getTestAttemptDetail } from "@/actions/test";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
 
 export default async function TestResultPage({
   params,
@@ -56,6 +45,19 @@ export default async function TestResultPage({
     where: { userId: session.user.id, testId: attempt.testId },
   });
 
+  // PERFECT LOGIC: Get BEST (highest) score from all attempts
+  const allAttempts = await db.testAttempt.findMany({
+    where: { userId: session.user.id, testId: attempt.testId },
+    select: { score: true, passed: true },
+    orderBy: { score: 'desc' }
+  });
+  
+  const bestAttempt = allAttempts[0];
+  const bestScore = bestAttempt ? Math.round(bestAttempt.score ?? 0) : score;
+  const hasBestScore = allAttempts.length > 1; // Show best score only if multiple attempts
+  const isCurrentBest = score === bestScore;
+  const hasPassedBefore = allAttempts.some(a => a.passed);
+
   const enrollment = await db.enrollment.findUnique({
     where: { userId_courseId: { userId: session.user.id, courseId: params.courseId } },
     select: { maxPostTestAttempts: true, postTestAttempts: true, hasCheatedPostTest: true }
@@ -67,295 +69,304 @@ export default async function TestResultPage({
     : Infinity;
   const canTryAgain = effectiveMaxAttempts === 0 || remainingAttempts > 0;
 
+  // Determine status color theme
+  let statusColor = "#f59e0b"; // fail
+  let statusText = "text-[#f59e0b]";
+  let statusBg = "bg-[#f59e0b]";
+  let statusBorder = "border-[#f59e0b]";
+  
+  if (isCheated) {
+    statusColor = "#ef4444";
+    statusText = "text-[#ef4444]";
+    statusBg = "bg-[#ef4444]";
+    statusBorder = "border-[#ef4444]";
+  } else if (isPassed) {
+    statusColor = "#10b981";
+    statusText = "text-[#10b981]";
+    statusBg = "bg-[#10b981]";
+    statusBorder = "border-[#10b981]";
+  }
+
+  // Time calculation
+  const getDuration = () => {
+    if (!attempt.completedAt) return "—";
+    const start = new Date(attempt.createdAt).getTime();
+    const end = new Date(attempt.completedAt).getTime();
+    const diff = Math.max(0, end - start);
+    const diffMins = Math.floor(diff / 60000);
+    const diffSecs = Math.floor((diff % 60000) / 1000);
+    if (diffMins === 0 && diffSecs === 0) return "< 1s";
+    return diffMins > 0 ? `${diffMins}m ${diffSecs}s` : `${diffSecs}s`;
+  };
+
   return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-8">
+    <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans min-h-screen">
+      <main className="max-w-[1440px] mx-auto px-6 py-8">
         
-        {/* Breadcrumb */}
-        <div className="flex items-center justify-between gap-4">
-          <Link
+        {/* Premium Header */}
+        <div className="flex flex-col gap-2 mb-8">
+          <Link 
             href={`/courses/${params.courseId}`}
-            className="inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
+            className="flex items-center text-[#006970] hover:text-[#f7941d] text-sm font-semibold gap-1 transition-colors w-fit"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="w-4 h-4" />
             Kembali ke Kursus
           </Link>
-          
-          <div className="flex items-center gap-2">
-            <Badge variant={testType === 'PRE' ? "default" : "secondary"}>
-              {testType}-TEST
-            </Badge>
-            <Badge variant="outline">
-              Percobaan #{attemptCount}
-            </Badge>
-          </div>
-        </div>
-
-        {/* Result Card */}
-        <Card className={cn(
-          "overflow-hidden",
-          isCheated ? "border-l-4 border-l-red-600" :
-          isPassed ? "border-l-4 border-l-green-600" :
-          "border-l-4 border-l-yellow-600"
-        )}>
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row items-center gap-8">
-              
-              {/* Score Circle */}
-              <div className="relative shrink-0">
-                <div className="relative w-40 h-40">
-                  <svg className="w-full h-full -rotate-90">
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
-                      fill="none"
-                      className="stroke-slate-200"
-                      strokeWidth="12"
-                    />
-                    <circle
-                      cx="80"
-                      cy="80"
-                      r="70"
-                      fill="none"
-                      className={cn(
-                        isCheated ? "stroke-red-500" :
-                        isPassed ? "stroke-green-500" :
-                        "stroke-yellow-500"
-                      )}
-                      strokeWidth="12"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 70}`}
-                      strokeDashoffset={`${2 * Math.PI * 70 * (1 - score / 100)}`}
-                      style={{ transition: "stroke-dashoffset 1s ease" }}
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center">
-                    <span className="text-4xl font-bold">{score}%</span>
-                    <span className="text-xs text-slate-600">Skor Akhir</span>
-                  </div>
-                </div>
-                
-                <Badge className={cn(
-                  "mt-4 w-full justify-center",
-                  isCheated ? "bg-red-600" :
-                  isPassed ? "bg-green-600" :
-                  "bg-yellow-600"
-                )}>
-                  {isCheated ? (
-                    <><AlertTriangle className="h-4 w-4 mr-1" /> Diskualifikasi</>
-                  ) : isPassed ? (
-                    <><CheckCircle2 className="h-4 w-4 mr-1" /> Lulus</>
-                  ) : (
-                    <><XCircle className="h-4 w-4 mr-1" /> Gagal</>
-                  )}
-                </Badge>
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 text-center md:text-left space-y-4">
-                <h1 className="text-3xl font-bold text-slate-900">
-                  {isCheated ? "Kecurangan Terdeteksi!" : isPassed ? "Luar Biasa!" : "Jangan Menyerah!"}
-                </h1>
-                <p className="text-slate-600">
-                  {isCheated
-                    ? "Sistem merekam adanya anomali saat ujian berlangsung. Nilai Anda hangus."
-                    : isPassed
-                      ? `Anda berhasil melampaui batas minimum ${passingScore}%. Pemahaman kompetensi Anda terbukti solid.`
-                      : `Anda hanya terpaut ${passingScore - score} poin dari batas kelulusan. Pelajari kembali materi dan coba lagi.`}
-                </p>
-
-                <div className="flex flex-wrap gap-3 justify-center md:justify-start">
-                  {!isCheated && !isPassed && canTryAgain && (
-                    <Button asChild>
-                      <Link href={`/courses/${params.courseId}/tests/${params.testId}`}>
-                        <RefreshCcw className="h-4 w-4 mr-2" />
-                        Ulangi Ujian
-                      </Link>
-                    </Button>
-                  )}
-                  {isPassed && testType === "POST" && (
-                    <Button asChild>
-                      <Link href={`/courses/${params.courseId}`}>
-                        Lanjutkan Kursus
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      </Link>
-                    </Button>
-                  )}
-                  <Button asChild variant="outline">
-                    <a href="#review">
-                      Review Jawaban
-                    </a>
-                  </Button>
-                </div>
-              </div>
-
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {[
-            { icon: <Target />, label: "Benar", value: `${correctCount} soal`, color: "text-green-600" },
-            { icon: <Clock />, label: "Waktu", value: attempt.completedAt ? new Date(attempt.completedAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "—", color: "text-blue-600" },
-            { icon: <CalendarDays />, label: "Tanggal", value: new Date(attempt.createdAt).toLocaleDateString("id-ID", { day: "numeric", month: "short" }), color: "text-yellow-600" },
-            { icon: <Trophy />, label: "Percobaan", value: `Ke-${attemptCount}`, color: "text-purple-600" },
-          ].map((m, i) => (
-            <Card key={i}>
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className={cn("shrink-0", m.color)}>
-                  {m.icon}
-                </div>
-                <div>
-                  <p className="text-xs text-slate-600">{m.label}</p>
-                  <p className="text-lg font-bold text-slate-900">{m.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
-        {/* Answer Review */}
-        <Card id="review">
-          <CardContent className="p-8">
-            
-            <div className="flex items-center justify-between mb-8 pb-6 border-b">
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                  <BookOpen className="h-6 w-6" />
-                  Lembar Jawaban
-                </h2>
-                <p className="text-slate-600 mt-1">Pelajari kembali soal-soal di bawah ini</p>
-              </div>
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-4 mt-2">
+            <div>
+              <h1 className="text-3xl font-bold text-[#0b1c30] mb-2">Hasil Ujian: {attempt.test.title}</h1>
               <div className="flex gap-2">
-                <Badge className="bg-green-100 text-green-700 border-0">
-                  <CheckCircle2 className="h-3 w-3 mr-1" /> {correctCount} Tepat
-                </Badge>
-                <Badge className="bg-red-100 text-red-700 border-0">
-                  <XCircle className="h-3 w-3 mr-1" /> {wrongCount} Salah
-                </Badge>
-              </div>
-            </div>
-
-            <div className="space-y-6">
-              {attempt.test.questions.map((question: any, idx: number) => {
-                const userAnswer = attempt.answers.find((a: any) => a.questionId === question.id);
-                const isCorrect = userAnswer?.isCorrect ?? false;
-                const isUnanswered = !userAnswer;
-
-                return (
-                  <Card key={question.id} className={cn(
-                    "border-l-4",
-                    isCorrect ? "border-l-green-500" :
-                    isUnanswered ? "border-l-slate-300" :
-                    "border-l-red-500"
-                  )}>
-                    <CardContent className="p-6">
-                      
-                      {/* Question Header */}
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex items-center gap-3">
-                          <div className={cn(
-                            "h-8 w-8 rounded-full flex items-center justify-center font-semibold text-sm",
-                            isCorrect ? "bg-green-100 text-green-700" :
-                            isUnanswered ? "bg-slate-100 text-slate-600" :
-                            "bg-red-100 text-red-700"
-                          )}>
-                            {idx + 1}
-                          </div>
-                          <span className="text-sm font-medium text-slate-600">Pertanyaan</span>
-                        </div>
-                        {isCorrect ? (
-                          <Badge className="bg-green-100 text-green-700 border-0">
-                            <CheckCircle2 className="h-3 w-3 mr-1"/> Benar
-                          </Badge>
-                        ) : isUnanswered ? (
-                          <Badge variant="secondary">Kosong</Badge>
-                        ) : (
-                          <Badge className="bg-red-100 text-red-700 border-0">
-                            <XCircle className="h-3 w-3 mr-1"/> Salah
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Question Text */}
-                      <p className="text-base font-medium text-slate-900 mb-6">
-                        {question.text}
-                      </p>
-
-                      {/* Options */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {question.options.map((option: any, optIdx: number) => {
-                          const label = String.fromCharCode(65 + optIdx);
-                          const isUserSelected = userAnswer?.selectedOptionId === option.id;
-                          const isOptionCorrect = option.isCorrect;
-
-                          return (
-                            <div key={option.id} className={cn(
-                              "flex items-center gap-3 p-3 rounded-lg border",
-                              isUserSelected && isCorrect ? "bg-green-50 border-green-200" :
-                              isUserSelected && !isCorrect ? "bg-red-50 border-red-200" :
-                              !isUserSelected && isOptionCorrect ? "bg-green-50 border-green-200 border-dashed" :
-                              "bg-slate-50 border-slate-200"
-                            )}>
-                              <div className={cn(
-                                "h-8 w-8 flex items-center justify-center rounded-lg font-semibold text-sm shrink-0",
-                                isUserSelected && isCorrect ? "bg-green-500 text-white" :
-                                isUserSelected && !isCorrect ? "bg-red-500 text-white" :
-                                !isUserSelected && isOptionCorrect ? "bg-green-100 text-green-700" :
-                                "bg-slate-200 text-slate-600"
-                              )}>
-                                {label}
-                              </div>
-                              <span className="flex-1 text-sm">
-                                {option.text}
-                              </span>
-                              {isUserSelected && isCorrect && <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0"/>}
-                              {isUserSelected && !isCorrect && <XCircle className="h-4 w-4 text-red-600 shrink-0"/>}
-                              {!isUserSelected && isOptionCorrect && <Badge variant="outline" className="text-xs shrink-0">Kunci</Badge>}
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-
-            {/* Bottom CTA */}
-            <div className="mt-8 pt-6 border-t flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div>
-                <p className="font-semibold text-slate-900">
-                  {isPassed ? "Lanjutkan Perjalanan Belajar" : "Siap Mencoba Lagi?"}
-                </p>
-                <p className="text-sm text-slate-600">
-                  {isPassed
-                    ? "Kembali ke kursus dan selesaikan semua materi"
-                    : "Tinjau materi dan jadwalkan percobaan berikutnya"}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button asChild variant="outline">
-                  <Link href={`/courses/${params.courseId}`}>
-                    <BookOpen className="h-4 w-4 mr-2" />
-                    Kursus
-                  </Link>
-                </Button>
-                {!isPassed && !isCheated && canTryAgain && (
-                  <Button asChild>
-                    <Link href={`/courses/${params.courseId}/tests/${params.testId}`}>
-                      <RefreshCcw className="h-4 w-4 mr-2" />
-                      Coba Lagi
-                    </Link>
-                  </Button>
+                <span className="bg-[#dce9ff] text-[#0b1c30] text-xs font-semibold px-2 py-1 rounded-sm border border-[#dac2af]">
+                  {testType}-TEST
+                </span>
+                <span className="bg-[#dce9ff] text-[#0b1c30] text-xs font-semibold px-2 py-1 rounded-sm border border-[#dac2af]">
+                  Percobaan #{attemptCount}
+                </span>
+                {hasBestScore && isCurrentBest && (
+                  <span className="bg-gradient-to-r from-[#f7941d] to-[#ff6b35] text-white text-xs font-bold px-2 py-1 rounded-sm shadow-sm flex items-center gap-1">
+                    <Trophy className="w-3 h-3" />
+                    BEST SCORE
+                  </span>
                 )}
               </div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+        </div>
+
+        {/* Dynamic Result Card */}
+        <div className={`bg-[#ffffff] rounded-xl shadow-sm border border-[#dac2af] border-l-4 ${statusBorder} p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row gap-8 items-center`}>
+          
+          {/* Score Visualization */}
+          <div className="relative w-48 h-48 flex-shrink-0">
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+              <circle className="text-[#dce9ff]" cx="50" cy="50" fill="none" r="45" stroke="currentColor" strokeWidth="10"></circle>
+              <circle 
+                className={statusText} 
+                cx="50" cy="50" fill="none" r="45" 
+                stroke="currentColor" 
+                strokeDasharray="282.7" 
+                strokeDashoffset={282.7 * (1 - score / 100)} 
+                strokeWidth="10"
+                style={{ transition: "stroke-dashoffset 1.5s ease-out" }}
+              ></circle>
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-xs font-semibold text-[#544435] uppercase tracking-wider mb-1">
+                {hasBestScore && !isCurrentBest ? "Skor Ini" : "Skor Akhir"}
+              </span>
+              <span className="text-4xl font-bold text-[#0b1c30]">{score}%</span>
+              {hasBestScore && !isCurrentBest && (
+                <div className="mt-2 text-center">
+                  <span className="text-[10px] font-semibold text-[#544435] uppercase tracking-wider block">Best Score</span>
+                  <span className="text-2xl font-bold text-[#f7941d]">{bestScore}%</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Action-Oriented Content */}
+          <div className="flex-grow flex flex-col items-start gap-6">
+            <div>
+              <h2 className={`text-2xl font-bold ${statusText} mb-2 flex items-center gap-2`}>
+                {isCheated ? (
+                  <><XCircle className="w-6 h-6 fill-current text-white" /> Kecurangan Terdeteksi</>
+                ) : isPassed ? (
+                  <><CheckCircle className="w-6 h-6 fill-current text-white" /> Luar Biasa!</>
+                ) : (
+                  <><XCircle className="w-6 h-6 fill-current text-white" /> Jangan Menyerah!</>
+                )}
+              </h2>
+              <p className="text-base text-[#544435] max-w-2xl">
+                {isCheated
+                  ? "Sistem merekam adanya anomali saat ujian berlangsung. Nilai Anda hangus."
+                  : isPassed
+                    ? hasBestScore && !isCurrentBest
+                      ? `Nilai Anda kali ini ${score}%, namun nilai terbaik Anda tetap ${bestScore}%. Sistem akan menggunakan nilai tertinggi sebagai hasil akhir.`
+                      : `Selamat, Anda telah lulus ujian ini dengan nilai yang memuaskan. ${canTryAgain ? "Anda masih bisa mencoba lagi untuk meningkatkan nilai." : ""}`
+                    : `Anda belum mencapai batas kelulusan. ${canTryAgain ? "Pelajari kembali materi dan coba lagi." : "Anda telah menggunakan semua kesempatan."}`}
+              </p>
+              <p className="text-xs font-semibold text-[#544435] mt-3">
+                Batas kelulusan: {passingScore}% • 
+                {hasBestScore && ` Nilai Terbaik: ${bestScore}% • `}
+                Sisa Percobaan: {effectiveMaxAttempts === 0 ? "Unlimited" : remainingAttempts}
+              </p>
+            </div>
+            
+            <div className="flex flex-wrap gap-3 mt-auto">
+              {/* PERFECT LOGIC: Allow retry if attempts left, regardless of pass/fail status */}
+              {!isCheated && canTryAgain ? (
+                <>
+                  <Link href={`/courses/${params.courseId}/tests/${params.testId}`}>
+                    <button className="bg-[#f7941d] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-opacity">
+                      {isPassed ? "Tingkatkan Nilai" : "Ulangi Ujian"}
+                    </button>
+                  </Link>
+                  <Link href={`/courses/${params.courseId}`}>
+                    <button className="bg-transparent text-[#006970] border border-[#006970] text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#eff4ff] transition-colors">
+                      Kembali ke Kursus
+                    </button>
+                  </Link>
+                </>
+              ) : (
+                <Link href={`/courses/${params.courseId}`}>
+                  <button className="bg-[#f7941d] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-opacity">
+                    {isPassed && testType === "POST" ? "Lanjutkan Kursus" : "Kembali ke Kursus"}
+                  </button>
+                </Link>
+              )}
+              <a href="#review">
+                <button className="bg-transparent text-[#006970] border border-[#006970] text-sm font-semibold px-6 py-3 rounded-lg hover:bg-[#eff4ff] transition-colors">
+                  Review Jawaban
+                </button>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+          <div className="bg-[#ffffff] rounded-lg shadow-sm border border-[#dac2af] p-6 flex items-center gap-6">
+            <div className="w-12 h-12 rounded-full bg-[#e5eeff] flex items-center justify-center text-[#006970] flex-shrink-0">
+              <Target className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#544435] uppercase tracking-wide">Jawaban Benar</p>
+              <p className="text-xl font-bold text-[#0b1c30]">{correctCount} / {totalQ}</p>
+            </div>
+          </div>
+          
+          <div className="bg-[#ffffff] rounded-lg shadow-sm border border-[#dac2af] p-6 flex items-center gap-6">
+            <div className="w-12 h-12 rounded-full bg-[#e5eeff] flex items-center justify-center text-[#006970] flex-shrink-0">
+              <Timer className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#544435] uppercase tracking-wide">Waktu Pengerjaan</p>
+              <p className="text-xl font-bold text-[#0b1c30]">{getDuration()}</p>
+            </div>
+          </div>
+
+          <div className="bg-[#ffffff] rounded-lg shadow-sm border border-[#dac2af] p-6 flex items-center gap-6">
+            <div className="w-12 h-12 rounded-full bg-[#e5eeff] flex items-center justify-center text-[#006970] flex-shrink-0">
+              <CalendarDays className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#544435] uppercase tracking-wide">Tanggal Selesai</p>
+              <p className="text-xl font-bold text-[#0b1c30]">
+                {attempt.completedAt ? new Date(attempt.completedAt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" }) : "—"}
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-[#ffffff] rounded-lg shadow-sm border border-[#dac2af] p-6 flex items-center gap-6">
+            <div className="w-12 h-12 rounded-full bg-[#e5eeff] flex items-center justify-center text-[#006970] flex-shrink-0">
+              <Trophy className="w-6 h-6" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#544435] uppercase tracking-wide">Percobaan</p>
+              <p className="text-xl font-bold text-[#0b1c30]">{attemptCount} / {effectiveMaxAttempts === 0 ? "∞" : effectiveMaxAttempts}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Detailed Answer Review Section */}
+        <div id="review" className="bg-[#ffffff] rounded-xl shadow-sm border border-[#dac2af] overflow-hidden">
+          <div className="px-8 py-6 border-b border-[#dac2af] bg-[#eff4ff] flex justify-between items-center">
+            <h3 className="text-xl font-bold text-[#0b1c30]">Lembar Jawaban</h3>
+            <span className="text-xs font-semibold text-[#544435] bg-white px-3 py-1 rounded-full border border-[#dac2af]">
+              Tampilkan Semua
+            </span>
+          </div>
+          
+          <div className="p-8 flex flex-col gap-6 max-h-[800px] overflow-y-auto">
+            {attempt.test.questions.map((question: any, idx: number) => {
+              const userAnswer = attempt.answers.find((a: any) => a.questionId === question.id);
+              const isCorrect = userAnswer?.isCorrect ?? false;
+              const isUnanswered = !userAnswer;
+
+              return (
+                <div key={question.id} className="border border-[#dac2af] rounded-lg p-6 relative pl-14 bg-white">
+                  <div className={`absolute left-5 top-6 ${isCorrect ? "text-[#10b981]" : "text-[#ef4444]"}`}>
+                    {isCorrect ? (
+                      <CheckCircle2 className="w-6 h-6 fill-current text-white" />
+                    ) : (
+                      <XCircle className="w-6 h-6 fill-current text-white" />
+                    )}
+                  </div>
+                  
+                  <div className="mb-4">
+                    <span className="text-xs font-semibold text-[#544435]">Soal {idx + 1}</span>
+                    <p className="text-base font-medium text-[#0b1c30] mt-1">
+                      {question.text}
+                    </p>
+                  </div>
+                  
+                  <div className="flex flex-col gap-3">
+                    {question.options.map((option: any, optIdx: number) => {
+                      const label = String.fromCharCode(65 + optIdx);
+                      const isUserSelected = userAnswer?.selectedOptionId === option.id;
+                      const isOptionCorrect = option.isCorrect;
+
+                      // Styles based on states
+                      if (isUserSelected && isCorrect) {
+                        return (
+                          <div key={option.id} className="flex items-start gap-2 bg-[#10b981]/10 p-3 rounded-md border border-[#10b981]/30">
+                            <span className="text-sm font-semibold text-[#10b981] mt-0.5">{label}.</span>
+                            <div>
+                              <p className="text-sm text-[#0b1c30]">{option.text}</p>
+                              <span className="text-xs font-semibold text-[#10b981] bg-white px-2 py-0.5 rounded-sm inline-block mt-1 border border-[#10b981]/20">
+                                Jawaban Anda - Benar
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (isUserSelected && !isCorrect) {
+                        return (
+                          <div key={option.id} className="flex items-start gap-2 bg-[#ef4444]/10 p-3 rounded-md border border-[#ef4444]/30">
+                            <span className="text-sm font-semibold text-[#ef4444] mt-0.5">{label}.</span>
+                            <div>
+                              <p className="text-sm text-[#0b1c30]">{option.text}</p>
+                              <span className="text-xs font-semibold text-[#ef4444] bg-white px-2 py-0.5 rounded-sm inline-block mt-1 border border-[#ef4444]/20">
+                                Jawaban Anda - Salah
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      if (!isUserSelected && isOptionCorrect) {
+                        return (
+                          <div key={option.id} className="flex items-start gap-2 bg-[#e5eeff] p-3 rounded-md border border-[#dac2af]">
+                            <span className="text-sm font-semibold text-[#544435] mt-0.5">{label}.</span>
+                            <div>
+                              <p className="text-sm text-[#0b1c30]">{option.text}</p>
+                              <span className="text-xs font-semibold text-[#544435] bg-white px-2 py-0.5 rounded-sm inline-block mt-1 border border-[#dac2af]">
+                                Kunci Jawaban
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      // Default Option
+                      return (
+                        <div key={option.id} className="flex items-start gap-2 bg-transparent p-3 rounded-md border border-transparent">
+                          <span className="text-sm font-semibold text-[#544435] mt-0.5">{label}.</span>
+                          <div>
+                            <p className="text-sm text-[#0b1c30]">{option.text}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+      </main>
     </div>
   );
 }

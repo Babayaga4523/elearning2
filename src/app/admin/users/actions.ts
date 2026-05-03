@@ -49,6 +49,7 @@ export async function updateUser(userId: string, data: {
   password?: string;
   role?: UserRole;
   roles?: UserRole[];
+  isLocked?: boolean;
 }) {
   try {
     const result = await requireAdmin();
@@ -91,6 +92,11 @@ export async function updateUser(userId: string, data: {
       updateData.role = data.roles[0];
       // Reset activeRole so user must select role on next login
       updateData.activeRole = null;
+    }
+
+    if (data.isLocked !== undefined) {
+      updateData.lockedAt = data.isLocked ? new Date() : null;
+      delete updateData.isLocked;
     }
 
     await db.user.update({

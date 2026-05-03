@@ -1,23 +1,47 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../src/generated/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
   const adminPassword = await bcrypt.hash("admin123", 10);
+  const superAdminPassword = await bcrypt.hash("superadmin123", 10);
   const userPassword = await bcrypt.hash("user123", 10);
+
+  // Create Super Admin
+  const superAdmin = await prisma.user.upsert({
+    where: { email: "superadmin@bnif.co.id" },
+    update: {
+      department: "IT Infrastructure",
+      roles: ["SUPER_ADMIN", "ADMIN"],
+      activeRole: "SUPER_ADMIN",
+    },
+    create: {
+      email: "superadmin@bnif.co.id",
+      name: "Super Admin",
+      password: superAdminPassword,
+      role: "SUPER_ADMIN",
+      roles: ["SUPER_ADMIN", "ADMIN"],
+      activeRole: "SUPER_ADMIN",
+      department: "IT Infrastructure",
+    },
+  });
 
   // Create Admin
   const admin = await prisma.user.upsert({
     where: { email: "admin@bnif.co.id" },
     update: {
       department: "Human Resources",
+      roles: ["ADMIN"],
+      activeRole: "ADMIN",
     },
     create: {
       email: "admin@bnif.co.id",
       name: "Admin BNI Finance",
       password: adminPassword,
       role: "ADMIN",
+      roles: ["ADMIN"],
+      activeRole: "ADMIN",
       department: "Human Resources",
     },
   });

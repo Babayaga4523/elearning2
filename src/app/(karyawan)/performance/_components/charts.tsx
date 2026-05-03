@@ -3,7 +3,7 @@
 import {
   AreaChart, Area,
   BarChart, Bar,
-  XAxis, YAxis, CartesianGrid,
+  XAxis, YAxis, CartesianGrid, LabelList,
 } from "recharts";
 import {
   ChartContainer,
@@ -92,8 +92,12 @@ export function CompareBarChart({ barData, config }: { barData: any[], config: a
         />
         <ChartTooltip content={<ChartTooltipContent />} />
         <ChartLegend content={<ChartLegendContent />} />
-        <Bar dataKey="preScore" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={20} />
-        <Bar dataKey="postScore" fill="#0F1C3F" radius={[4, 4, 0, 0]} maxBarSize={20} />
+        <Bar dataKey="preScore" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28}>
+          <LabelList dataKey="preScore" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#64748b' }} formatter={(v: number) => v > 0 ? `${v}` : ''} />
+        </Bar>
+        <Bar dataKey="postScore" fill="#0F1C3F" radius={[4, 4, 0, 0]} maxBarSize={28}>
+          <LabelList dataKey="postScore" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#0F1C3F' }} formatter={(v: number) => v > 0 ? `${v}` : ''} />
+        </Bar>
       </BarChart>
     </ChartContainer>
   );

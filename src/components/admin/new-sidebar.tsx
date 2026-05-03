@@ -16,6 +16,7 @@ import {
   ChevronRight,
   Upload,
   ChevronDown,
+  Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -30,78 +31,101 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { usePermission } from "@/hooks/usePermission";
 
 interface MenuItem {
   label: string;
   icon: React.ComponentType<{ className?: string }>;
   href?: string;
   badge?: string;
-  subItems?: { label: string; href: string }[];
+  subItems?: { label: string; href: string; permission?: string }[];
+  // Permission required to see this menu item (if any)
+  permission?: string;
+  // Show only for SUPER_ADMIN
+  superAdminOnly?: boolean;
 }
 
+// ─── Menu items with RBAC permission mapping ────────────────────
 const menuItems: MenuItem[] = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/admin",
+    // Dashboard is always visible to all admin roles
   },
   {
     label: "Manajemen Kursus",
     icon: BookOpen,
     href: "/admin/courses",
+    permission: "manage_courses",
   },
   {
     label: "Enrollment",
     icon: GraduationCap,
     href: "/admin/enrollments",
+    permission: "manage_courses",
   },
   {
     label: "Karyawan",
     icon: Users,
     href: "/admin/users",
+    permission: "manage_users",
   },
   {
     label: "Import Data",
     icon: Upload,
     href: "/admin/import",
+    permission: "manage_users",
     subItems: [
-      { label: "Import Soal", href: "/admin/import/questions" },
-      { label: "Import Karyawan", href: "/admin/import/users" },
-      { label: "Import Enrollment", href: "/admin/import/enrollments" },
+      { label: "Import Soal", href: "/admin/import/questions", permission: "manage_courses" },
+      { label: "Import Karyawan", href: "/admin/import/users", permission: "manage_users" },
+      { label: "Import Enrollment", href: "/admin/import/enrollments", permission: "manage_courses" },
     ],
   },
   {
     label: "Analytics",
     icon: FileBarChart,
+    permission: "view_course_reports",
     subItems: [
-      { label: "Overview", href: "/admin/analytics" },
-      { label: "Progress Tracking", href: "/admin/analytics/progress" },
+      { label: "Overview", href: "/admin/analytics", permission: "view_course_reports" },
+      { label: "Progress Tracking", href: "/admin/analytics/progress", permission: "view_course_reports" },
     ],
   },
   {
     label: "Kalender",
     icon: Calendar,
     href: "/admin/calendar",
+    // Calendar is visible to all admin roles
   },
   {
     label: "Scheduler",
     icon: Clock,
     href: "/admin/scheduler",
+    permission: "manage_settings",
   },
   {
     label: "Log Sistem",
     icon: History,
     href: "/admin/logs",
+    permission: "view_all_reports",
   },
   {
     label: "Akun Terkunci",
     icon: Lock,
     href: "/admin/locked-accounts",
+    permission: "manage_users",
+  },
+  {
+    label: "Kelola Permission",
+    icon: Shield,
+    href: "/admin/roles",
+    superAdminOnly: true,
   },
   {
     label: "Pengaturan",
     icon: Settings,
     href: "/admin/settings",
+    permission: "manage_settings",
   },
 ];
 
@@ -113,6 +137,7 @@ interface NewSidebarProps {
 export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
+  const { hasPermission, isSuperAdmin, isLoading: permLoading } = usePermission();
 
   const toggleExpand = (label: string) => {
     setExpandedItems((prev) =>
@@ -121,6 +146,32 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
         : [...prev, label]
     );
   };
+
+  // ─── Filter menu items based on user permissions ──────────────
+  const visibleMenuItems = React.useMemo(() => {
+    return menuItems.filter((item) => {
+      // Super Admin Only items
+      if (item.superAdminOnly) {
+        return isSuperAdmin;
+      }
+      // No permission required — visible to all admin roles
+      if (!item.permission) {
+        return true;
+      }
+      // Check if user has the required permission
+      return hasPermission(item.permission);
+    }).map((item) => {
+      // Also filter sub-items by permission
+      if (item.subItems) {
+        const filteredSubItems = item.subItems.filter((sub) => {
+          if (!sub.permission) return true;
+          return hasPermission(sub.permission);
+        });
+        return { ...item, subItems: filteredSubItems };
+      }
+      return item;
+    });
+  }, [hasPermission, isSuperAdmin]);
 
   return (
     <div className="flex h-full flex-col bg-[#0F1C3F] border-r border-[#1A3060] shadow-xl">
@@ -181,7 +232,7 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
       <ScrollArea className="flex-1 px-3 py-3 dark-scrollbar">
         <TooltipProvider delayDuration={0}>
           <nav className="space-y-1">
-            {menuItems.map((item) => {
+            {visibleMenuItems.map((item) => {
               const hasSubItems = item.subItems && item.subItems.length > 0;
               const isExpanded = expandedItems.includes(item.label);
               const isActive = item.href ? pathname === item.href : false;

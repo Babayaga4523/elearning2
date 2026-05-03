@@ -4,6 +4,16 @@ import { sendEmailWithAttachment } from "@/lib/email";
 import { batchCreateEnrollments } from "@/lib/enrollment";
 import ExcelJS from "exceljs";
 import { toZonedTime } from "date-fns-tz";
+import { 
+  createWorkbook, 
+  styleTitle, 
+  styleSubtitle, 
+  styleHeaderRow, 
+  applyDataRow, 
+  applyStatusCell,
+  finalizeSheet,
+  BRAND 
+} from "@/lib/excel-template";
 
 // CRITICAL FIX #1: Use WIB timezone explicitly
 const TIMEZONE = "Asia/Jakarta";
@@ -267,39 +277,65 @@ export async function runProactiveReminders() {
  */
 
 async function generateDeadlineReport(enrollments: any[]) {
-  const workbook = new ExcelJS.Workbook();
+  const workbook = createWorkbook();
   const sheet = workbook.addWorksheet("Laporan Deadline");
 
+  // Define columns
   sheet.columns = [
-    { header: "NO", key: "no", width: 5 },
-    { header: "NIP", key: "nip", width: 15 },
+    { header: "NO", key: "no", width: 6 },
+    { header: "NIP", key: "nip", width: 16 },
     { header: "NAMA KARYAWAN", key: "name", width: 35 },
-    { header: "EMAIL", key: "email", width: 30 },
-    { header: "STATUS", key: "status", width: 15 },
-    { header: "DEADLINE", key: "deadline", width: 20 },
-    { header: "TANGGAL DAFTAR", key: "createdAt", width: 20 },
+    { header: "EMAIL", key: "email", width: 32 },
+    { header: "STATUS", key: "status", width: 16 },
+    { header: "DEADLINE", key: "deadline", width: 18 },
+    { header: "TANGGAL DAFTAR", key: "createdAt", width: 18 },
   ];
 
-  // Header Styling
-  const headerRow = sheet.getRow(1);
-  headerRow.font = { bold: true, color: { argb: "FFFFFFFF" } };
-  headerRow.fill = {
-    type: "pattern",
-    pattern: "solid",
-    fgColor: { argb: "FF0F1C3F" },
-  };
+  // Title row
+  styleTitle(sheet, 1, "Laporan Karyawan Melewati Deadline", 7);
+  
+  // Subtitle row
+  styleSubtitle(sheet, 2, 7, `Total: ${enrollments.length} karyawan`);
 
+  // Header row
+  styleHeaderRow(sheet, 3);
+
+  // Data rows
   enrollments.forEach((e, idx) => {
-    sheet.addRow({
+    const row = sheet.addRow({
       no: idx + 1,
-      nip: e.user.nip,
+      nip: e.user.nip || "-",
       name: e.user.name,
       email: e.user.email,
       status: e.status === "COMPLETED" ? "SELESAI" : "PROSES",
       deadline: e.deadline ? new Date(e.deadline).toLocaleDateString("id-ID") : "-",
       createdAt: new Date(e.createdAt).toLocaleDateString("id-ID"),
     });
+    
+    applyDataRow(row, idx);
+    
+    // Center align for specific columns
+    row.getCell("no").alignment = { horizontal: "center", vertical: "middle" };
+    row.getCell("nip").alignment = { horizontal: "center", vertical: "middle" };
+    row.getCell("deadline").alignment = { horizontal: "center", vertical: "middle" };
+    row.getCell("createdAt").alignment = { horizontal: "center", vertical: "middle" };
+    
+    // Apply status styling
+    const statusCell = row.getCell("status");
+    if (e.status === "COMPLETED") {
+      statusCell.value = "Selesai";
+      statusCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_COMPLETED_FG } };
+      statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BRAND.STATUS_COMPLETED_BG } };
+    } else {
+      statusCell.value = "Proses";
+      statusCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_PROGRESS_FG } };
+      statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BRAND.STATUS_PROGRESS_BG } };
+    }
+    statusCell.alignment = { horizontal: "center", vertical: "middle" };
   });
+
+  // Finalize sheet
+  finalizeSheet(sheet, 7, 3);
 
   return await workbook.xlsx.writeBuffer() as unknown as Buffer;
 }
@@ -454,14 +490,90 @@ export async function runDeadlineMonitoring() {
 }
 
 /**
+ * ─── ORPHANED TEST SESSIONS CLEANUP ─────────────────────────────────────────
+ * Cleans up sessions where the user closed the tab without submitting
+ */
+export async function cleanupOrphanedTestSessions() {
+  const start = Date.now();
+  
+  // Find ongoing sessions
+  const ongoingSessions = await db.testSession.findMany({
+    where: { status: "ONGOING" },
+  });
+
+  let forceSubmitted = 0;
+
+  for (const session of ongoingSessions) {
+    const test = await db.test.findUnique({
+      where: { id: session.testId },
+      select: { duration: true }
+    });
+    
+    if (!test) continue;
+
+    const durationMs = test.duration * 60 * 1000;
+    // Add 5 minutes buffer
+    const bufferMs = 5 * 60 * 1000;
+    const expiryTime = new Date(session.startedAt.getTime() + durationMs + bufferMs);
+
+    if (new Date() > expiryTime) {
+      // Force submit
+      try {
+        await db.$transaction(async (tx) => {
+          await tx.testSession.update({
+            where: { id: session.id },
+            data: { 
+              status: "FORCE_SUBMITTED",
+              submittedAt: new Date(),
+              forceSubmittedAt: new Date()
+            }
+          });
+
+          // Attempt to find answers to calculate score, but since they closed the tab
+          // we might just have whatever they managed to auto-save.
+          // For simplicity, we just mark the attempt as failed with whatever score they had
+          // Since the prompt asks to "otomatis jalankan force-submit (status FORCE_SUBMITTED, nilai 0)"
+          
+          await tx.testAttempt.create({
+            data: {
+              userId: session.userId,
+              testId: session.testId,
+              score: 0,
+              passed: false,
+              answers: {},
+            }
+          });
+
+          // Mark enrollment if it was a post-test
+          // Note: This is a simplified cleanup. In a full system, you'd calculate exact score from TestAnswer table if any.
+        });
+        forceSubmitted++;
+      } catch (err) {
+        console.error("Failed to cleanup session", session.id, err);
+      }
+    }
+  }
+
+  if (forceSubmitted > 0) {
+    await db.schedulerLog.create({
+      data: {
+        jobName: "orphan-session-cleanup",
+        status: "SUCCESS",
+        message: `Cleaned up ${forceSubmitted} orphaned test sessions.`,
+        duration: Date.now() - start,
+      }
+    });
+  }
+
+  return { cleaned: forceSubmitted };
+}
+
+/**
  * ─── DEPARTMENT REPORTS ENGINE ──────────────────────────────────────────────
  */
 
 export async function generateDepartmentExcel(departmentName: string) {
-  const workbook = new ExcelJS.Workbook();
-  workbook.creator = "BNI Finance E-Learning System";
-  workbook.lastModifiedBy = "Automated Scheduler";
-  workbook.created = new Date();
+  const workbook = createWorkbook();
 
   // Ambil semua aturan (rules) untuk departemen ini guna menentukan kursus wajib (template)
   const rules = await db.autoEnrollmentRule.findMany({
@@ -485,45 +597,49 @@ export async function generateDepartmentExcel(departmentName: string) {
   // ═══════════════════════════════════════════════════════════════════════════
   const summarySheet = workbook.addWorksheet("📊 Ringkasan");
   
-  // Header dengan styling
-  summarySheet.mergeCells('A1:D1');
-  const titleCell = summarySheet.getCell('A1');
-  titleCell.value = `LAPORAN PROGRES PEMBELAJARAN - ${departmentName.toUpperCase()}`;
-  titleCell.font = { bold: true, size: 16, color: { argb: 'FFFFFFFF' } };
-  titleCell.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF0F1C3F' }
-  };
-  titleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-  summarySheet.getRow(1).height = 30;
+  // Title
+  styleTitle(summarySheet, 1, `Laporan Progres Pembelajaran - ${departmentName}`, 6);
+  
+  // Subtitle
+  const uniqueUsers = new Set(enrollments.map((e: any) => e.userId)).size;
+  styleSubtitle(summarySheet, 2, 6, `${rules.length} Kursus Wajib • ${uniqueUsers} Karyawan`);
 
-  // Info Laporan
+  // Info section
   summarySheet.addRow([]);
-  summarySheet.addRow(['Tanggal Generate:', new Date().toLocaleString("id-ID", { dateStyle: 'full', timeStyle: 'short' })]);
   summarySheet.addRow(['Departemen:', departmentName]);
   summarySheet.addRow(['Total Kursus Wajib:', rules.length]);
-  summarySheet.addRow(['Total Karyawan Terdaftar:', new Set(enrollments.map((e: any) => e.userId)).size]);
+  summarySheet.addRow(['Total Karyawan Terdaftar:', uniqueUsers]);
   summarySheet.addRow([]);
 
   // Styling info rows
-  for (let i = 3; i <= 6; i++) {
-    summarySheet.getCell(`A${i}`).font = { bold: true, color: { argb: 'FF0F1C3F' } };
-    summarySheet.getCell(`B${i}`).font = { color: { argb: 'FF64748B' } };
+  for (let i = 4; i <= 6; i++) {
+    const row = summarySheet.getRow(i);
+    row.getCell(1).font = { bold: true, size: 10, color: { argb: BRAND.NAVY } };
+    row.getCell(2).font = { size: 10, color: { argb: "FF64748B" } };
   }
 
-  // Statistik per Kursus
-  summarySheet.addRow(['STATISTIK PER KURSUS']).font = { bold: true, size: 12, color: { argb: 'FF0F1C3F' } };
+  // Statistik per Kursus header
+  summarySheet.addRow([]);
+  const statsLabelRow = summarySheet.addRow(['STATISTIK PER KURSUS']);
+  summarySheet.mergeCells(statsLabelRow.number, 1, statsLabelRow.number, 6);
+  const statsLabelCell = summarySheet.getCell(statsLabelRow.number, 1);
+  statsLabelCell.font = { bold: true, size: 12, color: { argb: BRAND.NAVY } };
+  statsLabelCell.alignment = { horizontal: "left", vertical: "middle" };
+  
   summarySheet.addRow([]);
   
-  const statsHeaderRow = summarySheet.addRow(['No', 'Nama Kursus', 'Total Terdaftar', 'Selesai', 'Dalam Proses', '% Completion']);
-  statsHeaderRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-  statsHeaderRow.fill = {
-    type: 'pattern',
-    pattern: 'solid',
-    fgColor: { argb: 'FF0F1C3F' }
-  };
-  statsHeaderRow.alignment = { vertical: 'middle', horizontal: 'center' };
+  // Define columns for stats table
+  summarySheet.columns = [
+    { header: 'No', key: 'no', width: 6 },
+    { header: 'Nama Kursus', key: 'courseName', width: 45 },
+    { header: 'Total Terdaftar', key: 'total', width: 16 },
+    { header: 'Selesai', key: 'completed', width: 12 },
+    { header: 'Dalam Proses', key: 'inProgress', width: 16 },
+    { header: '% Completion', key: 'completionRate', width: 16 },
+  ];
+  
+  // Stats header row
+  styleHeaderRow(summarySheet, 10);
 
   // Group enrollments by course
   const courseStats = new Map<string, { courseId: string, courseTitle: string, total: number, completed: number, inProgress: number }>();
@@ -548,37 +664,41 @@ export async function generateDepartmentExcel(departmentName: string) {
   let rowNum = 1;
   for (const [_, stats] of Array.from(courseStats)) {
     const completionRate = stats.total > 0 ? ((stats.completed / stats.total) * 100).toFixed(1) : '0.0';
-    const row = summarySheet.addRow([
-      rowNum++,
-      stats.courseTitle,
-      stats.total,
-      stats.completed,
-      stats.inProgress,
-      `${completionRate}%`
-    ]);
+    const row = summarySheet.addRow({
+      no: rowNum++,
+      courseName: stats.courseTitle,
+      total: stats.total,
+      completed: stats.completed,
+      inProgress: stats.inProgress,
+      completionRate: `${completionRate}%`
+    });
+    
+    applyDataRow(row, rowNum - 2);
+    
+    // Center align
+    row.getCell('no').alignment = { horizontal: 'center', vertical: 'middle' };
+    row.getCell('total').alignment = { horizontal: 'center', vertical: 'middle' };
+    row.getCell('completed').alignment = { horizontal: 'center', vertical: 'middle' };
+    row.getCell('inProgress').alignment = { horizontal: 'center', vertical: 'middle' };
     
     // Conditional formatting for completion rate
-    const rateCell = row.getCell(6);
+    const rateCell = row.getCell('completionRate');
+    rateCell.alignment = { horizontal: 'center', vertical: 'middle' };
     const rate = parseFloat(completionRate);
     if (rate >= 80) {
-      rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF10B981' } };
-      rateCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.STATUS_COMPLETED_BG } };
+      rateCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_COMPLETED_FG } };
     } else if (rate >= 50) {
-      rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF59E0B' } };
-      rateCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.STATUS_PENDING_BG } };
+      rateCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_PENDING_FG } };
     } else {
-      rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFEF4444' } };
-      rateCell.font = { bold: true, color: { argb: 'FFFFFFFF' } };
+      rateCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.STATUS_FAILED_BG } };
+      rateCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_FAILED_FG } };
     }
   }
 
-  // Set column widths
-  summarySheet.getColumn(1).width = 5;
-  summarySheet.getColumn(2).width = 40;
-  summarySheet.getColumn(3).width = 15;
-  summarySheet.getColumn(4).width = 12;
-  summarySheet.getColumn(5).width = 15;
-  summarySheet.getColumn(6).width = 15;
+  // Finalize summary sheet
+  finalizeSheet(summarySheet, 6, 10);
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 2-N: DETAIL PER KURSUS
@@ -592,113 +712,70 @@ export async function generateDepartmentExcel(departmentName: string) {
     
     const courseSheet = workbook.addWorksheet(sheetName);
     
-    // Header
-    courseSheet.mergeCells('A1:H1');
-    const courseTitleCell = courseSheet.getCell('A1');
-    courseTitleCell.value = stats.courseTitle.toUpperCase();
-    courseTitleCell.font = { bold: true, size: 14, color: { argb: 'FFFFFFFF' } };
-    courseTitleCell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF0F1C3F' }
-    };
-    courseTitleCell.alignment = { vertical: 'middle', horizontal: 'center' };
-    courseSheet.getRow(1).height = 25;
+    // Define columns
+    courseSheet.columns = [
+      { header: 'No', key: 'no', width: 6 },
+      { header: 'NIP', key: 'nip', width: 16 },
+      { header: 'Nama Karyawan', key: 'name', width: 32 },
+      { header: 'Email', key: 'email', width: 32 },
+      { header: 'Status', key: 'status', width: 16 },
+      { header: 'Progress (%)', key: 'progress', width: 14 },
+      { header: 'Deadline', key: 'deadline', width: 16 },
+      { header: 'Tanggal Selesai', key: 'completedAt', width: 18 },
+    ];
 
-    courseSheet.addRow([]);
-
-    // Table Header
-    const headerRow = courseSheet.addRow([
-      'No',
-      'NIP',
-      'Nama Karyawan',
-      'Email',
-      'Status',
-      'Progress (%)',
-      'Deadline',
-      'Tanggal Selesai'
-    ]);
+    // Title
+    styleTitle(courseSheet, 1, stats.courseTitle, 8);
     
-    headerRow.font = { bold: true, color: { argb: 'FFFFFFFF' } };
-    headerRow.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF1E40AF' }
-    };
-    headerRow.alignment = { vertical: 'middle', horizontal: 'center' };
-    headerRow.height = 20;
+    // Subtitle
+    styleSubtitle(courseSheet, 2, 8, `${courseEnrollments.length} Peserta`);
+
+    // Header row
+    styleHeaderRow(courseSheet, 3);
 
     // Data rows
     courseEnrollments.forEach((e, idx) => {
-      const statusText = e.status === 'COMPLETED' ? 'SELESAI' : 
-                        e.status === 'IN_PROGRESS' ? 'DALAM PROSES' : 
-                        e.status === 'CHEATING' ? 'CHEATING' : 'TIDAK AKTIF';
-      
-      // Calculate progress (0-100) - if completed, 100%, otherwise 0 for now
-      // TODO: Calculate actual progress from UserProgress if needed
       const progressValue = e.status === 'COMPLETED' ? 100 : 0;
       
-      const row = courseSheet.addRow([
-        idx + 1,
-        e.user.nip || '-',
-        e.user.name,
-        e.user.email,
-        statusText,
-        progressValue,
-        e.deadline ? new Date(e.deadline).toLocaleDateString('id-ID') : '-',
-        e.status === 'COMPLETED' && e.updatedAt ? new Date(e.updatedAt).toLocaleDateString('id-ID') : '-'
-      ]);
+      const row = courseSheet.addRow({
+        no: idx + 1,
+        nip: e.user.nip || '-',
+        name: e.user.name,
+        email: e.user.email,
+        status: '', // Will be styled separately
+        progress: progressValue,
+        deadline: e.deadline ? new Date(e.deadline).toLocaleDateString('id-ID') : '-',
+        completedAt: e.status === 'COMPLETED' && e.updatedAt ? new Date(e.updatedAt).toLocaleDateString('id-ID') : '-'
+      });
 
-      // Status color coding
-      const statusCell = row.getCell(5);
-      if (e.status === 'COMPLETED') {
-        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
-        statusCell.font = { bold: true, color: { argb: 'FF065F46' } };
-      } else if (e.status === 'CHEATING') {
-        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFECACA' } };
-        statusCell.font = { bold: true, color: { argb: 'FF991B1B' } };
-      } else {
-        statusCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
-        statusCell.font = { bold: true, color: { argb: 'FF92400E' } };
-      }
+      applyDataRow(row, idx);
+      
+      // Center align
+      row.getCell('no').alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell('nip').alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell('progress').alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell('deadline').alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell('completedAt').alignment = { horizontal: 'center', vertical: 'middle' };
+
+      // Status styling
+      applyStatusCell(row.getCell('status'), e.status);
 
       // Progress bar styling
-      const progressCell = row.getCell(6);
+      const progressCell = row.getCell('progress');
       if (progressValue >= 80) {
-        progressCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFD1FAE5' } };
-        progressCell.font = { bold: true, color: { argb: 'FF065F46' } };
+        progressCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.STATUS_COMPLETED_BG } };
+        progressCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_COMPLETED_FG } };
       } else if (progressValue >= 50) {
-        progressCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF3C7' } };
-        progressCell.font = { bold: true, color: { argb: 'FF92400E' } };
+        progressCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.STATUS_PENDING_BG } };
+        progressCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_PENDING_FG } };
       } else {
-        progressCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFECACA' } };
-        progressCell.font = { bold: true, color: { argb: 'FF991B1B' } };
+        progressCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: BRAND.STATUS_FAILED_BG } };
+        progressCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_FAILED_FG } };
       }
     });
 
-    // Set column widths
-    courseSheet.getColumn(1).width = 5;
-    courseSheet.getColumn(2).width = 15;
-    courseSheet.getColumn(3).width = 30;
-    courseSheet.getColumn(4).width = 30;
-    courseSheet.getColumn(5).width = 15;
-    courseSheet.getColumn(6).width = 12;
-    courseSheet.getColumn(7).width = 15;
-    courseSheet.getColumn(8).width = 18;
-
-    // Add borders to all cells
-    courseSheet.eachRow((row, rowNumber) => {
-      if (rowNumber > 2) {
-        row.eachCell((cell) => {
-          cell.border = {
-            top: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-            left: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-            bottom: { style: 'thin', color: { argb: 'FFE2E8F0' } },
-            right: { style: 'thin', color: { argb: 'FFE2E8F0' } }
-          };
-        });
-      }
-    });
+    // Finalize course sheet
+    finalizeSheet(courseSheet, 8, 3);
   }
 
   return workbook;

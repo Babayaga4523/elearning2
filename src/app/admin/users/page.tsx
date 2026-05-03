@@ -20,6 +20,7 @@ export default async function AdminUsersPage() {
         lokasi: true,
         role: true,
         roles: true,
+        lockedAt: true,
         enrollments: {
           select: {
             status: true,
@@ -71,6 +72,7 @@ export default async function AdminUsersPage() {
       lokasi: u.lokasi,
       role: u.role,
       roles: u.roles,
+      lockedAt: u.lockedAt,
       totalEnrollments: stats.total,
       completedEnrollments: stats.completed,
       inProgressEnrollments: stats.inProgress,

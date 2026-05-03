@@ -44,13 +44,19 @@ export function TestStepWithModal({
   const handleClick = () => {
     if (locked) return;
     
-    // If already done, go to result
-    if (done && resultUrl) {
+    // PERFECT RETRY LOGIC:
+    // Calculate if user can retry based on attempts only
+    const hasAttemptsLeft = testInfo.maxAttempts === 0 || testInfo.attemptCount < testInfo.maxAttempts;
+    
+    // RULE 1: If no attempts left, redirect to result page (cannot retry)
+    if (done && resultUrl && !hasAttemptsLeft) {
       window.location.href = resultUrl;
       return;
     }
     
-    // Show modal for new attempt
+    // RULE 2: If has attempts left (regardless of pass/fail), show modal to allow retry
+    // This allows users to improve their score even after passing
+    // The system will always take the BEST (highest) score as final result
     setShowModal(true);
   };
 

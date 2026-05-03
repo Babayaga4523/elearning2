@@ -139,7 +139,8 @@ exports.Prisma.UserScalarFieldEnum = {
   nip: 'nip',
   authMethod: 'authMethod',
   lastLoginAt: 'lastLoginAt',
-  lastLoginMethod: 'lastLoginMethod'
+  lastLoginMethod: 'lastLoginMethod',
+  lockedAt: 'lockedAt'
 };
 
 exports.Prisma.CourseScalarFieldEnum = {
@@ -335,6 +336,22 @@ exports.Prisma.DepartmentConfigScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.PermissionScalarFieldEnum = {
+  id: 'id',
+  key: 'key',
+  label: 'label',
+  description: 'description',
+  group: 'group',
+  createdAt: 'createdAt'
+};
+
+exports.Prisma.RolePermissionScalarFieldEnum = {
+  id: 'id',
+  role: 'role',
+  permissionId: 'permissionId',
+  createdAt: 'createdAt'
+};
+
 exports.Prisma.SchedulerLogScalarFieldEnum = {
   id: 'id',
   jobName: 'jobName',
@@ -474,6 +491,8 @@ exports.Prisma.ModelName = {
   TestAnswer: 'TestAnswer',
   AutoEnrollmentRule: 'AutoEnrollmentRule',
   DepartmentConfig: 'DepartmentConfig',
+  Permission: 'Permission',
+  RolePermission: 'RolePermission',
   SchedulerLog: 'SchedulerLog',
   LoginAttempt: 'LoginAttempt',
   VideoProgress: 'VideoProgress',

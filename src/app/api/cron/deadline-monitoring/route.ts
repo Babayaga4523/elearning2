@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { runDeadlineMonitoring } from "@/lib/scheduler";
+import { runDeadlineMonitoring, cleanupOrphanedTestSessions } from "@/lib/scheduler";
 
 /**
  * Cron Job: Deadline Monitoring & Escalation
@@ -17,10 +17,14 @@ export async function GET(req: Request) {
     console.log("[CRON] Starting deadline monitoring job...");
     const result = await runDeadlineMonitoring();
     
-    console.log("[CRON] Deadline monitoring completed:", result);
+    console.log("[CRON] Starting orphaned test session cleanup...");
+    const cleanupResult = await cleanupOrphanedTestSessions();
+    
+    console.log("[CRON] Deadline monitoring completed:", result, "Cleanup:", cleanupResult);
     return NextResponse.json({ 
       success: true, 
       result,
+      cleanup: cleanupResult,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {

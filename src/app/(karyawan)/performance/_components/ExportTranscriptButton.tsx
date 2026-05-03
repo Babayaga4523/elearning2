@@ -236,8 +236,8 @@ export const ExportTranscriptButton = ({ data, userName }: ExportTranscriptButto
       onClick={handleExport}
       disabled={isGenerating}
       className={cn(
-        "bg-white hover:bg-slate-50 text-slate-950 font-black rounded-2xl h-12 px-6 shadow-md border-0 flex items-center gap-2 transition-all active:scale-95",
-        isGenerating && "opacity-80"
+        "bg-[#f7941d] hover:bg-opacity-90 text-white font-medium text-sm py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2",
+        isGenerating && "opacity-80 cursor-not-allowed"
       )}
     >
       {isGenerating ? (

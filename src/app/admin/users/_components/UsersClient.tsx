@@ -70,6 +70,7 @@ interface UserRow {
   completedEnrollments: number;
   inProgressEnrollments: number;
   hasCheated?: boolean;
+  lockedAt?: Date | null;
 }
 
 interface UsersClientProps {
@@ -269,7 +270,12 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                           </AvatarFallback>
                         </Avatar>
                         <div className="flex flex-col min-w-0">
-                          <span className="text-[13px] font-bold text-[#0F1C3F] truncate">{user.name ?? "-"}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[13px] font-bold text-[#0F1C3F] truncate">{user.name ?? "-"}</span>
+                            {user.lockedAt && (
+                              <span className="px-1.5 py-0.5 rounded text-[8px] font-bold bg-red-100 text-red-700">TERKUNCI</span>
+                            )}
+                          </div>
                           <span className="text-[10px] font-medium text-slate-400 truncate">{user.email}</span>
                         </div>
                       </div>

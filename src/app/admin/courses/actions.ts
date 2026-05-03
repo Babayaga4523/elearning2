@@ -73,6 +73,8 @@ export async function deleteCourse(courseId: string) {
     });
 
     revalidatePath("/admin/courses");
+    revalidatePath("/courses");         // Katalog user
+    revalidatePath("/dashboard");       // Dashboard user
     return { success: true };
   } catch (error) {
     console.error("[DELETE_COURSE_ERROR]:", error);

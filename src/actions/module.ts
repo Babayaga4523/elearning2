@@ -59,7 +59,7 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
     },
   });
 
-  // Auto-complete enrollment jika semua modul selesai
+  // Auto-complete enrollment jika semua modul selesai DAN Post-Test lulus (jika ada)
   if (isCompleted) {
     const courseModules = await db.module.findMany({
       where: { courseId: m.courseId, isPublished: true },
@@ -75,43 +75,73 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
       select: { moduleId: true }
     });
     
-    // Jika semua modul selesai, update status enrollment ke COMPLETED
-    if (completedModules.length >= courseModules.length && enrollment.status !== "COMPLETED") {
-      // Use transaction to prevent race condition
-      await db.$transaction(async (tx) => {
-        // Re-check enrollment status inside transaction
-        const currentEnrollment = await tx.enrollment.findUnique({
-          where: { id: enrollment.id },
-          select: { status: true }
+    // Check if all modules are completed
+    const allModulesCompleted = completedModules.length >= courseModules.length;
+    
+    if (allModulesCompleted && enrollment.status !== "COMPLETED") {
+      // IMPORTANT: Check if Post-Test exists and if user has passed it
+      const postTest = await db.test.findFirst({
+        where: { 
+          courseId: m.courseId,
+          type: "POST"
+        },
+        select: { id: true }
+      });
+      
+      let canComplete = true;
+      
+      // If Post-Test exists, check if user has passed it
+      if (postTest) {
+        const passedPostTest = await db.testAttempt.findFirst({
+          where: {
+            userId,
+            testId: postTest.id,
+            passed: true
+          }
         });
         
-        // Only update if still not COMPLETED (prevents duplicate notifications)
-        if (currentEnrollment && currentEnrollment.status !== "COMPLETED") {
-          await tx.enrollment.update({
+        // User must pass Post-Test to complete the course
+        canComplete = !!passedPostTest;
+      }
+      
+      // Only mark as COMPLETED if all modules done AND Post-Test passed (if exists)
+      if (canComplete) {
+        // Use transaction to prevent race condition
+        await db.$transaction(async (tx) => {
+          // Re-check enrollment status inside transaction
+          const currentEnrollment = await tx.enrollment.findUnique({
             where: { id: enrollment.id },
-            data: { 
-              status: "COMPLETED"
-            }
+            select: { status: true }
           });
           
-          // Get course title for notification
-          const course = await tx.course.findUnique({
-            where: { id: m.courseId },
-            select: { title: true }
-          });
-          
-          // Create notification
-          await tx.notification.create({
-            data: {
-              userId,
-              type: "SYSTEM",
-              title: "Selamat! Kursus Selesai",
-              body: `Anda telah menyelesaikan kursus "${course?.title || "Kursus"}".`,
-              href: `/courses/${m.courseId}`,
-            },
-          });
-        }
-      });
+          // Only update if still not COMPLETED (prevents duplicate notifications)
+          if (currentEnrollment && currentEnrollment.status !== "COMPLETED") {
+            await tx.enrollment.update({
+              where: { id: enrollment.id },
+              data: { 
+                status: "COMPLETED"
+              }
+            });
+            
+            // Get course title for notification
+            const course = await tx.course.findUnique({
+              where: { id: m.courseId },
+              select: { title: true }
+            });
+            
+            // Create notification
+            await tx.notification.create({
+              data: {
+                userId,
+                type: "SYSTEM",
+                title: "Selamat! Kursus Selesai",
+                body: `Anda telah menyelesaikan kursus "${course?.title || "Kursus"}".`,
+                href: `/courses/${m.courseId}`,
+              },
+            });
+          }
+        });
+      }
     }
   }
 
@@ -148,6 +178,8 @@ export async function updateModule(id: string, values: any) {
   });
 
   revalidatePath(`/admin/courses/${m.courseId}`);
+  revalidatePath(`/courses/${m.courseId}`);
+  revalidatePath("/dashboard");
   return m;
 }
 
@@ -166,5 +198,7 @@ export async function deleteModule(id: string) {
   });
 
   revalidatePath(`/admin/courses/${m.courseId}`);
+  revalidatePath(`/courses/${m.courseId}`);
+  revalidatePath("/dashboard");
   return m;
 }

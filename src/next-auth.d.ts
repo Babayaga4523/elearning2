@@ -6,6 +6,7 @@ export type ExtendedUser = DefaultSession["user"] & {
   roles: ("ADMIN" | "KARYAWAN" | "SUPER_ADMIN")[]; // New multi-role field
   activeRole: "ADMIN" | "KARYAWAN" | "SUPER_ADMIN" | null; // Currently selected role
   nip?: string | null;
+  permissions: string[]; // RBAC permissions from database
 };
 
 declare module "next-auth" {

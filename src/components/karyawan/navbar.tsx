@@ -47,7 +47,7 @@ interface NavbarProps {
 export const Navbar = ({ user }: NavbarProps = {}) => {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+
   const isHidden = useMemo(() => isTestPage(pathname), [pathname]);
 
   if (isHidden) return null;
@@ -76,7 +76,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-                
+
                 return (
                   <Link
                     key={link.href}
@@ -98,13 +98,13 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
             {/* Actions */}
             <div className="flex items-center gap-x-2 sm:gap-x-3">
               <NotificationBellLink variant="karyawan" />
-              
+
               {/* Desktop User Menu */}
               <div className="hidden sm:block">
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-slate-50 transition-colors border border-slate-200 bg-white shadow-sm">
                     <Avatar className="h-8 w-8 border-2 border-white shadow-sm">
-                      <AvatarImage 
+                      <AvatarImage
                         src={user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || '?')}&background=0f1c3f&color=fff&bold=true`}
                         alt={user?.name || "User avatar"}
                       />
@@ -141,7 +141,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       onClick={() => signOut()}
                       className="text-rose-600 focus:text-rose-600 focus:bg-rose-50 cursor-pointer"
                     >
@@ -151,7 +151,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              
+
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -175,7 +175,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
               {/* User Info Mobile */}
               <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-lg mb-3">
                 <Avatar className="h-12 w-12 border-2 border-white shadow-sm">
-                  <AvatarImage 
+                  <AvatarImage
                     src={user?.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(user?.name || '?')}&background=0f1c3f&color=fff&bold=true`}
                     alt={user?.name || "User avatar"}
                   />
@@ -196,7 +196,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href || pathname.startsWith(link.href + "/");
-                
+
                 return (
                   <Link
                     key={link.href}
@@ -214,7 +214,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
                   </Link>
                 );
               })}
-              
+
               <div className="pt-3 border-t border-slate-200 mt-3 space-y-1">
                 <Link
                   href="/profile"

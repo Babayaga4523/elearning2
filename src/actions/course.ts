@@ -70,8 +70,9 @@ export async function updateCourse(id: string, values: any) {
   // Refined Revalidation Paths (Final Review Requirement)
   revalidatePath("/admin/courses");              // List kursus Admin
   revalidatePath(`/admin/courses/${id}`);        // Detail kursus Admin
-  revalidatePath("/courses");                    // Katalog karyawan
+  revalidatePath("/courses", "layout");          // Katalog karyawan (layout)
   revalidatePath(`/courses/${id}`);              // Detail kursus karyawan
+  revalidatePath("/dashboard");                  // Dashboard karyawan
   
   return course;
 }
@@ -85,6 +86,8 @@ export async function deleteCourse(id: string) {
   });
 
   revalidatePath("/admin/courses");
+  revalidatePath("/courses", "layout");
+  revalidatePath("/dashboard");
   return course;
 }
 
@@ -99,7 +102,7 @@ export async function publishCourse(id: string, isPublished: boolean) {
 
   revalidatePath("/admin/courses");
   revalidatePath(`/admin/courses/${id}`);
-  revalidatePath("/courses");
+  revalidatePath("/courses", "layout");
   revalidatePath(`/courses/${id}`);
   revalidatePath("/dashboard"); // Also for employees
 
@@ -126,6 +129,7 @@ export async function createModule(courseId: string, data: { title: string }) {
   });
 
   revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/courses/${courseId}`);  // User course detail
   return m;
 }
 
@@ -141,6 +145,7 @@ export async function reorderModules(courseId: string, updateData: { id: string;
   }
 
   revalidatePath(`/admin/courses/${courseId}`);
+  revalidatePath(`/courses/${courseId}`);  // User course detail
 }
 
 export async function createTest(courseId: string, data: { title: string; type: "PRE" | "POST" }) {

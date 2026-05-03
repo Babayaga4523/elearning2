@@ -29,6 +29,7 @@ model User {
   authMethod          AuthMethod      @default(MANUAL)
   lastLoginAt         DateTime?
   lastLoginMethod     AuthMethod?
+  lockedAt            DateTime?       // Indicates if account is administratively locked
   
   approvedEnrollments Enrollment[]    @relation("ApprovedEnrollments")
   enrollments         Enrollment[]    @relation("UserEnrollments")
@@ -310,6 +311,29 @@ model DepartmentConfig {
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+}
+
+// ─── RBAC: Permission System ────────────────────────────────────
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique  // e.g. "manage_courses"
+  label       String                     // e.g. "Kelola Kursus"
+  description String?
+  group       String?                    // grouping for UI display
+  createdAt   DateTime         @default(now())
+  rolePermissions RolePermission[]
+}
+
+model RolePermission {
+  id           String     @id @default(cuid())
+  role         UserRole
+  permissionId String
+  createdAt    DateTime   @default(now())
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([role, permissionId])
+  @@index([role])
+  @@index([permissionId])
 }
 
 model SchedulerLog {

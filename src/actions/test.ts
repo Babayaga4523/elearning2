@@ -78,6 +78,8 @@ export async function updateTest(id: string, values: Partial<any>) {
 
   revalidatePath(`/admin/courses/${test.courseId}/tests/${id}`);
   revalidatePath(`/admin/courses/${test.courseId}`);
+  revalidatePath(`/courses/${test.courseId}`);
+  revalidatePath("/dashboard");
   return test;
 }
 
@@ -96,6 +98,8 @@ export async function deleteTest(id: string) {
   });
 
   revalidatePath(`/admin/courses/${test.courseId}`);
+  revalidatePath(`/courses/${test.courseId}`);
+  revalidatePath("/dashboard");
   return test;
 }
 
@@ -515,7 +519,7 @@ export async function forceSubmitDueToCheating(
     await tx.enrollment.update({
       where: { id: enrollmentId },
       data: {
-        status: "FAILED",
+        status: "CHEATING",
         hasCheatedPostTest: true,
         cheatedAtAttempt: attemptNumber,
         postTestAttempts: attemptNumber,

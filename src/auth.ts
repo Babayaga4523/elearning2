@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import authConfig from "./auth.config";
 import Credentials from "next-auth/providers/credentials";
 import MicrosoftEntraID from "next-auth/providers/microsoft-entra-id";
+import { getPermissionsForRole } from "@/lib/permissions.server";
 
 const authOptions: any = {
   ...authConfig,
@@ -141,18 +142,27 @@ const authOptions: any = {
       if (token.nip && session.user) {
         session.user.nip = token.nip;
       }
+      if (token.lockedAt && session.user) {
+        session.user.lockedAt = token.lockedAt;
+      }
+      // Inject RBAC permissions into session
+      if (session.user) {
+        session.user.permissions = token.permissions || [];
+      }
       return session;
     },
     async jwt({ token, trigger, session }: { token: any, trigger?: string, session?: any }) {
       // Handle session updates from update() method
       if (trigger === "update" && session) {
         if (session.activeRole) {
-          token.activeRole = session.activeRole
+          token.activeRole = session.activeRole;
+          // Re-fetch permissions when active role changes
+          token.permissions = await getPermissionsForRole(session.activeRole);
         }
         if (session.roles) {
-          token.roles = session.roles
+          token.roles = session.roles;
         }
-        return token
+        return token;
       }
 
       if (!token.sub) return token;
@@ -166,6 +176,7 @@ const authOptions: any = {
           roles: true, 
           activeRole: true,
           nip: true,
+          lockedAt: true,
         },
       });
 
@@ -175,6 +186,11 @@ const authOptions: any = {
         token.roles = existingUser.roles; // New multi-role field
         token.activeRole = existingUser.activeRole;
         token.nip = existingUser.nip;
+        token.lockedAt = existingUser.lockedAt;
+
+        // Resolve RBAC permissions based on active role
+        const effectiveRole = existingUser.activeRole || existingUser.role;
+        token.permissions = await getPermissionsForRole(effectiveRole);
       }
       
       return token;

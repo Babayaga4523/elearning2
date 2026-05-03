@@ -72,28 +72,36 @@ export default async function TestPlayerPage({
 
   // Admin can preview test without restrictions
   if (!isAdmin) {
-    // Check if user has passed the test
+    // RULE 1: If user has PASSED the test, always redirect to result (no retry needed)
     if (bestPassedAttempt) {
       return redirect(
         `/courses/${params.courseId}/tests/${params.testId}/result?attemptId=${bestPassedAttempt.id}`
       );
     }
 
-    // Check max attempts for both PRE and POST tests
+    // RULE 2: Check if user can still retry based on max attempts
+    // Get effective max attempts (enrollment override or test default)
     const effectiveMaxAttempts = test.type === "POST" 
       ? (enrollment?.maxPostTestAttempts ?? test.maxAttempts ?? 3)
       : (test.maxAttempts ?? 0);
     
-    const effectiveAttemptCount = test.type === "POST"
-      ? (enrollment?.postTestAttempts ?? attempts.length)
-      : attempts.length;
+    // Count actual attempts from database
+    const actualAttemptCount = attempts.length;
     
-    // If max attempts reached, redirect to latest result
-    if (effectiveMaxAttempts > 0 && effectiveAttemptCount >= effectiveMaxAttempts && latestAttempt) {
+    // RULE 3: If max attempts is set (> 0) and user has used all attempts, redirect to latest result
+    // Example: maxAttempts = 2, actualAttempts = 2 → cannot retry (2 >= 2)
+    //          maxAttempts = 2, actualAttempts = 1 → can retry (1 < 2)
+    //          maxAttempts = 0 → unlimited, always can retry
+    const hasUsedAllAttempts = effectiveMaxAttempts > 0 && actualAttemptCount >= effectiveMaxAttempts;
+    
+    if (hasUsedAllAttempts && latestAttempt) {
       return redirect(
         `/courses/${params.courseId}/tests/${params.testId}/result?attemptId=${latestAttempt.id}`
       );
     }
+
+    // RULE 4: If user has attempts but hasn't passed and still has remaining attempts, allow retry
+    // This is the case where user failed but can try again
   }
 
   if (test.type === "POST" && !isAdmin) {

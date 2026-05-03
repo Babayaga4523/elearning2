@@ -6,6 +6,7 @@ import {
   authRoutes,
   publicRoutes,
 } from "@/routes";
+import { ROUTE_PERMISSION_MAP, API_ROUTE_PERMISSION_MAP } from "@/lib/permissions";
 
 const { auth } = NextAuth(authConfig);
 
@@ -25,6 +26,10 @@ export default auth((req: any) => {
   // Handle auth routes (login, register, etc.)
   if (isAuthRoute) {
     if (isLoggedIn) {
+      // If user is logged in but locked, we allow them to access auth routes (specifically so they can log out or see error)
+      if (req.auth?.user?.lockedAt) {
+        return; 
+      }
       // Allow /auth/login?check-role=true for role selection even when logged in
       if (nextUrl.pathname === "/auth/login" && nextUrl.searchParams.get("check-role") === "true") {
         return; // Allow access
@@ -33,6 +38,13 @@ export default auth((req: any) => {
       return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
     }
     return; // Allow unauthenticated users to access auth routes
+  }
+
+  // ─── CHECK FOR LOCKED ACCOUNT ──────────────────────────────────────────
+  if (isLoggedIn && req.auth?.user?.lockedAt) {
+    // If the user's account is locked by admin, redirect to signout 
+    // to clear the session immediately.
+    return Response.redirect(new URL("/api/auth/signout?callbackUrl=/auth/login?error=Locked", nextUrl));
   }
 
   // Require authentication for non-public routes
@@ -44,6 +56,75 @@ export default auth((req: any) => {
 
     const encodedCallbackUrl = encodeURIComponent(callbackUrl);
     return Response.redirect(new URL(`/auth/login?callbackUrl=${encodedCallbackUrl}`, nextUrl));
+  }
+
+  // ─── RBAC: Permission-based route blocking for admin routes ───
+  if (isLoggedIn && nextUrl.pathname.startsWith("/admin")) {
+    const token = req.auth;
+    const activeRole = token?.user?.activeRole || token?.user?.role;
+    
+    // SUPER_ADMIN bypasses all permission checks
+    if (activeRole === "SUPER_ADMIN") {
+      return;
+    }
+
+    // Check if the route requires specific permissions
+    const permissions: string[] = token?.user?.permissions || [];
+    
+    // Find matching route pattern (longest match first)
+    const sortedRoutes = Object.keys(ROUTE_PERMISSION_MAP).sort(
+      (a, b) => b.length - a.length
+    );
+
+    for (const route of sortedRoutes) {
+      if (nextUrl.pathname === route || nextUrl.pathname.startsWith(route + "/")) {
+        const requiredPermissions = ROUTE_PERMISSION_MAP[route];
+        const hasAccess = requiredPermissions.some((perm) =>
+          permissions.includes(perm)
+        );
+
+        if (!hasAccess) {
+          // Redirect to admin dashboard with error
+          console.log(`[MIDDLEWARE] Access denied: ${nextUrl.pathname} requires ${requiredPermissions.join("|")}, user has: ${permissions.join(", ")}`);
+          return Response.redirect(new URL("/admin?error=unauthorized", nextUrl));
+        }
+        break; // Found matching route, stop checking
+      }
+    }
+  }
+
+  // ─── RBAC: Permission-based API route blocking ────────────────
+  if (isLoggedIn && nextUrl.pathname.startsWith("/api/admin/")) {
+    const token = req.auth;
+    const activeRole = token?.user?.activeRole || token?.user?.role;
+
+    // SUPER_ADMIN bypasses all permission checks
+    if (activeRole === "SUPER_ADMIN") {
+      return;
+    }
+
+    const permissions: string[] = token?.user?.permissions || [];
+
+    const sortedApiRoutes = Object.keys(API_ROUTE_PERMISSION_MAP).sort(
+      (a, b) => b.length - a.length
+    );
+
+    for (const route of sortedApiRoutes) {
+      if (nextUrl.pathname === route || nextUrl.pathname.startsWith(route + "/")) {
+        const requiredPermissions = API_ROUTE_PERMISSION_MAP[route];
+        const hasAccess = requiredPermissions.some((perm) =>
+          permissions.includes(perm)
+        );
+
+        if (!hasAccess) {
+          return new Response(
+            JSON.stringify({ error: "Forbidden", message: "Anda tidak memiliki permission untuk mengakses resource ini." }),
+            { status: 403, headers: { "Content-Type": "application/json" } }
+          );
+        }
+        break;
+      }
+    }
   }
 
   return;

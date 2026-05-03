@@ -1,43 +1,62 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  BookOpen, ArrowRight, Clock
-} from "lucide-react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { 
+  AlertTriangle, Clock, PlayCircle, CheckCircle2, Award, 
+  ChevronRight, Play, TrendingUp, Shield, Brain
+} from "lucide-react";
 import ActivityChart from "@/app/(karyawan)/dashboard/_components/ActivityChart";
 import Leaderboard from "@/app/(karyawan)/dashboard/_components/Leaderboard";
 import { LearningProgressChart } from "@/app/(karyawan)/dashboard/_components/LearningProgressChart";
-import { SupportContact } from "@/components/support/support-contact";
 
-// ─── Category colors with modern palette ──────────────────────────────────────
-const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
-  Finance:    { bg: "bg-blue-50",    text: "text-blue-700",    border: "border-blue-200" },
-  Legal:      { bg: "bg-purple-50",  text: "text-purple-700",  border: "border-purple-200" },
-  Leadership: { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" },
-  Technology: { bg: "bg-cyan-50",    text: "text-cyan-700",    border: "border-cyan-200" },
-  Service:    { bg: "bg-pink-50",    text: "text-pink-700",    border: "border-pink-200" },
-  Marketing:  { bg: "bg-orange-50",  text: "text-orange-700",  border: "border-orange-200" },
-  Ethics:     { bg: "bg-green-50",   text: "text-green-700",   border: "border-green-200" },
-};
-
-const getCategoryStyle = (category: string) =>
-  categoryColors[category] || { 
-    bg: "bg-gray-50", 
-    text: "text-gray-700", 
-    border: "border-gray-200" 
+interface DashboardClientProps {
+  user: {
+    name: string;
+    email: string;
+    department: string;
+    avatar: string;
   };
+  kpis: {
+    activeCourses: number;
+    modulesDone: number;
+    testsPassed: number;
+  };
+  urgentAlerts: Array<{
+    title: string;
+    deadline: string;
+    daysRemaining: number;
+    courseId: string;
+  }>;
+  activeCourses: Array<any>;
+  activityData: Array<{day: string, count: number}>;
+  learningProgressData: Array<any>;
+  leaderboard: Array<{
+    rank: number;
+    name: string;
+    department: string;
+    score: number;
+    isCurrentUser: boolean;
+  }>;
+  exploreCourses: Array<any>;
+  resumeData: { title?: string; href: string } | null;
+  avgScore: number;
+  isAdmin: boolean;
+}
 
-// ─── Modern Hero Section ──────────────────────────────────────────────────────
-function ModernHeroSection({ user, resumeData, avgScore }: { 
-  user: any; 
-  resumeData: any; 
-  avgScore: number 
-}) {
+export default function DashboardClient({ 
+  user, 
+  kpis, 
+  urgentAlerts, 
+  activeCourses, 
+  activityData,
+  learningProgressData,
+  leaderboard,
+  exploreCourses,
+  resumeData,
+  avgScore,
+  isAdmin
+}: DashboardClientProps) {
   const [greeting, setGreeting] = useState("Halo");
   
   useEffect(() => {
@@ -47,530 +66,263 @@ function ModernHeroSection({ user, resumeData, avgScore }: {
       else if (hour < 17) setGreeting("Selamat Siang");
       else setGreeting("Selamat Malam");
     };
-    
     updateGreeting();
     const interval = setInterval(updateGreeting, 60000);
     return () => clearInterval(interval);
   }, []);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 p-8 lg:p-12">
-      {/* Subtle Background */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute -top-24 -right-24 h-48 w-48 rounded-full bg-blue-400 blur-3xl" />
-        <div className="absolute -bottom-12 -left-12 h-32 w-32 rounded-full bg-cyan-400 blur-2xl" />
-      </div>
-
-      <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-8">
-        {/* Left Content */}
-        <div className="flex-1 space-y-6">
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-slate-400">
-              {greeting}
-            </p>
-            
-            <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
-              {user.name}
-            </h1>
-            
-            <p className="text-base text-slate-300">
-              {user.department}
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            {resumeData ? (
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-white hover:bg-slate-100 text-slate-900 font-semibold"
-              >
-                <Link href={resumeData.href}>
-                  Lanjutkan Belajar
-                </Link>
-              </Button>
-            ) : (
-              <Button 
-                asChild 
-                size="lg" 
-                className="bg-white hover:bg-slate-100 text-slate-900 font-semibold"
-              >
-                <Link href="/courses">
-                  Mulai Belajar
-                </Link>
-              </Button>
-            )}
-            
-            <Button 
-              asChild 
-              variant="outline" 
-              size="lg"
-              className="border-white/20 text-white hover:bg-white/10 hover:text-white bg-transparent"
-            >
-              <Link href="/performance">
-                Lihat Progres
-              </Link>
-            </Button>
-          </div>
-        </div>
-
-        {/* Right Performance Badge */}
-        {avgScore > 0 && (
-          <div className="shrink-0 rounded-xl border border-white/10 p-6 text-center min-w-[140px] bg-white/5 backdrop-blur-sm">
-            <div className="text-3xl font-bold text-white mb-1">
-              {avgScore}%
-            </div>
-            <p className="text-xs font-medium text-slate-400">
-              Rata-rata Skor
-            </p>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ─── Modern Alert Component ───────────────────────────────────────────────────
-function ModernUrgentAlerts({ alerts }: { alerts: any[] }) {
-  if (!alerts.length) return null;
-  
-  return (
-    <div className="space-y-3">
-      <p className="text-sm font-semibold text-red-600">
-        {alerts.length} Deadline Mendesak
-      </p>
-      
-      {alerts.map((alert, index) => (
-        <Link key={index} href={`/courses/${alert.courseId}`}>
-          <Card className="border-l-4 border-l-red-500 bg-red-50 hover:shadow-md transition-all duration-200 cursor-pointer group">
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold text-slate-900 mb-1">
-                    {alert.title}
-                  </h3>
-                  <p className="text-sm text-red-600 font-medium">
-                    Deadline: {alert.deadline}
-                  </p>
-                </div>
-                
-                <Button 
-                  size="sm" 
-                  className="bg-red-600 hover:bg-red-700 text-white font-medium shrink-0"
-                >
-                  Kerjakan
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-// ─── Modern KPI Grid ──────────────────────────────────────────────────────────
-function ModernKPIGrid({ kpis }: { kpis: any }) {
-  const kpiItems = [
-    { 
-      label: "Kursus Aktif", 
-      value: kpis.activeCourses, 
-      color: "blue"
-    },
-    { 
-      label: "Modul Selesai", 
-      value: kpis.modulesDone, 
-      color: "green"
-    },
-    { 
-      label: "Ujian Lulus", 
-      value: kpis.testsPassed, 
-      color: "yellow"
-    },
-  ];
-
-  const getColorClasses = (color: string) => {
-    const colorMap = {
-      blue: "border-l-blue-500",
-      green: "border-l-green-500",
-      yellow: "border-l-yellow-500"
-    };
-    return colorMap[color as keyof typeof colorMap] || colorMap.blue;
-  };
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-      {kpiItems.map((item) => {
-        const borderColor = getColorClasses(item.color);
+    <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans min-h-[calc(100vh-4rem)] flex flex-col w-full p-4 md:p-8">
+      <main className="flex-1 w-full space-y-8 max-w-[1440px] mx-auto">
         
-        return (
-          <Card 
-            key={item.label} 
-            className={cn(
-              "border-l-4 bg-white hover:shadow-md transition-all duration-200",
-              borderColor
-            )}
-          >
-            <CardContent className="p-6">
-              <div className="space-y-1">
-                <p className="text-sm font-medium text-slate-600">
-                  {item.label}
-                </p>
-                <p className="text-4xl font-bold text-slate-900">
-                  {item.value.toLocaleString()}
-                </p>
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })}
-    </div>
-  );
-}
-
-// ─── Modern Leaderboard ───────────────────────────────────────────────────────
-function ModernLeaderboard({ leaderboard }: { leaderboard: any[] }) {
-  const topUsers = leaderboard.slice(0, 5);
-
-  return (
-    <Card className="bg-white">
-      <CardHeader className="pb-4">
-        <div className="space-y-1">
-          <CardTitle className="text-lg font-semibold text-slate-900">
-            Papan Peringkat
-          </CardTitle>
-          <p className="text-sm text-slate-600">
-            Top performer bulan ini
-          </p>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="pt-2 space-y-2">
-        {topUsers.map((user) => {
-          return (
-            <div
-              key={user.rank}
-              className={cn(
-                "flex items-center gap-4 p-3 rounded-lg transition-all duration-200",
-                user.isCurrentUser 
-                  ? "bg-blue-50 border border-blue-200" 
-                  : "hover:bg-slate-50"
-              )}
-            >
-              <div className="w-8 text-center">
-                <span className="text-sm font-semibold text-slate-600">
-                  {user.rank}
-                </span>
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
-                  <p className="font-medium text-slate-900 truncate">
-                    {user.name}
-                  </p>
-                  {user.isCurrentUser && (
-                    <Badge className="bg-blue-600 text-white text-xs font-medium border-0">
-                      Anda
-                    </Badge>
-                  )}
-                </div>
-                <p className="text-xs text-slate-600">
-                  {user.department}
-                </p>
-              </div>
-              
-              <div className="text-right">
-                <div className="text-base font-semibold text-slate-900">
-                  {user.score.toLocaleString()}
-                </div>
-                <div className="text-xs text-slate-600">
-                  poin
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </CardContent>
-    </Card>
-  );
-}
-
-// ─── Modern Course Card ───────────────────────────────────────────────────────
-function ModernCourseCard({ course, isUrgent }: { course: any; isUrgent: boolean }) {
-  const progress = course.progress;
-  const categoryStyle = getCategoryStyle(course.category);
-  
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return "bg-green-500";
-    if (progress >= 50) return "bg-blue-500";
-    return "bg-slate-400";
-  };
-
-  return (
-    <Link href={`/courses/${course.id}`} className="group block">
-      <Card className={cn(
-        "bg-white hover:shadow-md transition-all duration-200 h-full",
-        isUrgent && "border-l-4 border-l-red-500"
-      )}>
-        <CardContent className="p-5 space-y-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1">
-              <Badge className={cn(
-                "text-xs font-medium mb-3",
-                categoryStyle.bg,
-                categoryStyle.text
-              )}>
-                {course.category}
-              </Badge>
-              
-              <h3 className="font-semibold text-slate-900 line-clamp-2 leading-snug group-hover:text-blue-600 transition-colors">
-                {course.title}
-              </h3>
-              <p className="text-sm text-slate-600 mt-1">
-                {course.completedModules} dari {course.totalModules} modul
-              </p>
-            </div>
-            
-            {isUrgent && (
-              <Badge className="bg-red-600 text-white text-xs font-medium">
-                Urgent
-              </Badge>
-            )}
-          </div>
-          
-          <div className="space-y-2">
-            <div className="flex items-center justify-between text-sm">
-              <span className="font-medium text-slate-600">Progress</span>
-              <span className="font-semibold text-slate-900">{progress}%</span>
-            </div>
-            
-            <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
-              <div 
-                className={cn(
-                  "h-full rounded-full transition-all duration-300",
-                  getProgressColor(progress)
-                )}
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-          
-          <Button 
-            variant="ghost" 
-            className="w-full justify-center text-slate-700 hover:text-blue-600 hover:bg-blue-50 font-medium"
-          >
-            Lanjutkan belajar
-          </Button>
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-// ─── Modern Explore Card ──────────────────────────────────────────────────────
-function ModernExploreCard({ course }: { course: any }) {
-  const categoryStyle = getCategoryStyle(course.category);
-  
-  return (
-    <Link href={`/courses/${course.id}`} className="group block">
-      <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 hover:border-blue-300 transition-all duration-200">
-        <div className="flex-1 min-w-0 space-y-1">
-          <h4 className="font-medium text-slate-900 truncate group-hover:text-blue-600 transition-colors">
-            {course.title}
-          </h4>
-          
-          <div className="flex items-center gap-3 text-sm text-slate-600">
-            <span className={cn("text-xs font-medium", categoryStyle.text)}>
-              {course.category}
-            </span>
-            <span>•</span>
-            <span>{course.modules} modul</span>
-          </div>
-        </div>
-        
-        <ArrowRight className="h-5 w-5 text-slate-400 group-hover:text-blue-600 transition-colors shrink-0" />
-      </div>
-    </Link>
-  );
-}
-
-// ─── Modern Section Header ────────────────────────────────────────────────────
-function ModernSectionHeader({ 
-  title, 
-  subtitle, 
-  count, 
-  countLabel
-}: { 
-  title: string; 
-  subtitle?: string; 
-  count?: number; 
-  countLabel?: string;
-}) {
-  return (
-    <div className="flex items-center justify-between mb-6">
-      <div>
-        <h2 className="text-xl font-semibold text-slate-900">
-          {title}
-        </h2>
-        {subtitle && (
-          <p className="text-sm text-slate-600 mt-1">
-            {subtitle}
-          </p>
-        )}
-      </div>
-      
-      {count !== undefined && (
-        <span className="text-sm font-medium text-slate-600">
-          {count} {countLabel}
-        </span>
-      )}
-    </div>
-  );
-}
-
-// ─── Main Dashboard Component ─────────────────────────────────────────────────
-export default function DashboardClient({
-  user, kpis, urgentAlerts, activeCourses, activityData, learningProgressData, leaderboard,
-  exploreCourses, resumeData, avgScore, isAdmin,
-}: {
-  user: any; kpis: any; urgentAlerts: any[]; activeCourses: any[];
-  activityData: any[]; learningProgressData: any[]; leaderboard: any[]; exploreCourses: any[];
-  resumeData: any; avgScore: number; isAdmin: boolean;
-}) {
-  return (
-    <div className="min-h-screen bg-slate-50 pb-20">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-
-        {/* Admin Banner */}
-        {isAdmin && (
-          <Card className="border-l-4 border-l-amber-500 bg-amber-50">
-            <CardContent className="p-4">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div>
-                  <h3 className="font-semibold text-amber-900">Administrator Session</h3>
-                  <p className="text-sm text-amber-700">Anda sedang melihat tampilan dashboard karyawan</p>
-                </div>
-                <Button asChild className="bg-amber-600 hover:bg-amber-700 text-white font-medium">
-                  <Link href="/admin">
-                    Admin Console
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
         {/* Urgent Alerts */}
         {urgentAlerts.length > 0 && (
-          <div>
-            <ModernUrgentAlerts alerts={urgentAlerts} />
+          <div className="flex flex-col gap-4">
+            {urgentAlerts.map((alert, idx) => {
+              const isExpired = alert.daysRemaining <= 0;
+              return (
+                <div 
+                  key={idx} 
+                  className={`border rounded-lg p-4 flex items-start gap-4 ${
+                    isExpired 
+                      ? "bg-[#ffdad6] border-[#ba1a1a]" 
+                      : "bg-[#ffdcbf] border-[#8c4f00]"
+                  }`}
+                >
+                  {isExpired ? (
+                    <AlertTriangle className="text-[#93000a] mt-1 shrink-0 w-6 h-6" />
+                  ) : (
+                    <Clock className="text-[#8c4f00] mt-1 shrink-0 w-6 h-6" />
+                  )}
+                  <div className="flex-1">
+                    <h4 className={`text-sm font-semibold tracking-wide ${
+                      isExpired ? "text-[#93000a]" : "text-[#6b3b00]"
+                    }`}>
+                      {isExpired ? "Telah lewat deadline" : `${alert.daysRemaining} hari lagi`}
+                    </h4>
+                    <p className={`text-sm mt-1 ${
+                      isExpired ? "text-[#93000a]" : "text-[#6b3b00]"
+                    }`}>
+                      {alert.title}
+                    </p>
+                  </div>
+                  <Link href={`/courses/${alert.courseId}`}>
+                    <button className={`text-xs px-4 py-2 font-bold rounded-md text-white transition-colors ${
+                      isExpired ? "bg-[#ba1a1a] hover:bg-[#93000a]" : "bg-[#f7941d] hover:bg-[#8c4f00]"
+                    }`}>
+                      {isExpired ? "Selesaikan Sekarang" : "Lanjutkan"}
+                    </button>
+                  </Link>
+                </div>
+              );
+            })}
           </div>
         )}
 
         {/* Hero Section */}
-        <ModernHeroSection user={user} resumeData={resumeData} avgScore={avgScore} />
+        <div className="bg-slate-900 rounded-xl overflow-hidden relative shadow-md">
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900 via-slate-800 to-blue-900 z-0"></div>
+          <div className="relative z-10 p-8 md:p-12 flex flex-col md:flex-row items-center justify-between gap-8">
+            <div className="space-y-4 text-white max-w-2xl">
+              <h1 className="text-3xl md:text-4xl font-bold tracking-tight">{greeting}, {user.name}</h1>
+              <p className="text-lg text-slate-300">{user.department || "Karyawan BNI Finance"}</p>
+              <div className="pt-4 flex flex-wrap gap-4">
+                {resumeData ? (
+                  <Link href={resumeData.href}>
+                    <button className="bg-[#f7941d] text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition shadow-sm">
+                      Lanjutkan Belajar
+                    </button>
+                  </Link>
+                ) : (
+                  <Link href="/courses">
+                    <button className="bg-[#f7941d] text-white px-6 py-3 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition shadow-sm">
+                      Mulai Belajar
+                    </button>
+                  </Link>
+                )}
+                <Link href="/performance">
+                  <button className="bg-transparent border border-[#7df4ff] text-[#7df4ff] px-6 py-3 rounded-lg text-sm font-semibold hover:bg-white/10 transition shadow-sm">
+                    Lihat Progres
+                  </button>
+                </Link>
+              </div>
+            </div>
+            
+            <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl p-6 flex items-center gap-6 shrink-0">
+              <div className="relative w-20 h-20">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <path className="text-white/20" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="4"></path>
+                  <path className="text-[#7df4ff]" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeDasharray={`${avgScore}, 100`} strokeWidth="4"></path>
+                </svg>
+                <div className="absolute inset-0 flex items-center justify-center text-xl text-white font-bold">{avgScore}%</div>
+              </div>
+              <div>
+                <h3 className="text-sm font-semibold text-slate-300">Performa</h3>
+                <p className="text-lg text-white font-semibold">Rata-rata Skor</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* KPI Grid */}
-        <ModernKPIGrid kpis={kpis} />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="bg-[#ffffff] border border-[#dac2af] border-t-4 border-t-[#006970] rounded-lg p-6 shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-semibold text-[#544435] uppercase tracking-wider">Kursus Aktif</p>
+                <h2 className="text-3xl font-semibold text-[#0b1c30] mt-1">{kpis.activeCourses}</h2>
+              </div>
+              <PlayCircle className="text-[#006970] w-8 h-8" />
+            </div>
+          </div>
+          <div className="bg-[#ffffff] border border-[#dac2af] border-t-4 border-t-[#22c55e] rounded-lg p-6 shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-semibold text-[#544435] uppercase tracking-wider">Modul Selesai</p>
+                <h2 className="text-3xl font-semibold text-[#0b1c30] mt-1">{kpis.modulesDone}</h2>
+              </div>
+              <CheckCircle2 className="text-[#22c55e] w-8 h-8" />
+            </div>
+          </div>
+          <div className="bg-[#ffffff] border border-[#dac2af] border-t-4 border-t-[#f7941d] rounded-lg p-6 shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs font-semibold text-[#544435] uppercase tracking-wider">Ujian Lulus</p>
+                <h2 className="text-3xl font-semibold text-[#0b1c30] mt-1">{kpis.testsPassed}</h2>
+              </div>
+              <Award className="text-[#f7941d] w-8 h-8" />
+            </div>
+          </div>
+        </div>
 
         {/* Charts Section */}
-        <div className="grid grid-cols-1 gap-6">
-          {/* Learning Progress Chart - Full Width */}
-          <div className="w-full">
-            <LearningProgressChart data={learningProgressData} />
-          </div>
-          
-          {/* Activity Chart & Leaderboard - Side by Side */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-            <div className="w-full">
-              <ActivityChart data={activityData} />
+        <div className="space-y-6">
+          {/* Learning Progress Full Width */}
+          <div className="bg-[#ffffff] border border-[#dac2af] rounded-xl shadow-sm p-6 flex flex-col min-h-[300px]">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-semibold text-[#0b1c30]">Learning Progress (6 Bulan Terakhir)</h3>
+              <Link href="/performance" className="text-[#166874] text-sm font-semibold flex items-center hover:underline">
+                Lihat Detail <ChevronRight className="w-4 h-4 ml-1" />
+              </Link>
             </div>
-            <div className="w-full">
-              <Leaderboard data={leaderboard} />
+            <div className="flex-1 w-full relative -ml-4">
+              <LearningProgressChart data={learningProgressData} />
+            </div>
+          </div>
+
+          {/* Activity & Leaderboard */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-[#ffffff] border border-[#dac2af] rounded-xl shadow-sm p-6 flex flex-col">
+              <h3 className="text-xl font-semibold text-[#0b1c30] mb-6">Aktivitas Mingguan (Jam)</h3>
+              <div className="flex-1 min-h-[200px]">
+                <ActivityChart data={activityData} />
+              </div>
+            </div>
+            
+            <div className="bg-[#ffffff] border border-[#dac2af] rounded-xl shadow-sm p-6">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-xl font-semibold text-[#0b1c30]">Leaderboard (Top 5)</h3>
+              </div>
+              <div className="mt-[-1rem]">
+                <Leaderboard data={leaderboard} />
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Active Courses */}
-        <div>
-          <ModernSectionHeader 
-            title="Pelajaran Aktif" 
-            subtitle="Lanjutkan progres belajar Anda"
-            count={activeCourses.length} 
-            countLabel="Kursus"
-          />
-          
-          {activeCourses.length === 0 ? (
-            <Card className="bg-white">
-              <CardContent className="py-16 text-center">
-                <div className="max-w-md mx-auto space-y-4">
-                  <div>
-                    <h3 className="font-semibold text-slate-900 mb-2">Belum ada kursus aktif</h3>
-                    <p className="text-sm text-slate-600">Mulai perjalanan belajar Anda dengan memilih kursus yang tersedia</p>
-                  </div>
-                  <Button asChild className="bg-blue-600 hover:bg-blue-700 text-white">
-                    <Link href="/courses">Jelajahi Kursus</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {activeCourses.map(course => (
-                <ModernCourseCard 
-                  key={course.id} 
-                  course={course} 
-                  isUrgent={urgentAlerts.some(alert => alert.courseId === course.id)} 
-                />
-              ))}
+        {/* Bento Grid Layout for Pelajaran Aktif & Rekomendasi */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Pelajaran Aktif */}
+          <div className="lg:col-span-2 bg-[#ffffff] border border-[#dac2af] rounded-xl shadow-sm p-6">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-semibold text-[#0b1c30]">Pelajaran Aktif</h3>
+              <Link href="/courses" className="text-[#166874] text-sm font-semibold flex items-center hover:underline">
+                Lihat Semua <ChevronRight className="w-4 h-4 ml-1" />
+              </Link>
             </div>
-          )}
-        </div>
-
-        {/* Explore Courses */}
-        <Card className="bg-white">
-          <CardHeader className="pb-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-lg font-semibold text-slate-900">
-                  Rekomendasi untuk Anda
-                </CardTitle>
-                <p className="text-sm text-slate-600 mt-1">
-                  Kursus yang mungkin menarik bagi Anda
-                </p>
-              </div>
-              
-              <Button asChild variant="outline" size="sm">
-                <Link href="/courses">
-                  Lihat Semua
-                </Link>
-              </Button>
-            </div>
-          </CardHeader>
-          
-          <CardContent className="space-y-3">
-            {exploreCourses.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-slate-600">
-                  Tidak ada kursus baru untuk dieksplorasi saat ini
-                </p>
-              </div>
+            
+            {activeCourses.length === 0 ? (
+               <p className="text-sm text-[#544435] text-center py-8">Tidak ada kursus aktif saat ini.</p>
             ) : (
-              exploreCourses.map(course => (
-                <ModernExploreCard key={course.id} course={course} />
-              ))
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activeCourses.slice(0, 3).map((course, idx) => {
+                  const progressPercentage = course.totalModules > 0 
+                    ? Math.round((course.completedModules / course.totalModules) * 100) 
+                    : 0;
+                  
+                  return (
+                    <div key={course.id} className={`border border-[#dac2af] rounded-lg p-4 hover:shadow-md transition-shadow ${idx === 2 ? "md:col-span-2" : ""}`}>
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="bg-[#3abcc6]/20 text-[#006970] text-xs font-semibold inline-block px-2 py-1 rounded-full mb-2">
+                            {course.category || "General"}
+                          </div>
+                          <h4 className="text-sm font-semibold text-[#0b1c30] mb-1 line-clamp-2">
+                            {course.title}
+                          </h4>
+                          <p className="text-sm text-[#544435] mb-4">
+                            {course.completedModules} dari {course.totalModules} Modul Selesai
+                          </p>
+                          <div className="w-full bg-[#dce9ff] rounded-full h-2 mb-1">
+                            <div className="bg-[#f7941d] h-2 rounded-full" style={{ width: `${progressPercentage}%` }}></div>
+                          </div>
+                          <div className="flex justify-between text-xs font-semibold text-[#544435]">
+                            <span>{progressPercentage}%</span>
+                            <span>Estimasi: {Math.max(15, (course.totalModules - course.completedModules) * 15)} Menit</span>
+                          </div>
+                        </div>
+                        {idx === 2 && (
+                          <Link href={`/courses/${course.id}`}>
+                            <button className="shrink-0 bg-[#f7941d] text-white p-2 rounded-lg hover:bg-opacity-90 transition">
+                              <Play className="w-5 h-5" />
+                            </button>
+                          </Link>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
 
-        {/* Support Contact */}
-        <SupportContact 
-          userName={user.name}
-          userEmail={user.email}
-          userDepartment={user.department}
-        />
-
-      </div>
+          {/* Rekomendasi */}
+          <div className="bg-[#ffffff] border border-[#dac2af] rounded-xl shadow-sm p-6 flex flex-col">
+            <h3 className="text-xl font-semibold text-[#0b1c30] mb-6">Rekomendasi Untuk Anda</h3>
+            
+            {exploreCourses.length === 0 ? (
+               <p className="text-sm text-[#544435] text-center py-8">Tidak ada rekomendasi saat ini.</p>
+            ) : (
+              <div className="space-y-4 flex-1">
+                {exploreCourses.slice(0, 3).map((rec, idx) => (
+                  <Link href={`/courses/${rec.id}`} key={rec.id}>
+                    <div className="flex items-start gap-3 group cursor-pointer mt-4">
+                      <div className="bg-[#eff4ff] rounded-lg p-2 text-[#166874] group-hover:bg-[#166874] group-hover:text-white transition-colors">
+                        {idx === 0 ? <TrendingUp className="w-5 h-5" /> : idx === 1 ? <Shield className="w-5 h-5" /> : <Brain className="w-5 h-5" />}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-[#0b1c30] group-hover:text-[#166874] transition-colors line-clamp-2">
+                          {rec.title}
+                        </h4>
+                        <p className="text-sm text-[#544435]">
+                          {rec.category || "General"} • {rec.modules?.length || 0} Modul
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+            
+            <Link href="/courses">
+              <button className="mt-6 w-full py-2 border border-[#dac2af] rounded-lg text-[#166874] text-sm font-semibold hover:bg-[#eff4ff] transition-colors">
+                Jelajahi Library
+              </button>
+            </Link>
+          </div>
+        </div>
+        
+      </main>
     </div>
   );
 }

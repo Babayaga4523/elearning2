@@ -46,7 +46,7 @@ export default async function DashboardPage() {
 
   const allAttempts = await db.testAttempt.findMany({
     where: { userId },
-    select: { score: true, isCheated: true }
+    select: { testId: true, score: true, isCheated: true }
   });
 
   // Get user's enrolled course categories for smart recommendations
@@ -145,7 +145,7 @@ export default async function DashboardPage() {
 
   // Define active statuses for courses that need action
   // EnrollmentStatus: IN_PROGRESS | COMPLETED | FAILED | PENDING | REJECTED | CHEATING
-  const activeStatuses = ["IN_PROGRESS"]; // Hanya kursus yang sedang aktif
+  const activeStatuses = ["IN_PROGRESS", "FAILED"]; // Kursus yang masih aktif atau bisa retake
 
   // 4. Logic: Urgent Deadlines
   const today = new Date();
@@ -157,15 +157,17 @@ export default async function DashboardPage() {
       // Deadline reminder untuk IN_PROGRESS, FAILED, CHEATING
       if (!activeStatuses.includes(en.status) || !en.deadline) return false;
       const deadlineDate = new Date(en.deadline);
-      return deadlineDate <= threeDaysFromNow && deadlineDate >= today;
+      // Include today, expired, and up to 3 days in the future
+      return deadlineDate <= threeDaysFromNow;
     })
     .map(en => {
       const deadlineDate = new Date(en.deadline!);
-      const diffTime = Math.abs(deadlineDate.getTime() - today.getTime());
+      const diffTime = deadlineDate.getTime() - today.getTime();
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       return {
         title: en.course.title,
-        deadline: `${diffDays} hari lagi`,
+        deadline: diffDays < 0 ? "Telah lewat deadline" : diffDays === 0 ? "Hari ini" : `${diffDays} hari lagi`,
+        daysRemaining: diffDays,
         courseId: en.course.id
       };
     });
@@ -315,10 +317,23 @@ export default async function DashboardPage() {
     testsPassed: uniquePassedTestsCount
   };
 
-  // Hanya hitung attempt yang tidak curang untuk rata-rata skor
-  const validAttempts = allAttempts.filter((a) => !a.isCheated && a.score !== null);
-  const avgScore = validAttempts.length > 0
-    ? Math.round(validAttempts.reduce((sum, curr) => sum + (curr.score ?? 0), 0) / validAttempts.length)
+  // PERFECT LOGIC: Calculate average from BEST score per test (not all attempts)
+  // Group attempts by testId and get best score for each test
+  const testBestScores = new Map<string, number>();
+  
+  allAttempts
+    .filter((a) => !a.isCheated && a.score !== null)
+    .forEach((a) => {
+      const currentBest = testBestScores.get(a.testId);
+      if (!currentBest || a.score! > currentBest) {
+        testBestScores.set(a.testId, a.score!);
+      }
+    });
+
+  // Calculate average from best scores only
+  const bestScoresArray = Array.from(testBestScores.values());
+  const avgScore = bestScoresArray.length > 0
+    ? Math.round(bestScoresArray.reduce((sum, score) => sum + score, 0) / bestScoresArray.length)
     : 0;
 
   return (

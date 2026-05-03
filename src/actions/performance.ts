@@ -75,8 +75,10 @@ export async function getPerformanceData() {
   const totalCourses = enrollments.length;
   const completedCourses = enrollments.filter(e => e.status === "COMPLETED").length;
   
-  const totalTestsTaken = allAttempts.length;
-  const totalTestsPassed = allAttempts.filter(a => a.passed).length;
+  // Only count POST-test attempts for pass rate (business rule: graduation is based on POST-test)
+  const postTestAttempts = allAttempts.filter(a => a.test.type === "POST");
+  const totalTestsTaken = postTestAttempts.length;
+  const totalTestsPassed = postTestAttempts.filter(a => a.passed).length;
   
   const allScores = allAttempts.map(a => a.score).filter((s): s is number => s !== null);
   const averageScore = allScores.length > 0 

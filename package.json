@@ -15,7 +15,8 @@
     "cache:stats": "node -e \"console.log(require('./src/lib/cache').cache.getStats())\"",
     "migrate:multi-role": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/migrate-users-to-multi-role.ts",
     "update:karyawan": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/update-karyawan-multi-role.ts",
-    "check:roles": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/check-user-roles.ts"
+    "check:roles": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/check-user-roles.ts",
+    "seed:permissions": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/seed-permissions.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.1.0",
