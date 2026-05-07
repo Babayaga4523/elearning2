@@ -17,6 +17,7 @@ import {
   Upload,
   ChevronDown,
   Shield,
+  FolderTree,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -57,6 +58,12 @@ const menuItems: MenuItem[] = [
     label: "Manajemen Kursus",
     icon: BookOpen,
     href: "/admin/courses",
+    permission: "manage_courses",
+  },
+  {
+    label: "Kategori Kursus",
+    icon: FolderTree,
+    href: "/admin/categories",
     permission: "manage_courses",
   },
   {

@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useEffect, useState } from "react";
 import {
   BookPlus,
   ArrowLeft,
@@ -15,6 +16,7 @@ import {
   Layers,
   Loader2,
   CheckCircle2,
+  FolderTree,
 } from "lucide-react";
 
 import {
@@ -34,12 +36,20 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { createCourse } from "@/actions/course";
 
 const formSchema = z.object({
   title: z.string().min(1, { message: "Judul kursus wajib diisi" }),
+  categoryId: z.string().min(1, { message: "Kategori wajib dipilih" }),
 });
 
 const STEPS = [
@@ -57,21 +67,44 @@ const TIPS = [
 
 const CreatePage = () => {
   const router = useRouter();
+  const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: { title: "" },
+    defaultValues: { 
+      title: "",
+      categoryId: "",
+    },
   });
 
   const { isSubmitting, isValid } = form.formState;
   const titleValue = form.watch("title");
+  const categoryValue = form.watch("categoryId");
+
+  // Fetch categories
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        const data = await res.json();
+        setCategories(data);
+      } catch (error) {
+        toast.error("Gagal memuat kategori");
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    }
+    fetchCategories();
+  }, []);
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       const course = await createCourse(values);
       toast.success("Kursus berhasil dibuat!");
       router.push(`/admin/courses/${course.id}?step=2`);
-    } catch {
-      toast.error("Terjadi kesalahan saat membuat kursus.");
+    } catch (error: any) {
+      toast.error(error.message || "Terjadi kesalahan saat membuat kursus.");
     }
   };
 
@@ -222,6 +255,59 @@ const CreatePage = () => {
                             ))}
                           </CardContent>
                         </Card>
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Category Field */}
+                  <FormField
+                    control={form.control}
+                    name="categoryId"
+                    render={({ field }) => (
+                      <FormItem className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <FormLabel className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
+                            Kategori Kursus
+                          </FormLabel>
+                          <Badge variant="outline" className="text-[10px] font-bold text-[#E8A020] border-[#E8A020]/30 bg-[#E8A020]/5 gap-1">
+                            <Sparkles className="h-2.5 w-2.5" />
+                            Wajib
+                          </Badge>
+                        </div>
+
+                        <FormControl>
+                          <Select
+                            disabled={isSubmitting || isLoadingCategories}
+                            onValueChange={field.onChange}
+                            value={field.value}
+                          >
+                            <SelectTrigger className="h-11 rounded-xl bg-slate-50 border-slate-200 focus:ring-[#0F1C3F]/20 focus:border-[#0F1C3F] font-semibold text-[#0F1C3F]">
+                              <div className="flex items-center gap-2">
+                                <FolderTree className="h-4 w-4 text-slate-400" />
+                                <SelectValue placeholder="Pilih kategori kursus" />
+                              </div>
+                            </SelectTrigger>
+                            <SelectContent>
+                              {isLoadingCategories ? (
+                                <SelectItem value="loading" disabled>
+                                  Memuat kategori...
+                                </SelectItem>
+                              ) : categories.length === 0 ? (
+                                <SelectItem value="empty" disabled>
+                                  Belum ada kategori
+                                </SelectItem>
+                              ) : (
+                                categories.map((category) => (
+                                  <SelectItem key={category.id} value={category.id}>
+                                    {category.name}
+                                  </SelectItem>
+                                ))
+                              )}
+                            </SelectContent>
+                          </Select>
+                        </FormControl>
+
+                        <FormMessage className="text-xs font-bold text-rose-500" />
                       </FormItem>
                     )}
                   />

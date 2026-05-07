@@ -4655,7 +4655,7 @@ export namespace Prisma {
     description: string | null
     imageUrl: string | null
     isPublished: boolean
-    categoryId: string | null
+    categoryId: string
     deadlineDuration: number | null
     deadlineDate: Date | null
     lockAfterDeadline: boolean
@@ -4700,7 +4700,7 @@ export namespace Prisma {
     updatedAt?: boolean
     isVisible?: boolean
     autoEnrollRules?: boolean | Course$autoEnrollRulesArgs<ExtArgs>
-    category?: boolean | Course$categoryArgs<ExtArgs>
+    category?: boolean | CategoryDefaultArgs<ExtArgs>
     enrollments?: boolean | Course$enrollmentsArgs<ExtArgs>
     modules?: boolean | Course$modulesArgs<ExtArgs>
     tests?: boolean | Course$testsArgs<ExtArgs>
@@ -4722,7 +4722,7 @@ export namespace Prisma {
     createdAt?: boolean
     updatedAt?: boolean
     isVisible?: boolean
-    category?: boolean | Course$categoryArgs<ExtArgs>
+    category?: boolean | CategoryDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["course"]>
 
   export type CourseSelectScalar = {
@@ -4744,21 +4744,21 @@ export namespace Prisma {
 
   export type CourseInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     autoEnrollRules?: boolean | Course$autoEnrollRulesArgs<ExtArgs>
-    category?: boolean | Course$categoryArgs<ExtArgs>
+    category?: boolean | CategoryDefaultArgs<ExtArgs>
     enrollments?: boolean | Course$enrollmentsArgs<ExtArgs>
     modules?: boolean | Course$modulesArgs<ExtArgs>
     tests?: boolean | Course$testsArgs<ExtArgs>
     _count?: boolean | CourseCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type CourseIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    category?: boolean | Course$categoryArgs<ExtArgs>
+    category?: boolean | CategoryDefaultArgs<ExtArgs>
   }
 
   export type $CoursePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     name: "Course"
     objects: {
       autoEnrollRules: Prisma.$AutoEnrollmentRulePayload<ExtArgs>[]
-      category: Prisma.$CategoryPayload<ExtArgs> | null
+      category: Prisma.$CategoryPayload<ExtArgs>
       enrollments: Prisma.$EnrollmentPayload<ExtArgs>[]
       modules: Prisma.$ModulePayload<ExtArgs>[]
       tests: Prisma.$TestPayload<ExtArgs>[]
@@ -4770,7 +4770,7 @@ export namespace Prisma {
       description: string | null
       imageUrl: string | null
       isPublished: boolean
-      categoryId: string | null
+      categoryId: string
       deadlineDuration: number | null
       deadlineDate: Date | null
       lockAfterDeadline: boolean
@@ -5143,7 +5143,7 @@ export namespace Prisma {
   export interface Prisma__CourseClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
     readonly [Symbol.toStringTag]: "PrismaPromise"
     autoEnrollRules<T extends Course$autoEnrollRulesArgs<ExtArgs> = {}>(args?: Subset<T, Course$autoEnrollRulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$AutoEnrollmentRulePayload<ExtArgs>, T, "findMany"> | Null>
-    category<T extends Course$categoryArgs<ExtArgs> = {}>(args?: Subset<T, Course$categoryArgs<ExtArgs>>): Prisma__CategoryClient<$Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow"> | null, null, ExtArgs>
+    category<T extends CategoryDefaultArgs<ExtArgs> = {}>(args?: Subset<T, CategoryDefaultArgs<ExtArgs>>): Prisma__CategoryClient<$Result.GetResult<Prisma.$CategoryPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
     enrollments<T extends Course$enrollmentsArgs<ExtArgs> = {}>(args?: Subset<T, Course$enrollmentsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$EnrollmentPayload<ExtArgs>, T, "findMany"> | Null>
     modules<T extends Course$modulesArgs<ExtArgs> = {}>(args?: Subset<T, Course$modulesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$ModulePayload<ExtArgs>, T, "findMany"> | Null>
     tests<T extends Course$testsArgs<ExtArgs> = {}>(args?: Subset<T, Course$testsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TestPayload<ExtArgs>, T, "findMany"> | Null>
@@ -5525,21 +5525,6 @@ export namespace Prisma {
     take?: number
     skip?: number
     distinct?: AutoEnrollmentRuleScalarFieldEnum | AutoEnrollmentRuleScalarFieldEnum[]
-  }
-
-  /**
-   * Course.category
-   */
-  export type Course$categoryArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the Category
-     */
-    select?: CategorySelect<ExtArgs> | null
-    /**
-     * Choose, which related nodes to fetch as well
-     */
-    include?: CategoryInclude<ExtArgs> | null
-    where?: CategoryWhereInput
   }
 
   /**
@@ -26535,7 +26520,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Course"> | string | null
     imageUrl?: StringNullableFilter<"Course"> | string | null
     isPublished?: BoolFilter<"Course"> | boolean
-    categoryId?: StringNullableFilter<"Course"> | string | null
+    categoryId?: StringFilter<"Course"> | string
     deadlineDuration?: IntNullableFilter<"Course"> | number | null
     deadlineDate?: DateTimeNullableFilter<"Course"> | Date | string | null
     lockAfterDeadline?: BoolFilter<"Course"> | boolean
@@ -26544,7 +26529,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Course"> | Date | string
     isVisible?: BoolFilter<"Course"> | boolean
     autoEnrollRules?: AutoEnrollmentRuleListRelationFilter
-    category?: XOR<CategoryNullableRelationFilter, CategoryWhereInput> | null
+    category?: XOR<CategoryRelationFilter, CategoryWhereInput>
     enrollments?: EnrollmentListRelationFilter
     modules?: ModuleListRelationFilter
     tests?: TestListRelationFilter
@@ -26557,7 +26542,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
     isPublished?: SortOrder
-    categoryId?: SortOrderInput | SortOrder
+    categoryId?: SortOrder
     deadlineDuration?: SortOrderInput | SortOrder
     deadlineDate?: SortOrderInput | SortOrder
     lockAfterDeadline?: SortOrder
@@ -26582,7 +26567,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Course"> | string | null
     imageUrl?: StringNullableFilter<"Course"> | string | null
     isPublished?: BoolFilter<"Course"> | boolean
-    categoryId?: StringNullableFilter<"Course"> | string | null
+    categoryId?: StringFilter<"Course"> | string
     deadlineDuration?: IntNullableFilter<"Course"> | number | null
     deadlineDate?: DateTimeNullableFilter<"Course"> | Date | string | null
     lockAfterDeadline?: BoolFilter<"Course"> | boolean
@@ -26591,7 +26576,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"Course"> | Date | string
     isVisible?: BoolFilter<"Course"> | boolean
     autoEnrollRules?: AutoEnrollmentRuleListRelationFilter
-    category?: XOR<CategoryNullableRelationFilter, CategoryWhereInput> | null
+    category?: XOR<CategoryRelationFilter, CategoryWhereInput>
     enrollments?: EnrollmentListRelationFilter
     modules?: ModuleListRelationFilter
     tests?: TestListRelationFilter
@@ -26604,7 +26589,7 @@ export namespace Prisma {
     description?: SortOrderInput | SortOrder
     imageUrl?: SortOrderInput | SortOrder
     isPublished?: SortOrder
-    categoryId?: SortOrderInput | SortOrder
+    categoryId?: SortOrder
     deadlineDuration?: SortOrderInput | SortOrder
     deadlineDate?: SortOrderInput | SortOrder
     lockAfterDeadline?: SortOrder
@@ -26629,7 +26614,7 @@ export namespace Prisma {
     description?: StringNullableWithAggregatesFilter<"Course"> | string | null
     imageUrl?: StringNullableWithAggregatesFilter<"Course"> | string | null
     isPublished?: BoolWithAggregatesFilter<"Course"> | boolean
-    categoryId?: StringNullableWithAggregatesFilter<"Course"> | string | null
+    categoryId?: StringWithAggregatesFilter<"Course"> | string
     deadlineDuration?: IntNullableWithAggregatesFilter<"Course"> | number | null
     deadlineDate?: DateTimeNullableWithAggregatesFilter<"Course"> | Date | string | null
     lockAfterDeadline?: BoolWithAggregatesFilter<"Course"> | boolean
@@ -28409,7 +28394,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     isVisible?: boolean
     autoEnrollRules?: AutoEnrollmentRuleCreateNestedManyWithoutCourseInput
-    category?: CategoryCreateNestedOneWithoutCoursesInput
+    category: CategoryCreateNestedOneWithoutCoursesInput
     enrollments?: EnrollmentCreateNestedManyWithoutCourseInput
     modules?: ModuleCreateNestedManyWithoutCourseInput
     tests?: TestCreateNestedManyWithoutCourseInput
@@ -28422,7 +28407,7 @@ export namespace Prisma {
     description?: string | null
     imageUrl?: string | null
     isPublished?: boolean
-    categoryId?: string | null
+    categoryId: string
     deadlineDuration?: number | null
     deadlineDate?: Date | string | null
     lockAfterDeadline?: boolean
@@ -28451,7 +28436,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
     autoEnrollRules?: AutoEnrollmentRuleUpdateManyWithoutCourseNestedInput
-    category?: CategoryUpdateOneWithoutCoursesNestedInput
+    category?: CategoryUpdateOneRequiredWithoutCoursesNestedInput
     enrollments?: EnrollmentUpdateManyWithoutCourseNestedInput
     modules?: ModuleUpdateManyWithoutCourseNestedInput
     tests?: TestUpdateManyWithoutCourseNestedInput
@@ -28464,7 +28449,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isPublished?: BoolFieldUpdateOperationsInput | boolean
-    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: StringFieldUpdateOperationsInput | string
     deadlineDuration?: NullableIntFieldUpdateOperationsInput | number | null
     deadlineDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lockAfterDeadline?: BoolFieldUpdateOperationsInput | boolean
@@ -28485,7 +28470,7 @@ export namespace Prisma {
     description?: string | null
     imageUrl?: string | null
     isPublished?: boolean
-    categoryId?: string | null
+    categoryId: string
     deadlineDuration?: number | null
     deadlineDate?: Date | string | null
     lockAfterDeadline?: boolean
@@ -28518,7 +28503,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isPublished?: BoolFieldUpdateOperationsInput | boolean
-    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: StringFieldUpdateOperationsInput | string
     deadlineDuration?: NullableIntFieldUpdateOperationsInput | number | null
     deadlineDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lockAfterDeadline?: BoolFieldUpdateOperationsInput | boolean
@@ -30591,9 +30576,9 @@ export namespace Prisma {
     none?: AutoEnrollmentRuleWhereInput
   }
 
-  export type CategoryNullableRelationFilter = {
-    is?: CategoryWhereInput | null
-    isNot?: CategoryWhereInput | null
+  export type CategoryRelationFilter = {
+    is?: CategoryWhereInput
+    isNot?: CategoryWhereInput
   }
 
   export type ModuleListRelationFilter = {
@@ -32373,12 +32358,10 @@ export namespace Prisma {
     deleteMany?: AutoEnrollmentRuleScalarWhereInput | AutoEnrollmentRuleScalarWhereInput[]
   }
 
-  export type CategoryUpdateOneWithoutCoursesNestedInput = {
+  export type CategoryUpdateOneRequiredWithoutCoursesNestedInput = {
     create?: XOR<CategoryCreateWithoutCoursesInput, CategoryUncheckedCreateWithoutCoursesInput>
     connectOrCreate?: CategoryCreateOrConnectWithoutCoursesInput
     upsert?: CategoryUpsertWithoutCoursesInput
-    disconnect?: CategoryWhereInput | boolean
-    delete?: CategoryWhereInput | boolean
     connect?: CategoryWhereUniqueInput
     update?: XOR<XOR<CategoryUpdateToOneWithWhereWithoutCoursesInput, CategoryUpdateWithoutCoursesInput>, CategoryUncheckedUpdateWithoutCoursesInput>
   }
@@ -34822,7 +34805,7 @@ export namespace Prisma {
     description?: StringNullableFilter<"Course"> | string | null
     imageUrl?: StringNullableFilter<"Course"> | string | null
     isPublished?: BoolFilter<"Course"> | boolean
-    categoryId?: StringNullableFilter<"Course"> | string | null
+    categoryId?: StringFilter<"Course"> | string
     deadlineDuration?: IntNullableFilter<"Course"> | number | null
     deadlineDate?: DateTimeNullableFilter<"Course"> | Date | string | null
     lockAfterDeadline?: BoolFilter<"Course"> | boolean
@@ -34847,7 +34830,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     isVisible?: boolean
     autoEnrollRules?: AutoEnrollmentRuleCreateNestedManyWithoutCourseInput
-    category?: CategoryCreateNestedOneWithoutCoursesInput
+    category: CategoryCreateNestedOneWithoutCoursesInput
     enrollments?: EnrollmentCreateNestedManyWithoutCourseInput
     tests?: TestCreateNestedManyWithoutCourseInput
   }
@@ -34859,7 +34842,7 @@ export namespace Prisma {
     description?: string | null
     imageUrl?: string | null
     isPublished?: boolean
-    categoryId?: string | null
+    categoryId: string
     deadlineDuration?: number | null
     deadlineDate?: Date | string | null
     lockAfterDeadline?: boolean
@@ -35009,7 +34992,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
     autoEnrollRules?: AutoEnrollmentRuleUpdateManyWithoutCourseNestedInput
-    category?: CategoryUpdateOneWithoutCoursesNestedInput
+    category?: CategoryUpdateOneRequiredWithoutCoursesNestedInput
     enrollments?: EnrollmentUpdateManyWithoutCourseNestedInput
     tests?: TestUpdateManyWithoutCourseNestedInput
   }
@@ -35021,7 +35004,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isPublished?: BoolFieldUpdateOperationsInput | boolean
-    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: StringFieldUpdateOperationsInput | string
     deadlineDuration?: NullableIntFieldUpdateOperationsInput | number | null
     deadlineDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lockAfterDeadline?: BoolFieldUpdateOperationsInput | boolean
@@ -35125,7 +35108,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     isVisible?: boolean
     autoEnrollRules?: AutoEnrollmentRuleCreateNestedManyWithoutCourseInput
-    category?: CategoryCreateNestedOneWithoutCoursesInput
+    category: CategoryCreateNestedOneWithoutCoursesInput
     enrollments?: EnrollmentCreateNestedManyWithoutCourseInput
     modules?: ModuleCreateNestedManyWithoutCourseInput
   }
@@ -35137,7 +35120,7 @@ export namespace Prisma {
     description?: string | null
     imageUrl?: string | null
     isPublished?: boolean
-    categoryId?: string | null
+    categoryId: string
     deadlineDuration?: number | null
     deadlineDate?: Date | string | null
     lockAfterDeadline?: boolean
@@ -35262,7 +35245,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
     autoEnrollRules?: AutoEnrollmentRuleUpdateManyWithoutCourseNestedInput
-    category?: CategoryUpdateOneWithoutCoursesNestedInput
+    category?: CategoryUpdateOneRequiredWithoutCoursesNestedInput
     enrollments?: EnrollmentUpdateManyWithoutCourseNestedInput
     modules?: ModuleUpdateManyWithoutCourseNestedInput
   }
@@ -35274,7 +35257,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isPublished?: BoolFieldUpdateOperationsInput | boolean
-    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: StringFieldUpdateOperationsInput | string
     deadlineDuration?: NullableIntFieldUpdateOperationsInput | number | null
     deadlineDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lockAfterDeadline?: BoolFieldUpdateOperationsInput | boolean
@@ -35885,7 +35868,7 @@ export namespace Prisma {
     updatedAt?: Date | string
     isVisible?: boolean
     autoEnrollRules?: AutoEnrollmentRuleCreateNestedManyWithoutCourseInput
-    category?: CategoryCreateNestedOneWithoutCoursesInput
+    category: CategoryCreateNestedOneWithoutCoursesInput
     modules?: ModuleCreateNestedManyWithoutCourseInput
     tests?: TestCreateNestedManyWithoutCourseInput
   }
@@ -35897,7 +35880,7 @@ export namespace Prisma {
     description?: string | null
     imageUrl?: string | null
     isPublished?: boolean
-    categoryId?: string | null
+    categoryId: string
     deadlineDuration?: number | null
     deadlineDate?: Date | string | null
     lockAfterDeadline?: boolean
@@ -36157,7 +36140,7 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
     autoEnrollRules?: AutoEnrollmentRuleUpdateManyWithoutCourseNestedInput
-    category?: CategoryUpdateOneWithoutCoursesNestedInput
+    category?: CategoryUpdateOneRequiredWithoutCoursesNestedInput
     modules?: ModuleUpdateManyWithoutCourseNestedInput
     tests?: TestUpdateManyWithoutCourseNestedInput
   }
@@ -36169,7 +36152,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isPublished?: BoolFieldUpdateOperationsInput | boolean
-    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: StringFieldUpdateOperationsInput | string
     deadlineDuration?: NullableIntFieldUpdateOperationsInput | number | null
     deadlineDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lockAfterDeadline?: BoolFieldUpdateOperationsInput | boolean
@@ -37125,7 +37108,7 @@ export namespace Prisma {
     createdAt?: Date | string
     updatedAt?: Date | string
     isVisible?: boolean
-    category?: CategoryCreateNestedOneWithoutCoursesInput
+    category: CategoryCreateNestedOneWithoutCoursesInput
     enrollments?: EnrollmentCreateNestedManyWithoutCourseInput
     modules?: ModuleCreateNestedManyWithoutCourseInput
     tests?: TestCreateNestedManyWithoutCourseInput
@@ -37138,7 +37121,7 @@ export namespace Prisma {
     description?: string | null
     imageUrl?: string | null
     isPublished?: boolean
-    categoryId?: string | null
+    categoryId: string
     deadlineDuration?: number | null
     deadlineDate?: Date | string | null
     lockAfterDeadline?: boolean
@@ -37181,7 +37164,7 @@ export namespace Prisma {
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     isVisible?: BoolFieldUpdateOperationsInput | boolean
-    category?: CategoryUpdateOneWithoutCoursesNestedInput
+    category?: CategoryUpdateOneRequiredWithoutCoursesNestedInput
     enrollments?: EnrollmentUpdateManyWithoutCourseNestedInput
     modules?: ModuleUpdateManyWithoutCourseNestedInput
     tests?: TestUpdateManyWithoutCourseNestedInput
@@ -37194,7 +37177,7 @@ export namespace Prisma {
     description?: NullableStringFieldUpdateOperationsInput | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
     isPublished?: BoolFieldUpdateOperationsInput | boolean
-    categoryId?: NullableStringFieldUpdateOperationsInput | string | null
+    categoryId?: StringFieldUpdateOperationsInput | string
     deadlineDuration?: NullableIntFieldUpdateOperationsInput | number | null
     deadlineDate?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     lockAfterDeadline?: BoolFieldUpdateOperationsInput | boolean

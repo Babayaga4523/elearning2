@@ -8,7 +8,7 @@ import { getPermissionsForRole } from "@/lib/permissions.server";
 
 const authOptions: any = {
   ...authConfig,
-  adapter: PrismaAdapter(db),
+  adapter: PrismaAdapter(db as any),
   session: { strategy: "jwt" },
   providers: [
     Credentials({

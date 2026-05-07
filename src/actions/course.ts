@@ -9,6 +9,14 @@ export async function createCourse(data: { title: string; categoryId?: string })
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
+  // Validasi categoryId wajib ada
+  if (!data.categoryId) {
+    throw new Error("Kategori kursus wajib dipilih");
+  }
+
+  // Setelah validasi, kita tahu categoryId pasti ada
+  const categoryId: string = data.categoryId;
+
   // [Fix Duplication] Check for existing "fresh" draft with same title and user
   // A fresh draft is unpublished and has no modules yet.
   const existingDraft = await db.course.findFirst({
@@ -24,10 +32,10 @@ export async function createCourse(data: { title: string; categoryId?: string })
 
   if (existingDraft) {
     // If found, update category if it was changed in the form
-    if (data.categoryId && existingDraft.categoryId !== data.categoryId) {
+    if (existingDraft.categoryId !== categoryId) {
       await db.course.update({
         where: { id: existingDraft.id },
-        data: { categoryId: data.categoryId }
+        data: { categoryId }
       });
     }
     return existingDraft;
@@ -37,7 +45,7 @@ export async function createCourse(data: { title: string; categoryId?: string })
     data: {
       userId: session.user.id!,
       title: data.title,
-      categoryId: data.categoryId,
+      categoryId,
     },
   });
 

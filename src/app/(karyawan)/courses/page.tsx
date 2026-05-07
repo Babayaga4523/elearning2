@@ -93,7 +93,13 @@ export default async function CoursesPage({
     }
   }
 
+  // Hanya ambil kategori yang memiliki kursus (count > 0)
+  const categoryIdsWithCourses = Object.keys(categoryCounts);
+  
   const categories = await db.category.findMany({
+    where: {
+      id: { in: categoryIdsWithCourses }
+    },
     orderBy: { name: "asc" }
   });
 

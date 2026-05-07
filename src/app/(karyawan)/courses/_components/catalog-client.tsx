@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Search, BookOpen, CheckCircle2, Clock, ChevronRight, ChevronLeft, X, Filter,
-  List, Building, Scale, Users, Terminal, Brain
+  List, Building, Scale, Users, Terminal, Brain, Calendar
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -21,6 +21,17 @@ interface CatalogClientProps {
   totalPages: number;
   totalItems: number;
 }
+
+// Helper function untuk singkat nama kategori
+const getCategoryShortName = (name: string) => {
+  const shortNames: Record<string, string> = {
+    "Ilmu Pengetahuan Alam": "IPA",
+    "Ilmu Pengetahuan Sosial": "IPS",
+    "Technical Skills": "Tech Skills",
+    "Corporate Culture": "Corporate",
+  };
+  return shortNames[name] || name;
+};
 
 // Icon mapper untuk kategori
 const getCategoryIcon = (name: string) => {
@@ -48,18 +59,14 @@ export function CatalogClient({
 
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const activeCategory = searchParams.get("category") || "all";
-  const activeDifficulty = searchParams.get("difficulty")?.split(",").filter(Boolean) || [];
 
-  const updateUrl = (newSearch: string, newCategory: string, newDifficulty: string[], page: number = 1) => {
+  const updateUrl = (newSearch: string, newCategory: string, page: number = 1) => {
     const params = new URLSearchParams(searchParams);
     if (newSearch.trim()) params.set("search", newSearch);
     else params.delete("search");
     
     if (newCategory !== "all") params.set("category", newCategory);
     else params.delete("category");
-    
-    if (newDifficulty.length > 0) params.set("difficulty", newDifficulty.join(","));
-    else params.delete("difficulty");
     
     if (page > 1) params.set("page", page.toString());
     else params.delete("page");
@@ -69,30 +76,23 @@ export function CatalogClient({
 
   const handleSearchSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    updateUrl(search, activeCategory, activeDifficulty, 1);
+    updateUrl(search, activeCategory, 1);
   };
 
   const handleCategorySelect = (categoryId: string) => {
-    updateUrl(search, categoryId, activeDifficulty, 1);
-  };
-
-  const handleDifficultyToggle = (difficulty: string) => {
-    const newDifficulty = activeDifficulty.includes(difficulty)
-      ? activeDifficulty.filter(d => d !== difficulty)
-      : [...activeDifficulty, difficulty];
-    updateUrl(search, activeCategory, newDifficulty, 1);
+    updateUrl(search, categoryId, 1);
   };
 
   const clearFilters = () => {
     setSearch("");
-    updateUrl("", "all", [], 1);
+    updateUrl("", "all", 1);
   };
   
   const handlePageChange = (page: number) => {
-    updateUrl(search, activeCategory, activeDifficulty, page);
+    updateUrl(search, activeCategory, page);
   };
 
-  const hasActiveFilters = search.trim() !== "" || activeCategory !== "all" || activeDifficulty.length > 0;
+  const hasActiveFilters = search.trim() !== "" || activeCategory !== "all";
 
   return (
     <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans antialiased min-h-[calc(100vh-4rem)] flex flex-col w-full">
@@ -143,7 +143,7 @@ export function CatalogClient({
               >
                 <List className="w-5 h-5" />
                 <span className="flex-1">Semua Kursus</span>
-                <span className="bg-[#e5eeff] text-[#206e7a] py-0.5 px-2 rounded-full text-xs">{totalAllCourses}</span>
+                <span className="bg-[#e5eeff] text-[#206e7a] py-0.5 px-2 rounded-full text-xs font-bold">{totalAllCourses}</span>
               </button>
               
               {categories.map((category) => {
@@ -163,44 +163,11 @@ export function CatalogClient({
                     {getCategoryIcon(category.name)}
                     <span className="flex-1">{category.name}</span>
                     {count > 0 && (
-                      <span className="bg-[#e5eeff] text-[#206e7a] py-0.5 px-2 rounded-full text-xs">{count}</span>
+                      <span className="bg-[#e5eeff] text-[#206e7a] py-0.5 px-2 rounded-full text-xs font-bold">{count}</span>
                     )}
                   </button>
                 );
               })}
-            </div>
-            
-            <hr className="my-4 border-[#d3e4fe]" />
-            
-            <h3 className="text-sm font-semibold text-[#544435] mb-3 px-2">Level Kesulitan</h3>
-            <div className="px-2 flex flex-col gap-3">
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input 
-                  className="w-4 h-4 rounded border-[#dac2af] text-[#f7941d] focus:ring-[#f7941d]" 
-                  type="checkbox"
-                  checked={activeDifficulty.includes("BEGINNER")}
-                  onChange={() => handleDifficultyToggle("BEGINNER")}
-                />
-                <span className="text-sm text-[#0b1c30]">Pemula</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input 
-                  className="w-4 h-4 rounded border-[#dac2af] text-[#f7941d] focus:ring-[#f7941d]" 
-                  type="checkbox"
-                  checked={activeDifficulty.includes("INTERMEDIATE")}
-                  onChange={() => handleDifficultyToggle("INTERMEDIATE")}
-                />
-                <span className="text-sm text-[#0b1c30]">Menengah</span>
-              </label>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input 
-                  className="w-4 h-4 rounded border-[#dac2af] text-[#f7941d] focus:ring-[#f7941d]" 
-                  type="checkbox"
-                  checked={activeDifficulty.includes("ADVANCED")}
-                  onChange={() => handleDifficultyToggle("ADVANCED")}
-                />
-                <span className="text-sm text-[#0b1c30]">Lanjutan</span>
-              </label>
             </div>
           </div>
         </aside>
@@ -253,8 +220,44 @@ export function CatalogClient({
                   ? course.enrollments[0] 
                   : null;
                 
-                const isPending = enrollment?.status === "PENDING" || enrollment?.status === "pending_approval";
-                const isEnrolled = enrollment && !isPending;
+                const status = enrollment?.status;
+                
+                // Status badge mapping
+                const statusBadge = {
+                  PENDING: {
+                    label: "Menunggu",
+                    icon: Clock,
+                    className: "bg-[#ffdcbf] text-[#6b3b00] border-[#ffb874]"
+                  },
+                  IN_PROGRESS: {
+                    label: "Sedang Berjalan",
+                    icon: BookOpen,
+                    className: "bg-[#e0f2fe] text-[#0369a1] border-[#bae6fd]"
+                  },
+                  COMPLETED: {
+                    label: "Selesai",
+                    icon: CheckCircle2,
+                    className: "bg-[#d1fae5] text-[#065f46] border-[#a7f3d0]"
+                  },
+                  FAILED: {
+                    label: "Gagal",
+                    icon: Clock,
+                    className: "bg-[#fee2e2] text-[#991b1b] border-[#fecaca]"
+                  },
+                  REJECTED: {
+                    label: "Ditolak",
+                    icon: Clock,
+                    className: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"
+                  },
+                  CHEATING: {
+                    label: "Pelanggaran",
+                    icon: Clock,
+                    className: "bg-[#fee2e2] text-[#7f1d1d] border-[#fca5a5]"
+                  }
+                };
+
+                const currentStatus = status ? statusBadge[status as keyof typeof statusBadge] : null;
+                const StatusIcon = currentStatus?.icon;
 
                 return (
                   <Link href={`/courses/${course.id}`} key={course.id}>
@@ -275,19 +278,15 @@ export function CatalogClient({
                       </div>
                       <div className="p-4 flex-1 flex flex-col">
                         <div className="flex justify-between items-start mb-2 gap-2">
-                          <span className="bg-[#e5eeff] text-[#006970] text-xs font-semibold px-2 py-1 rounded-md shrink-0 truncate max-w-[120px]">
-                            {course.category?.name || "General"}
+                          <span className="bg-[#e5eeff] text-[#006970] text-xs font-semibold px-2 py-1 rounded-md shrink-0">
+                            {getCategoryShortName(course.category?.name || "General")}
                           </span>
                           
-                          {isEnrolled ? (
-                            <span className="bg-[#a7eefc] text-[#206e7a] text-xs font-semibold px-2 py-1 rounded-full border border-[#a7eefc] flex items-center gap-1 shrink-0">
-                              <CheckCircle2 className="w-3 h-3" /> Terdaftar
+                          {currentStatus && StatusIcon && (
+                            <span className={`text-xs font-semibold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${currentStatus.className}`}>
+                              <StatusIcon className="w-3 h-3" /> {currentStatus.label}
                             </span>
-                          ) : isPending ? (
-                            <span className="bg-[#ffdcbf] text-[#6b3b00] text-xs font-semibold px-2 py-1 rounded-full border border-[#ffb874] flex items-center gap-1 shrink-0">
-                              <Clock className="w-3 h-3" /> Menunggu
-                            </span>
-                          ) : null}
+                          )}
                         </div>
                         
                         <h3 className="text-lg font-semibold text-[#0b1c30] mb-2 leading-tight group-hover:text-[#f7941d] transition-colors line-clamp-2">
@@ -297,6 +296,18 @@ export function CatalogClient({
                         <p className="text-sm text-[#544435] line-clamp-2 mb-4 flex-1">
                           {course.description || "Pelajari materi ini untuk meningkatkan kompetensi dan keahlian Anda di lingkungan perusahaan."}
                         </p>
+                        
+                        {/* Deadline */}
+                        {course.deadlineDate && (
+                          <div className="mb-3 flex items-center gap-2 text-xs">
+                            <Calendar className="w-4 h-4 text-[#f7941d]" />
+                            <span className="text-[#544435]">
+                              Deadline: <span className="font-semibold text-[#0b1c30]">
+                                {format(new Date(course.deadlineDate), "dd MMM yyyy", { locale: idLocale })}
+                              </span>
+                            </span>
+                          </div>
+                        )}
                         
                         <div className="flex items-center justify-between border-t border-[#d3e4fe] pt-3 mt-auto">
                           <div className="flex items-center gap-1 text-[#544435] text-xs font-semibold">

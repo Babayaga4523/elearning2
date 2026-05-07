@@ -47,7 +47,7 @@ model Course {
   description        String?
   imageUrl           String?
   isPublished        Boolean              @default(false)
-  categoryId         String?
+  categoryId         String               // REQUIRED: Setiap kursus harus punya kategori
   deadlineDuration   Int?
   deadlineDate       DateTime?
   lockAfterDeadline  Boolean              @default(false)  // Kunci akses setelah deadline
@@ -56,7 +56,7 @@ model Course {
   updatedAt          DateTime             @updatedAt
   isVisible          Boolean              @default(true)
   autoEnrollRules    AutoEnrollmentRule[]
-  category           Category?            @relation(fields: [categoryId], references: [id])
+  category           Category             @relation(fields: [categoryId], references: [id])
   enrollments        Enrollment[]
   modules            Module[]
   tests              Test[]
