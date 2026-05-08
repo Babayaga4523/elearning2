@@ -7,7 +7,6 @@ import {
   Download,
   Users,
   CheckCircle2,
-  AlertTriangle,
   TrendingUp,
   Award,
 } from "lucide-react";
@@ -44,9 +43,6 @@ interface ReportRow {
   postTestTitle: string | null;
   postPassing: number;
   postTestPassed: boolean | null;
-  isCheated: boolean;
-  cheatedReason: string | null;
-  violationCount: number;
 }
 
 interface Props {
@@ -69,20 +65,6 @@ export function CourseReportClient({
   totalEnrolled,
 }: Props) {
   const [search, setSearch] = useState("");
-  const cheatedCount = reportRows.filter((r) => r.isCheated).length;
-
-  const getFraudReasonLabel = (reason: string | null) => {
-    switch (reason) {
-      case "SPEED_HACK":
-        return "Kecepatan Tidak Wajar";
-      case "MAX_VIOLATIONS":
-        return "Melebihi Batas Pelanggaran";
-      case "BOTH":
-        return "Speed Hack + Pelanggaran";
-      default:
-        return "Pelanggaran Terdeteksi";
-    }
-  };
 
   const completedCount = reportRows.filter((r) => r.status === "COMPLETED").length;
   const passedCount = reportRows.filter((r) => r.postTestPassed === true).length;
@@ -130,7 +112,6 @@ export function CourseReportClient({
         { key: "department", width: 25 },
         { key: "lokasi", width: 20 },
         { key: "status", width: 15 },
-        { key: "fraudStatus", width: 24 },
         { key: "enrolledAt", width: 15 },
         { key: "moduleProgress", width: 15 },
         { key: "completedModules", width: 15 },
@@ -142,7 +123,7 @@ export function CourseReportClient({
       ];
 
       // ─── 3. Judul Navy (Row 1) ──────────────────────────────────
-      sheet.mergeCells("A1:O1");
+      sheet.mergeCells("A1:N1");
       const titleCell = sheet.getCell("A1");
       titleCell.value = `LAPORAN HASIL PELATIHAN: ${course.title.toUpperCase()}`;
       titleCell.font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
@@ -155,7 +136,7 @@ export function CourseReportClient({
       sheet.getRow(1).height = 35;
 
       // Sub-judul (Row 2)
-      sheet.mergeCells("A2:O2");
+      sheet.mergeCells("A2:N2");
       const subTitleCell = sheet.getCell("A2");
       subTitleCell.value = `Tanggal Unduh: ${new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric", hour: "2-digit", minute: "2-digit" })}`;
       subTitleCell.font = { italic: true, size: 10, color: { argb: "FF444444" } };
@@ -168,7 +149,7 @@ export function CourseReportClient({
 
       const headerValues = [
         "NIP", "NAMA KARYAWAN", "EMAIL", "DEPARTEMEN", "LOKASI", 
-        "STATUS", "STATUS KECURANGAN", "TGL DAFTAR", "PROGRESS (%)", "MODUL LULUS", "TOTAL MODUL",
+        "STATUS", "TGL DAFTAR", "PROGRESS (%)", "MODUL LULUS", "TOTAL MODUL",
         `NILAI ${preTitle}`, `LULUS ${preTitle}`, `NILAI ${postTitle}`, `LULUS ${postTitle}`
       ];
 
@@ -197,7 +178,6 @@ export function CourseReportClient({
           r.status === "COMPLETED" ? "Selesai"
           : r.status === "FAILED" ? "Gagal"
           : r.status === "REJECTED" ? "Ditolak"
-          : r.status === "CHEATING" ? "Kecurangan"
           : "Berjalan";
 
         const row = sheet.addRow({
@@ -207,9 +187,6 @@ export function CourseReportClient({
           department: r.department,
           lokasi: r.lokasi,
           status: statusLabel,
-          fraudStatus: r.isCheated
-            ? `${getFraudReasonLabel(r.cheatedReason)} (${r.violationCount} pelanggaran)`
-            : "Aman",
           enrolledAt: new Date(r.enrolledAt).toLocaleDateString("id-ID"),
           moduleProgress: r.moduleProgress,
           completedModules: r.completedModules,
@@ -245,40 +222,27 @@ export function CourseReportClient({
         } else if (r.status === "REJECTED") {
           statusCell.font = { size: 10, bold: true, color: { argb: "FF475569" } };
           statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
-        } else if (r.status === "CHEATING") {
-          statusCell.font = { size: 10, bold: true, color: { argb: "FFFFFFFF" } };
-          statusCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDC2626" } };
         }
         statusCell.alignment = { horizontal: "center", vertical: "middle" };
 
-        const fraudCell = row.getCell(7);
-        if (r.isCheated) {
-          fraudCell.font = { size: 10, bold: true, color: { argb: "FF991B1B" } };
-          fraudCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFFEE2E2" } };
-        } else {
-          fraudCell.font = { size: 10, color: { argb: "FF166534" } };
-          fraudCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFDCFCE7" } };
-        }
-        fraudCell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
-
-        const preCell = row.getCell(13);
+        const preCell = row.getCell(12);
         if (r.preTestPassed === true) preCell.font = { color: { argb: "FF166534" } };
         else if (r.preTestPassed === false) preCell.font = { color: { argb: "FF991B1B" } };
         preCell.alignment = { horizontal: "center" };
 
-        const postCell = row.getCell(15);
+        const postCell = row.getCell(14);
         if (r.postTestPassed === true) postCell.font = { color: { argb: "FF166534" } };
         else if (r.postTestPassed === false) postCell.font = { color: { argb: "FF991B1B" } };
         postCell.alignment = { horizontal: "center" };
 
-        [8, 9, 10, 11, 12, 14].forEach(col => {
+        [7, 8, 9, 10, 11, 13].forEach(col => {
           row.getCell(col).alignment = { horizontal: "center" };
         });
       });
 
       // ─── 5. Freeze pane & Auto Filter ──────────────────────────────
       sheet.views = [{ state: "frozen", xSplit: 0, ySplit: 3 }]; 
-      sheet.autoFilter = { from: "A3", to: `O3` };
+      sheet.autoFilter = { from: "A3", to: `N3` };
 
       // ─── 6. Export ──────────────────────────────────────────────────
       const buffer = await workbook.xlsx.writeBuffer();
@@ -330,14 +294,6 @@ export function CourseReportClient({
       bg: "bg-amber-50",
       border: "border-amber-100",
     },
-    {
-      label: "Terindikasi Kecurangan",
-      value: cheatedCount,
-      icon: AlertTriangle,
-      color: "text-rose-600",
-      bg: "bg-rose-50",
-      border: "border-rose-100",
-    },
   ];
 
   const comparisonData = [
@@ -388,7 +344,7 @@ export function CourseReportClient({
       </div>
 
       {/* ── Summary Stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((s) => (
           <Card key={s.label} className={cn("border shadow-sm bg-white", s.border)}>
             <CardContent className="p-4">
@@ -445,7 +401,6 @@ export function CourseReportClient({
                   <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Progress Modul</th>
                   <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Pre-Test</th>
                   <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Post-Test</th>
-                  <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Kecurangan</th>
                   <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Status</th>
                 </tr>
               </thead>
@@ -538,26 +493,6 @@ export function CourseReportClient({
                         </div>
                       )}
                     </td>
-                    {/* Status */}
-                    <td className="px-4 py-4 text-center">
-                      {row.isCheated ? (
-                        <div className="flex flex-col items-center gap-1">
-                          <Badge className="text-[10px] font-black border-none px-2 bg-rose-100 text-rose-700">
-                            Terdeteksi
-                          </Badge>
-                          <span className="text-[10px] text-rose-600 font-semibold">
-                            {getFraudReasonLabel(row.cheatedReason)}
-                          </span>
-                          <span className="text-[10px] text-slate-500">
-                            {row.violationCount} pelanggaran
-                          </span>
-                        </div>
-                      ) : (
-                        <Badge className="text-[10px] font-black border-none px-2 bg-emerald-100 text-emerald-700">
-                          Aman
-                        </Badge>
-                      )}
-                    </td>
                     {/* Status Enrollment */}
                     <td className="px-4 py-4 text-center">
                       <Badge
@@ -569,8 +504,6 @@ export function CourseReportClient({
                             ? "bg-rose-100 text-rose-600"
                             : row.status === "REJECTED"
                             ? "bg-slate-100 text-slate-600"
-                            : row.status === "CHEATING"
-                            ? "bg-red-600 text-white animate-pulse"
                             : "bg-blue-100 text-blue-700"
                         )}
                       >
@@ -580,8 +513,6 @@ export function CourseReportClient({
                           ? "Gagal"
                           : row.status === "REJECTED"
                           ? "Ditolak"
-                          : row.status === "CHEATING"
-                          ? "Kecurangan"
                           : "Berjalan"}
                       </Badge>
                     </td>

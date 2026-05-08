@@ -51,28 +51,17 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { answers, pendingViolations } = body;
+    const { answers } = body;
 
     if (!answers || !Array.isArray(answers)) {
       return new NextResponse("Invalid answers format", { status: 400 });
     }
 
-    const normalizedPendingViolations = Array.isArray(pendingViolations)
-      ? pendingViolations.filter(
-          (v) =>
-            v &&
-            typeof v === "object" &&
-            typeof v.type === "string" &&
-            typeof v.timestamp === "string"
-        )
-      : [];
-
     // Call existing server action for robust scoring and atomic transaction
-    const result = await submitTest(params.testId, answers, normalizedPendingViolations);
+    const result = await submitTest(params.testId, answers);
 
     return NextResponse.json({ 
       attemptId: result.id,
-      isCheated: result.isCheated,
       passed: result.passed,
       canRetake: result.canRetake,
       remainingAttempts: result.remainingAttempts,

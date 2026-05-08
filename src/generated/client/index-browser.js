@@ -243,11 +243,7 @@ exports.Prisma.EnrollmentScalarFieldEnum = {
   approvedById: 'approvedById',
   rejectionNote: 'rejectionNote',
   postTestAttempts: 'postTestAttempts',
-  maxPostTestAttempts: 'maxPostTestAttempts',
-  hasCheatedPostTest: 'hasCheatedPostTest',
-  cheatedAtAttempt: 'cheatedAtAttempt',
-  hasCheatedPreTest: 'hasCheatedPreTest',
-  preTestCheatingCount: 'preTestCheatingCount'
+  maxPostTestAttempts: 'maxPostTestAttempts'
 };
 
 exports.Prisma.NotificationScalarFieldEnum = {
@@ -273,14 +269,8 @@ exports.Prisma.TestAttemptScalarFieldEnum = {
   updatedAt: 'updatedAt',
   completedAt: 'completedAt',
   startedAt: 'startedAt',
-  cheatedReason: 'cheatedReason',
-  isCheated: 'isCheated',
-  cheatedAt: 'cheatedAt',
-  forceSubmittedAt: 'forceSubmittedAt',
   status: 'status',
-  timeSpent: 'timeSpent',
-  violationCount: 'violationCount',
-  violationLogs: 'violationLogs'
+  timeSpent: 'timeSpent'
 };
 
 exports.Prisma.TestSessionScalarFieldEnum = {
@@ -289,22 +279,10 @@ exports.Prisma.TestSessionScalarFieldEnum = {
   userId: 'userId',
   enrollmentId: 'enrollmentId',
   attemptNumber: 'attemptNumber',
-  isCheated: 'isCheated',
-  cheatedAt: 'cheatedAt',
-  forceSubmittedAt: 'forceSubmittedAt',
   score: 'score',
   status: 'status',
   startedAt: 'startedAt',
   submittedAt: 'submittedAt'
-};
-
-exports.Prisma.TestViolationLogScalarFieldEnum = {
-  id: 'id',
-  testId: 'testId',
-  userId: 'userId',
-  type: 'type',
-  timestamp: 'timestamp',
-  detail: 'detail'
 };
 
 exports.Prisma.TestAnswerScalarFieldEnum = {
@@ -457,8 +435,7 @@ exports.EnrollmentStatus = exports.$Enums.EnrollmentStatus = {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
   PENDING: 'PENDING',
-  REJECTED: 'REJECTED',
-  CHEATING: 'CHEATING'
+  REJECTED: 'REJECTED'
 };
 
 exports.NotificationType = exports.$Enums.NotificationType = {
@@ -487,7 +464,6 @@ exports.Prisma.ModelName = {
   Notification: 'Notification',
   TestAttempt: 'TestAttempt',
   TestSession: 'TestSession',
-  TestViolationLog: 'TestViolationLog',
   TestAnswer: 'TestAnswer',
   AutoEnrollmentRule: 'AutoEnrollmentRule',
   DepartmentConfig: 'DepartmentConfig',

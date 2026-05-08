@@ -69,7 +69,6 @@ interface UserRow {
   totalEnrollments: number;
   completedEnrollments: number;
   inProgressEnrollments: number;
-  hasCheated?: boolean;
   lockedAt?: Date | null;
 }
 
@@ -295,9 +294,7 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                     <TableCell className="text-center text-xs font-bold text-slate-900">{user.totalEnrollments}</TableCell>
                     <TableCell className="text-center text-xs font-bold text-emerald-600">{user.completedEnrollments}</TableCell>
                     <TableCell className="text-center">
-                       {user.hasCheated ? (
-                         <StatusBadge status="FAILED" />
-                       ) : user.totalEnrollments === 0 ? (
+                       {user.totalEnrollments === 0 ? (
                          <StatusBadge status="PENDING" />
                        ) : isActive ? (
                          <StatusBadge status="IN_PROGRESS" />

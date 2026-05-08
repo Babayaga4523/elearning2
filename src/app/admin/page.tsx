@@ -74,7 +74,7 @@ export default async function AdminDashboard() {
      const monthKey = format(monthDate, "MMMM yyyy", { locale: localeId });
      enrollmentMonthly[monthKey] = 0;
      completionMonthly[monthKey] = 0;
-     interactivePieRaw[monthKey] = { COMPLETED: 0, FAILED: 0, IN_PROGRESS: 0, PENDING: 0, REJECTED: 0, CHEATING: 0 };
+     interactivePieRaw[monthKey] = { COMPLETED: 0, FAILED: 0, IN_PROGRESS: 0, PENDING: 0, REJECTED: 0 };
   }
 
   trendDataRaw.forEach((e) => {
@@ -108,7 +108,6 @@ export default async function AdminDashboard() {
         { name: "Berjalan", value: stats.IN_PROGRESS || 0, fill: "#E8A020" },
         { name: "Menunggu", value: stats.PENDING || 0, fill: "#94A3B8" },
         { name: "Ditolak", value: stats.REJECTED || 0, fill: "#64748B" },
-        { name: "Curang", value: stats.CHEATING || 0, fill: "#B91C1C" },
      ];
      return acc;
   }, {} as Record<string, any[]>);

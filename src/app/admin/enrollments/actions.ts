@@ -549,7 +549,6 @@ export async function pokeParticipant(enrollmentId: string, customNote?: string)
       const statusLabels: Record<string, string> = {
         COMPLETED: "sudah selesai",
         REJECTED: "ditolak",
-        CHEATING: "terdeteksi curang",
         EXPIRED: "kedaluwarsa"
       };
       return { 

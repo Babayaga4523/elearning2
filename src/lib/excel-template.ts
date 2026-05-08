@@ -26,8 +26,6 @@ export const BRAND = {
   STATUS_PENDING_FG: "FF854D0E",
   STATUS_REJECTED_BG: "FFF1F5F9",
   STATUS_REJECTED_FG: "FF64748B",
-  STATUS_CHEATING_BG: "FFFEE2E2",
-  STATUS_CHEATING_FG: "FFB91C1C",
 };
 
 // ─── Workbook Factory ───────────────────────────────────────────────────────
@@ -144,7 +142,6 @@ export function applyStatusCell(cell: ExcelJS.Cell, status: string): void {
     IN_PROGRESS: { bg: BRAND.STATUS_PROGRESS_BG, fg: BRAND.STATUS_PROGRESS_FG, label: "Berjalan" },
     PENDING:   { bg: BRAND.STATUS_PENDING_BG,   fg: BRAND.STATUS_PENDING_FG,   label: "Menunggu" },
     REJECTED:  { bg: BRAND.STATUS_REJECTED_BG,  fg: BRAND.STATUS_REJECTED_FG,  label: "Ditolak" },
-    CHEATING:  { bg: BRAND.STATUS_CHEATING_BG, fg: BRAND.STATUS_CHEATING_FG, label: "Curang" },
   };
   const s = map[status] ?? { bg: BRAND.STATUS_REJECTED_BG, fg: BRAND.STATUS_REJECTED_FG, label: status };
   cell.value = s.label;

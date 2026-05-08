@@ -47,7 +47,6 @@ export function PerformanceClient({ courseAnalysis }: PerformanceClientProps) {
           const statusMap: Record<string, { label: string; className: string }> = {
             COMPLETED: { label: "Selesai", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
             FAILED: { label: "Gagal", className: "bg-rose-50 text-rose-700 border-rose-200" },
-            CHEATING: { label: "Kecurangan", className: "bg-rose-600 text-white border-transparent" },
             IN_PROGRESS: { label: "Berjalan", className: "bg-blue-50 text-blue-700 border-blue-200" },
           };
           const status = statusMap[course.status] ?? statusMap.IN_PROGRESS;

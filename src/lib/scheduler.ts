@@ -356,7 +356,7 @@ export async function runDeadlineMonitoring() {
       where: {
         deadline: { lt: todayWIB },
         reportedAt: null,
-        status: { notIn: ["COMPLETED", "CHEATING"] },
+        status: { notIn: ["COMPLETED"] },
       },
       include: {
         user: { select: { name: true, email: true, department: true, nip: true } },
@@ -524,8 +524,7 @@ export async function cleanupOrphanedTestSessions() {
             where: { id: session.id },
             data: { 
               status: "FORCE_SUBMITTED",
-              submittedAt: new Date(),
-              forceSubmittedAt: new Date()
+              submittedAt: new Date()
             }
           });
 

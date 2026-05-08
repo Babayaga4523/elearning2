@@ -134,7 +134,6 @@ export const ExportTranscriptButton = ({ data, userName }: ExportTranscriptButto
         course.postScore !== null ? `${course.postScore}%` : "-",
         course.growth !== null ? (course.growth > 0 ? `+${course.growth}%` : `${course.growth}%`) : "-",
         course.status === "COMPLETED" ? "LULUS" : 
-        course.status === "CHEATING" ? "KECURANGAN" : 
         course.status === "FAILED" ? "GAGAL" : "IN PROGRESS"
       ]);
 
@@ -170,7 +169,7 @@ export const ExportTranscriptButton = ({ data, userName }: ExportTranscriptButto
            // Color Statuses conditionally
            if (dataContext.section === "body" && dataContext.column.index === 6) {
               const statusStr = dataContext.cell.raw;
-              if (statusStr === "KECURANGAN" || statusStr === "GAGAL") {
+              if (statusStr === "GAGAL") {
                 dataContext.cell.styles.textColor = [239, 68, 68]; // Red
               } else if (statusStr === "LULUS") {
                 dataContext.cell.styles.textColor = [16, 185, 129]; // Emerald

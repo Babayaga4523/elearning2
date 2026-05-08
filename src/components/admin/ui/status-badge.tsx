@@ -9,7 +9,6 @@ const statusConfig = {
   ENROLLED:    { label: 'Terdaftar',   class: 'bg-amber-50 text-amber-700 border-amber-200' },
   PENDING:     { label: 'Menunggu',    class: 'bg-slate-50 text-slate-600 border-slate-200' },
   REJECTED:    { label: 'Ditolak',     class: 'bg-rose-100 text-rose-800 border-rose-300' },
-  CHEATING:    { label: 'Curang',      class: 'bg-red-100 text-red-800 border-red-300' },
   PUBLISHED:   { label: 'Aktif',       class: 'bg-emerald-50 text-emerald-700 border-emerald-200' },
   DRAFT:       { label: 'Draft',       class: 'bg-slate-50 text-slate-600 border-slate-200' },
 }

@@ -7,11 +7,7 @@ import {
   HelpCircle, 
   Loader2,
   Info,
-  Shield,
-  ShieldAlert,
-  Clock,
-  AlertTriangle,
-  History
+  Clock
 } from "lucide-react";
 import { getTestAttemptDetail } from "@/actions/test";
 import { cn } from "@/lib/utils";
@@ -103,92 +99,6 @@ export function TestAttemptReview({ attemptId }: TestAttemptReviewProps) {
           </p>
         </div>
       </div>
-      
-      {/* ── Proctoring Stats ── */}
-      {data.isCheated && (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 transition-all animate-pulse">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-rose-100 text-rose-600">
-              <ShieldAlert className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-black text-rose-800 uppercase tracking-tight">Kecurangan Terdeteksi</p>
-              <p className="text-[11px] font-medium text-rose-600 leading-tight">
-                Sistem mendeteksi indikasi kecurangan yang kuat pada percobaan ini.
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <span className="rounded-full bg-rose-200 px-3 py-1 text-[10px] font-black uppercase text-rose-800">
-                  REASON: {data.cheatedReason || "UNSPECIFIED"}
-                </span>
-                <span className="rounded-full bg-rose-200 px-3 py-1 text-[10px] font-black uppercase text-rose-800">
-                  VIOLATIONS: {data.violationCount}
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {!data.isCheated && data.violationCount > 0 && (
-        <div className="rounded-xl border border-amber-100 bg-amber-50 p-4">
-          <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-amber-100 text-amber-600">
-              <Shield className="h-6 w-6" />
-            </div>
-            <div>
-              <p className="text-sm font-black text-amber-800 uppercase tracking-tight">Peringatan Keamanan</p>
-              <p className="text-[11px] font-medium text-amber-600 leading-tight">
-                Ditemukan {data.violationCount} pelanggaran minor, namun tidak mencapai ambang batas kecurangan otomatis.
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── Violation Logs Table ── */}
-      {data.violationLogs && data.violationLogs.length > 0 && (
-        <div className="rounded-xl border border-slate-200 bg-white overflow-hidden shadow-sm">
-          <div className="bg-slate-50 px-4 py-3 border-bottom border-slate-200 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <History className="h-4 w-4 text-slate-500" />
-              <h3 className="text-xs font-black uppercase tracking-wider text-slate-600">Audit Pelanggaran Real-time</h3>
-            </div>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/30 text-slate-400 font-black uppercase tracking-[0.1em]">
-                  <th className="px-4 py-2 font-black">Waktu</th>
-                  <th className="px-4 py-2 font-black">Jenis Pelanggaran</th>
-                  <th className="px-4 py-2 font-black">Detail</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {data.violationLogs.map((log: any, i: number) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="px-4 py-2.5 font-medium text-slate-500 tabular-nums">
-                      {new Date(log.timestamp).toLocaleTimeString()}
-                    </td>
-                    <td className="px-4 py-2.5">
-                      <span className={cn(
-                        "rounded px-2 py-0.5 text-[10px] font-black uppercase",
-                        log.type.includes("BLUR") || log.type.includes("VISIBILITY") 
-                          ? "bg-rose-100 text-rose-700" 
-                          : "bg-amber-100 text-amber-700"
-                      )}>
-                        {log.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2.5 text-slate-400 font-medium">
-                      {log.detail || "No additional data"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       <div className="space-y-3">
         {data.test.questions.map((question: any, idx: number) => {

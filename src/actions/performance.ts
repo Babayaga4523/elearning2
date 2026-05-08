@@ -97,9 +97,6 @@ export async function getPerformanceData() {
 
     // Get BEST attempts for this course (Highest Score)
     const courseAttempts = allAttempts.filter(a => a.test.courseId === course.id);
-    const hasCheated = courseAttempts.some(a => a.isCheated);
-    
-    const status = hasCheated ? "CHEATING" : en.status;
 
     const bestPre = courseAttempts
       .filter(a => a.test.type === "PRE" && a.score !== null)
@@ -120,7 +117,7 @@ export async function getPerformanceData() {
       title: course.title,
       category: course.category?.name || "Uncategorized",
       progress,
-      status,
+      status: en.status,
       preScore: bestPre?.score ?? null,
       postScore: bestPost?.score ?? null,
       growth,

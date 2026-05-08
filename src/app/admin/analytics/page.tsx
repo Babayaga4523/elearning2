@@ -53,7 +53,6 @@ export default async function AdminAnalyticsPage() {
   const inProgressEnrollments = statusGroups.find((g) => g.status === "IN_PROGRESS")?._count.status ?? 0;
   const pendingEnrollments = statusGroups.find((g) => g.status === "PENDING")?._count.status ?? 0;
   const rejectedEnrollments = statusGroups.find((g) => g.status === "REJECTED")?._count.status ?? 0;
-  const cheatingEnrollments = statusGroups.find((g) => g.status === "CHEATING")?._count.status ?? 0;
   const finishedEnrollments = completedEnrollments + failedEnrollments;
 
   const completionRate = totalEnrollments > 0 ? Math.round((finishedEnrollments / totalEnrollments) * 100) : 0;
@@ -97,7 +96,6 @@ export default async function AdminAnalyticsPage() {
     { name: "Berjalan", value: inProgressEnrollments, fill: "#E8A020" },
     { name: "Menunggu", value: pendingEnrollments, fill: "#94A3B8" },
     { name: "Ditolak", value: rejectedEnrollments, fill: "#64748B" },
-    { name: "Curang", value: cheatingEnrollments, fill: "#B91C1C" },
   ];
 
   // Radar Data (Actual 6-month trend)

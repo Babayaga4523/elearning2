@@ -46,7 +46,7 @@ export default async function DashboardPage() {
 
   const allAttempts = await db.testAttempt.findMany({
     where: { userId },
-    select: { testId: true, score: true, isCheated: true }
+    select: { testId: true, score: true }
   });
 
   // Get user's enrolled course categories for smart recommendations
@@ -290,12 +290,9 @@ export default async function DashboardPage() {
 
   const leaderboardCandidates = allEmployees
     .map(u => {
-      const hasCheated = u.enrollments.some(e => e.status === "CHEATING");
-      if (hasCheated) return null;
       const score = (u.userProgress.length * 10) + (u.testAttempts.length * 50);
       return { id: u.id, name: u.name || "Karyawan", department: u.department || "-", score, isCurrentUser: u.id === userId };
     })
-    .filter((c): c is NonNullable<typeof c> => c !== null)
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
 
@@ -322,7 +319,7 @@ export default async function DashboardPage() {
   const testBestScores = new Map<string, number>();
   
   allAttempts
-    .filter((a) => !a.isCheated && a.score !== null)
+    .filter((a) => a.score !== null)
     .forEach((a) => {
       const currentBest = testBestScores.get(a.testId);
       if (!currentBest || a.score! > currentBest) {

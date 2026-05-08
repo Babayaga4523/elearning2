@@ -33,7 +33,6 @@ export default async function TestResultPage({
   }
 
   const isPassed = attempt.passed;
-  const isCheated = !!(attempt as any).isCheated;
   const score = Math.round(attempt.score);
   const passingScore = attempt.test.passingScore ?? 0;
   const testType = attempt.test.type;
@@ -60,7 +59,7 @@ export default async function TestResultPage({
 
   const enrollment = await db.enrollment.findUnique({
     where: { userId_courseId: { userId: session.user.id, courseId: params.courseId } },
-    select: { maxPostTestAttempts: true, postTestAttempts: true, hasCheatedPostTest: true }
+    select: { maxPostTestAttempts: true, postTestAttempts: true }
   });
 
   const effectiveMaxAttempts = enrollment?.maxPostTestAttempts ?? attempt.test.maxAttempts ?? 3;
@@ -75,12 +74,7 @@ export default async function TestResultPage({
   let statusBg = "bg-[#f59e0b]";
   let statusBorder = "border-[#f59e0b]";
   
-  if (isCheated) {
-    statusColor = "#ef4444";
-    statusText = "text-[#ef4444]";
-    statusBg = "bg-[#ef4444]";
-    statusBorder = "border-[#ef4444]";
-  } else if (isPassed) {
+  if (isPassed) {
     statusColor = "#10b981";
     statusText = "text-[#10b981]";
     statusBg = "bg-[#10b981]";
@@ -168,18 +162,14 @@ export default async function TestResultPage({
           <div className="flex-grow flex flex-col items-start gap-6">
             <div>
               <h2 className={`text-2xl font-bold ${statusText} mb-2 flex items-center gap-2`}>
-                {isCheated ? (
-                  <><XCircle className="w-6 h-6 fill-current text-white" /> Kecurangan Terdeteksi</>
-                ) : isPassed ? (
+                {isPassed ? (
                   <><CheckCircle className="w-6 h-6 fill-current text-white" /> Luar Biasa!</>
                 ) : (
                   <><XCircle className="w-6 h-6 fill-current text-white" /> Jangan Menyerah!</>
                 )}
               </h2>
               <p className="text-base text-[#544435] max-w-2xl">
-                {isCheated
-                  ? "Sistem merekam adanya anomali saat ujian berlangsung. Nilai Anda hangus."
-                  : isPassed
+                {isPassed
                     ? hasBestScore && !isCurrentBest
                       ? `Nilai Anda kali ini ${score}%, namun nilai terbaik Anda tetap ${bestScore}%. Sistem akan menggunakan nilai tertinggi sebagai hasil akhir.`
                       : `Selamat, Anda telah lulus ujian ini dengan nilai yang memuaskan. ${canTryAgain ? "Anda masih bisa mencoba lagi untuk meningkatkan nilai." : ""}`
@@ -194,7 +184,7 @@ export default async function TestResultPage({
             
             <div className="flex flex-wrap gap-3 mt-auto">
               {/* PERFECT LOGIC: Allow retry if attempts left, regardless of pass/fail status */}
-              {!isCheated && canTryAgain ? (
+              {canTryAgain ? (
                 <>
                   <Link href={`/courses/${params.courseId}/tests/${params.testId}`}>
                     <button className="bg-[#f7941d] text-white text-sm font-semibold px-6 py-3 rounded-lg hover:bg-opacity-90 transition-opacity">

@@ -74,11 +74,6 @@ export type TestAttempt = $Result.DefaultSelection<Prisma.$TestAttemptPayload>
  */
 export type TestSession = $Result.DefaultSelection<Prisma.$TestSessionPayload>
 /**
- * Model TestViolationLog
- * 
- */
-export type TestViolationLog = $Result.DefaultSelection<Prisma.$TestViolationLogPayload>
-/**
  * Model TestAnswer
  * 
  */
@@ -166,8 +161,7 @@ export const EnrollmentStatus: {
   COMPLETED: 'COMPLETED',
   FAILED: 'FAILED',
   PENDING: 'PENDING',
-  REJECTED: 'REJECTED',
-  CHEATING: 'CHEATING'
+  REJECTED: 'REJECTED'
 };
 
 export type EnrollmentStatus = (typeof EnrollmentStatus)[keyof typeof EnrollmentStatus]
@@ -463,16 +457,6 @@ export class PrismaClient<
     * ```
     */
   get testSession(): Prisma.TestSessionDelegate<ExtArgs>;
-
-  /**
-   * `prisma.testViolationLog`: Exposes CRUD operations for the **TestViolationLog** model.
-    * Example usage:
-    * ```ts
-    * // Fetch zero or more TestViolationLogs
-    * const testViolationLogs = await prisma.testViolationLog.findMany()
-    * ```
-    */
-  get testViolationLog(): Prisma.TestViolationLogDelegate<ExtArgs>;
 
   /**
    * `prisma.testAnswer`: Exposes CRUD operations for the **TestAnswer** model.
@@ -1016,7 +1000,6 @@ export namespace Prisma {
     Notification: 'Notification',
     TestAttempt: 'TestAttempt',
     TestSession: 'TestSession',
-    TestViolationLog: 'TestViolationLog',
     TestAnswer: 'TestAnswer',
     AutoEnrollmentRule: 'AutoEnrollmentRule',
     DepartmentConfig: 'DepartmentConfig',
@@ -1041,7 +1024,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "course" | "category" | "module" | "test" | "question" | "option" | "userProgress" | "enrollment" | "notification" | "testAttempt" | "testSession" | "testViolationLog" | "testAnswer" | "autoEnrollmentRule" | "departmentConfig" | "permission" | "rolePermission" | "schedulerLog" | "loginAttempt" | "videoProgress" | "pDFProgress"
+      modelProps: "user" | "course" | "category" | "module" | "test" | "question" | "option" | "userProgress" | "enrollment" | "notification" | "testAttempt" | "testSession" | "testAnswer" | "autoEnrollmentRule" | "departmentConfig" | "permission" | "rolePermission" | "schedulerLog" | "loginAttempt" | "videoProgress" | "pDFProgress"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1882,76 +1865,6 @@ export namespace Prisma {
           count: {
             args: Prisma.TestSessionCountArgs<ExtArgs>
             result: $Utils.Optional<TestSessionCountAggregateOutputType> | number
-          }
-        }
-      }
-      TestViolationLog: {
-        payload: Prisma.$TestViolationLogPayload<ExtArgs>
-        fields: Prisma.TestViolationLogFieldRefs
-        operations: {
-          findUnique: {
-            args: Prisma.TestViolationLogFindUniqueArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload> | null
-          }
-          findUniqueOrThrow: {
-            args: Prisma.TestViolationLogFindUniqueOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>
-          }
-          findFirst: {
-            args: Prisma.TestViolationLogFindFirstArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload> | null
-          }
-          findFirstOrThrow: {
-            args: Prisma.TestViolationLogFindFirstOrThrowArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>
-          }
-          findMany: {
-            args: Prisma.TestViolationLogFindManyArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>[]
-          }
-          create: {
-            args: Prisma.TestViolationLogCreateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>
-          }
-          createMany: {
-            args: Prisma.TestViolationLogCreateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          createManyAndReturn: {
-            args: Prisma.TestViolationLogCreateManyAndReturnArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>[]
-          }
-          delete: {
-            args: Prisma.TestViolationLogDeleteArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>
-          }
-          update: {
-            args: Prisma.TestViolationLogUpdateArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>
-          }
-          deleteMany: {
-            args: Prisma.TestViolationLogDeleteManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          updateMany: {
-            args: Prisma.TestViolationLogUpdateManyArgs<ExtArgs>
-            result: BatchPayload
-          }
-          upsert: {
-            args: Prisma.TestViolationLogUpsertArgs<ExtArgs>
-            result: $Utils.PayloadToResult<Prisma.$TestViolationLogPayload>
-          }
-          aggregate: {
-            args: Prisma.TestViolationLogAggregateArgs<ExtArgs>
-            result: $Utils.Optional<AggregateTestViolationLog>
-          }
-          groupBy: {
-            args: Prisma.TestViolationLogGroupByArgs<ExtArgs>
-            result: $Utils.Optional<TestViolationLogGroupByOutputType>[]
-          }
-          count: {
-            args: Prisma.TestViolationLogCountArgs<ExtArgs>
-            result: $Utils.Optional<TestViolationLogCountAggregateOutputType> | number
           }
         }
       }
@@ -11724,15 +11637,11 @@ export namespace Prisma {
   export type EnrollmentAvgAggregateOutputType = {
     postTestAttempts: number | null
     maxPostTestAttempts: number | null
-    cheatedAtAttempt: number | null
-    preTestCheatingCount: number | null
   }
 
   export type EnrollmentSumAggregateOutputType = {
     postTestAttempts: number | null
     maxPostTestAttempts: number | null
-    cheatedAtAttempt: number | null
-    preTestCheatingCount: number | null
   }
 
   export type EnrollmentMinAggregateOutputType = {
@@ -11754,10 +11663,6 @@ export namespace Prisma {
     rejectionNote: string | null
     postTestAttempts: number | null
     maxPostTestAttempts: number | null
-    hasCheatedPostTest: boolean | null
-    cheatedAtAttempt: number | null
-    hasCheatedPreTest: boolean | null
-    preTestCheatingCount: number | null
   }
 
   export type EnrollmentMaxAggregateOutputType = {
@@ -11779,10 +11684,6 @@ export namespace Prisma {
     rejectionNote: string | null
     postTestAttempts: number | null
     maxPostTestAttempts: number | null
-    hasCheatedPostTest: boolean | null
-    cheatedAtAttempt: number | null
-    hasCheatedPreTest: boolean | null
-    preTestCheatingCount: number | null
   }
 
   export type EnrollmentCountAggregateOutputType = {
@@ -11804,10 +11705,6 @@ export namespace Prisma {
     rejectionNote: number
     postTestAttempts: number
     maxPostTestAttempts: number
-    hasCheatedPostTest: number
-    cheatedAtAttempt: number
-    hasCheatedPreTest: number
-    preTestCheatingCount: number
     _all: number
   }
 
@@ -11815,15 +11712,11 @@ export namespace Prisma {
   export type EnrollmentAvgAggregateInputType = {
     postTestAttempts?: true
     maxPostTestAttempts?: true
-    cheatedAtAttempt?: true
-    preTestCheatingCount?: true
   }
 
   export type EnrollmentSumAggregateInputType = {
     postTestAttempts?: true
     maxPostTestAttempts?: true
-    cheatedAtAttempt?: true
-    preTestCheatingCount?: true
   }
 
   export type EnrollmentMinAggregateInputType = {
@@ -11845,10 +11738,6 @@ export namespace Prisma {
     rejectionNote?: true
     postTestAttempts?: true
     maxPostTestAttempts?: true
-    hasCheatedPostTest?: true
-    cheatedAtAttempt?: true
-    hasCheatedPreTest?: true
-    preTestCheatingCount?: true
   }
 
   export type EnrollmentMaxAggregateInputType = {
@@ -11870,10 +11759,6 @@ export namespace Prisma {
     rejectionNote?: true
     postTestAttempts?: true
     maxPostTestAttempts?: true
-    hasCheatedPostTest?: true
-    cheatedAtAttempt?: true
-    hasCheatedPreTest?: true
-    preTestCheatingCount?: true
   }
 
   export type EnrollmentCountAggregateInputType = {
@@ -11895,10 +11780,6 @@ export namespace Prisma {
     rejectionNote?: true
     postTestAttempts?: true
     maxPostTestAttempts?: true
-    hasCheatedPostTest?: true
-    cheatedAtAttempt?: true
-    hasCheatedPreTest?: true
-    preTestCheatingCount?: true
     _all?: true
   }
 
@@ -12007,10 +11888,6 @@ export namespace Prisma {
     rejectionNote: string | null
     postTestAttempts: number
     maxPostTestAttempts: number
-    hasCheatedPostTest: boolean
-    cheatedAtAttempt: number | null
-    hasCheatedPreTest: boolean
-    preTestCheatingCount: number
     _count: EnrollmentCountAggregateOutputType | null
     _avg: EnrollmentAvgAggregateOutputType | null
     _sum: EnrollmentSumAggregateOutputType | null
@@ -12051,10 +11928,6 @@ export namespace Prisma {
     rejectionNote?: boolean
     postTestAttempts?: boolean
     maxPostTestAttempts?: boolean
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: boolean
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: boolean
     approvedBy?: boolean | Enrollment$approvedByArgs<ExtArgs>
     course?: boolean | CourseDefaultArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -12082,10 +11955,6 @@ export namespace Prisma {
     rejectionNote?: boolean
     postTestAttempts?: boolean
     maxPostTestAttempts?: boolean
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: boolean
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: boolean
     approvedBy?: boolean | Enrollment$approvedByArgs<ExtArgs>
     course?: boolean | CourseDefaultArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -12110,10 +11979,6 @@ export namespace Prisma {
     rejectionNote?: boolean
     postTestAttempts?: boolean
     maxPostTestAttempts?: boolean
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: boolean
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: boolean
   }
 
   export type EnrollmentInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -12158,10 +12023,6 @@ export namespace Prisma {
       rejectionNote: string | null
       postTestAttempts: number
       maxPostTestAttempts: number
-      hasCheatedPostTest: boolean
-      cheatedAtAttempt: number | null
-      hasCheatedPreTest: boolean
-      preTestCheatingCount: number
     }, ExtArgs["result"]["enrollment"]>
     composites: {}
   }
@@ -12578,10 +12439,6 @@ export namespace Prisma {
     readonly rejectionNote: FieldRef<"Enrollment", 'String'>
     readonly postTestAttempts: FieldRef<"Enrollment", 'Int'>
     readonly maxPostTestAttempts: FieldRef<"Enrollment", 'Int'>
-    readonly hasCheatedPostTest: FieldRef<"Enrollment", 'Boolean'>
-    readonly cheatedAtAttempt: FieldRef<"Enrollment", 'Int'>
-    readonly hasCheatedPreTest: FieldRef<"Enrollment", 'Boolean'>
-    readonly preTestCheatingCount: FieldRef<"Enrollment", 'Int'>
   }
     
 
@@ -13954,14 +13811,12 @@ export namespace Prisma {
     attemptNumber: number | null
     score: number | null
     timeSpent: number | null
-    violationCount: number | null
   }
 
   export type TestAttemptSumAggregateOutputType = {
     attemptNumber: number | null
     score: number | null
     timeSpent: number | null
-    violationCount: number | null
   }
 
   export type TestAttemptMinAggregateOutputType = {
@@ -13976,13 +13831,8 @@ export namespace Prisma {
     updatedAt: Date | null
     completedAt: Date | null
     startedAt: Date | null
-    cheatedReason: string | null
-    isCheated: boolean | null
-    cheatedAt: Date | null
-    forceSubmittedAt: Date | null
     status: $Enums.TestAttemptStatus | null
     timeSpent: number | null
-    violationCount: number | null
   }
 
   export type TestAttemptMaxAggregateOutputType = {
@@ -13997,13 +13847,8 @@ export namespace Prisma {
     updatedAt: Date | null
     completedAt: Date | null
     startedAt: Date | null
-    cheatedReason: string | null
-    isCheated: boolean | null
-    cheatedAt: Date | null
-    forceSubmittedAt: Date | null
     status: $Enums.TestAttemptStatus | null
     timeSpent: number | null
-    violationCount: number | null
   }
 
   export type TestAttemptCountAggregateOutputType = {
@@ -14018,14 +13863,8 @@ export namespace Prisma {
     updatedAt: number
     completedAt: number
     startedAt: number
-    cheatedReason: number
-    isCheated: number
-    cheatedAt: number
-    forceSubmittedAt: number
     status: number
     timeSpent: number
-    violationCount: number
-    violationLogs: number
     _all: number
   }
 
@@ -14034,14 +13873,12 @@ export namespace Prisma {
     attemptNumber?: true
     score?: true
     timeSpent?: true
-    violationCount?: true
   }
 
   export type TestAttemptSumAggregateInputType = {
     attemptNumber?: true
     score?: true
     timeSpent?: true
-    violationCount?: true
   }
 
   export type TestAttemptMinAggregateInputType = {
@@ -14056,13 +13893,8 @@ export namespace Prisma {
     updatedAt?: true
     completedAt?: true
     startedAt?: true
-    cheatedReason?: true
-    isCheated?: true
-    cheatedAt?: true
-    forceSubmittedAt?: true
     status?: true
     timeSpent?: true
-    violationCount?: true
   }
 
   export type TestAttemptMaxAggregateInputType = {
@@ -14077,13 +13909,8 @@ export namespace Prisma {
     updatedAt?: true
     completedAt?: true
     startedAt?: true
-    cheatedReason?: true
-    isCheated?: true
-    cheatedAt?: true
-    forceSubmittedAt?: true
     status?: true
     timeSpent?: true
-    violationCount?: true
   }
 
   export type TestAttemptCountAggregateInputType = {
@@ -14098,14 +13925,8 @@ export namespace Prisma {
     updatedAt?: true
     completedAt?: true
     startedAt?: true
-    cheatedReason?: true
-    isCheated?: true
-    cheatedAt?: true
-    forceSubmittedAt?: true
     status?: true
     timeSpent?: true
-    violationCount?: true
-    violationLogs?: true
     _all?: true
   }
 
@@ -14207,14 +14028,8 @@ export namespace Prisma {
     updatedAt: Date
     completedAt: Date | null
     startedAt: Date | null
-    cheatedReason: string | null
-    isCheated: boolean
-    cheatedAt: Date | null
-    forceSubmittedAt: Date | null
     status: $Enums.TestAttemptStatus
     timeSpent: number
-    violationCount: number
-    violationLogs: JsonValue | null
     _count: TestAttemptCountAggregateOutputType | null
     _avg: TestAttemptAvgAggregateOutputType | null
     _sum: TestAttemptSumAggregateOutputType | null
@@ -14248,14 +14063,8 @@ export namespace Prisma {
     updatedAt?: boolean
     completedAt?: boolean
     startedAt?: boolean
-    cheatedReason?: boolean
-    isCheated?: boolean
-    cheatedAt?: boolean
-    forceSubmittedAt?: boolean
     status?: boolean
     timeSpent?: boolean
-    violationCount?: boolean
-    violationLogs?: boolean
     answers?: boolean | TestAttempt$answersArgs<ExtArgs>
     test?: boolean | TestDefaultArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
@@ -14275,14 +14084,8 @@ export namespace Prisma {
     updatedAt?: boolean
     completedAt?: boolean
     startedAt?: boolean
-    cheatedReason?: boolean
-    isCheated?: boolean
-    cheatedAt?: boolean
-    forceSubmittedAt?: boolean
     status?: boolean
     timeSpent?: boolean
-    violationCount?: boolean
-    violationLogs?: boolean
     test?: boolean | TestDefaultArgs<ExtArgs>
     user?: boolean | UserDefaultArgs<ExtArgs>
     enrollment?: boolean | TestAttempt$enrollmentArgs<ExtArgs>
@@ -14300,14 +14103,8 @@ export namespace Prisma {
     updatedAt?: boolean
     completedAt?: boolean
     startedAt?: boolean
-    cheatedReason?: boolean
-    isCheated?: boolean
-    cheatedAt?: boolean
-    forceSubmittedAt?: boolean
     status?: boolean
     timeSpent?: boolean
-    violationCount?: boolean
-    violationLogs?: boolean
   }
 
   export type TestAttemptInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -14343,14 +14140,8 @@ export namespace Prisma {
       updatedAt: Date
       completedAt: Date | null
       startedAt: Date | null
-      cheatedReason: string | null
-      isCheated: boolean
-      cheatedAt: Date | null
-      forceSubmittedAt: Date | null
       status: $Enums.TestAttemptStatus
       timeSpent: number
-      violationCount: number
-      violationLogs: Prisma.JsonValue | null
     }, ExtArgs["result"]["testAttempt"]>
     composites: {}
   }
@@ -14759,14 +14550,8 @@ export namespace Prisma {
     readonly updatedAt: FieldRef<"TestAttempt", 'DateTime'>
     readonly completedAt: FieldRef<"TestAttempt", 'DateTime'>
     readonly startedAt: FieldRef<"TestAttempt", 'DateTime'>
-    readonly cheatedReason: FieldRef<"TestAttempt", 'String'>
-    readonly isCheated: FieldRef<"TestAttempt", 'Boolean'>
-    readonly cheatedAt: FieldRef<"TestAttempt", 'DateTime'>
-    readonly forceSubmittedAt: FieldRef<"TestAttempt", 'DateTime'>
     readonly status: FieldRef<"TestAttempt", 'TestAttemptStatus'>
     readonly timeSpent: FieldRef<"TestAttempt", 'Int'>
-    readonly violationCount: FieldRef<"TestAttempt", 'Int'>
-    readonly violationLogs: FieldRef<"TestAttempt", 'Json'>
   }
     
 
@@ -15162,9 +14947,6 @@ export namespace Prisma {
     userId: string | null
     enrollmentId: string | null
     attemptNumber: number | null
-    isCheated: boolean | null
-    cheatedAt: Date | null
-    forceSubmittedAt: Date | null
     score: number | null
     status: $Enums.TestAttemptStatus | null
     startedAt: Date | null
@@ -15177,9 +14959,6 @@ export namespace Prisma {
     userId: string | null
     enrollmentId: string | null
     attemptNumber: number | null
-    isCheated: boolean | null
-    cheatedAt: Date | null
-    forceSubmittedAt: Date | null
     score: number | null
     status: $Enums.TestAttemptStatus | null
     startedAt: Date | null
@@ -15192,9 +14971,6 @@ export namespace Prisma {
     userId: number
     enrollmentId: number
     attemptNumber: number
-    isCheated: number
-    cheatedAt: number
-    forceSubmittedAt: number
     score: number
     status: number
     startedAt: number
@@ -15219,9 +14995,6 @@ export namespace Prisma {
     userId?: true
     enrollmentId?: true
     attemptNumber?: true
-    isCheated?: true
-    cheatedAt?: true
-    forceSubmittedAt?: true
     score?: true
     status?: true
     startedAt?: true
@@ -15234,9 +15007,6 @@ export namespace Prisma {
     userId?: true
     enrollmentId?: true
     attemptNumber?: true
-    isCheated?: true
-    cheatedAt?: true
-    forceSubmittedAt?: true
     score?: true
     status?: true
     startedAt?: true
@@ -15249,9 +15019,6 @@ export namespace Prisma {
     userId?: true
     enrollmentId?: true
     attemptNumber?: true
-    isCheated?: true
-    cheatedAt?: true
-    forceSubmittedAt?: true
     score?: true
     status?: true
     startedAt?: true
@@ -15351,9 +15118,6 @@ export namespace Prisma {
     userId: string
     enrollmentId: string | null
     attemptNumber: number
-    isCheated: boolean
-    cheatedAt: Date | null
-    forceSubmittedAt: Date | null
     score: number | null
     status: $Enums.TestAttemptStatus
     startedAt: Date
@@ -15385,9 +15149,6 @@ export namespace Prisma {
     userId?: boolean
     enrollmentId?: boolean
     attemptNumber?: boolean
-    isCheated?: boolean
-    cheatedAt?: boolean
-    forceSubmittedAt?: boolean
     score?: boolean
     status?: boolean
     startedAt?: boolean
@@ -15401,9 +15162,6 @@ export namespace Prisma {
     userId?: boolean
     enrollmentId?: boolean
     attemptNumber?: boolean
-    isCheated?: boolean
-    cheatedAt?: boolean
-    forceSubmittedAt?: boolean
     score?: boolean
     status?: boolean
     startedAt?: boolean
@@ -15417,9 +15175,6 @@ export namespace Prisma {
     userId?: boolean
     enrollmentId?: boolean
     attemptNumber?: boolean
-    isCheated?: boolean
-    cheatedAt?: boolean
-    forceSubmittedAt?: boolean
     score?: boolean
     status?: boolean
     startedAt?: boolean
@@ -15444,9 +15199,6 @@ export namespace Prisma {
       userId: string
       enrollmentId: string | null
       attemptNumber: number
-      isCheated: boolean
-      cheatedAt: Date | null
-      forceSubmittedAt: Date | null
       score: number | null
       status: $Enums.TestAttemptStatus
       startedAt: Date
@@ -15850,9 +15602,6 @@ export namespace Prisma {
     readonly userId: FieldRef<"TestSession", 'String'>
     readonly enrollmentId: FieldRef<"TestSession", 'String'>
     readonly attemptNumber: FieldRef<"TestSession", 'Int'>
-    readonly isCheated: FieldRef<"TestSession", 'Boolean'>
-    readonly cheatedAt: FieldRef<"TestSession", 'DateTime'>
-    readonly forceSubmittedAt: FieldRef<"TestSession", 'DateTime'>
     readonly score: FieldRef<"TestSession", 'Float'>
     readonly status: FieldRef<"TestSession", 'TestAttemptStatus'>
     readonly startedAt: FieldRef<"TestSession", 'DateTime'>
@@ -16201,896 +15950,6 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: TestSessionInclude<ExtArgs> | null
-  }
-
-
-  /**
-   * Model TestViolationLog
-   */
-
-  export type AggregateTestViolationLog = {
-    _count: TestViolationLogCountAggregateOutputType | null
-    _min: TestViolationLogMinAggregateOutputType | null
-    _max: TestViolationLogMaxAggregateOutputType | null
-  }
-
-  export type TestViolationLogMinAggregateOutputType = {
-    id: string | null
-    testId: string | null
-    userId: string | null
-    type: string | null
-    timestamp: Date | null
-    detail: string | null
-  }
-
-  export type TestViolationLogMaxAggregateOutputType = {
-    id: string | null
-    testId: string | null
-    userId: string | null
-    type: string | null
-    timestamp: Date | null
-    detail: string | null
-  }
-
-  export type TestViolationLogCountAggregateOutputType = {
-    id: number
-    testId: number
-    userId: number
-    type: number
-    timestamp: number
-    detail: number
-    _all: number
-  }
-
-
-  export type TestViolationLogMinAggregateInputType = {
-    id?: true
-    testId?: true
-    userId?: true
-    type?: true
-    timestamp?: true
-    detail?: true
-  }
-
-  export type TestViolationLogMaxAggregateInputType = {
-    id?: true
-    testId?: true
-    userId?: true
-    type?: true
-    timestamp?: true
-    detail?: true
-  }
-
-  export type TestViolationLogCountAggregateInputType = {
-    id?: true
-    testId?: true
-    userId?: true
-    type?: true
-    timestamp?: true
-    detail?: true
-    _all?: true
-  }
-
-  export type TestViolationLogAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which TestViolationLog to aggregate.
-     */
-    where?: TestViolationLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TestViolationLogs to fetch.
-     */
-    orderBy?: TestViolationLogOrderByWithRelationInput | TestViolationLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the start position
-     */
-    cursor?: TestViolationLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TestViolationLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TestViolationLogs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Count returned TestViolationLogs
-    **/
-    _count?: true | TestViolationLogCountAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the minimum value
-    **/
-    _min?: TestViolationLogMinAggregateInputType
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
-     * 
-     * Select which fields to find the maximum value
-    **/
-    _max?: TestViolationLogMaxAggregateInputType
-  }
-
-  export type GetTestViolationLogAggregateType<T extends TestViolationLogAggregateArgs> = {
-        [P in keyof T & keyof AggregateTestViolationLog]: P extends '_count' | 'count'
-      ? T[P] extends true
-        ? number
-        : GetScalarType<T[P], AggregateTestViolationLog[P]>
-      : GetScalarType<T[P], AggregateTestViolationLog[P]>
-  }
-
-
-
-
-  export type TestViolationLogGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    where?: TestViolationLogWhereInput
-    orderBy?: TestViolationLogOrderByWithAggregationInput | TestViolationLogOrderByWithAggregationInput[]
-    by: TestViolationLogScalarFieldEnum[] | TestViolationLogScalarFieldEnum
-    having?: TestViolationLogScalarWhereWithAggregatesInput
-    take?: number
-    skip?: number
-    _count?: TestViolationLogCountAggregateInputType | true
-    _min?: TestViolationLogMinAggregateInputType
-    _max?: TestViolationLogMaxAggregateInputType
-  }
-
-  export type TestViolationLogGroupByOutputType = {
-    id: string
-    testId: string
-    userId: string
-    type: string
-    timestamp: Date
-    detail: string | null
-    _count: TestViolationLogCountAggregateOutputType | null
-    _min: TestViolationLogMinAggregateOutputType | null
-    _max: TestViolationLogMaxAggregateOutputType | null
-  }
-
-  type GetTestViolationLogGroupByPayload<T extends TestViolationLogGroupByArgs> = Prisma.PrismaPromise<
-    Array<
-      PickEnumerable<TestViolationLogGroupByOutputType, T['by']> &
-        {
-          [P in ((keyof T) & (keyof TestViolationLogGroupByOutputType))]: P extends '_count'
-            ? T[P] extends boolean
-              ? number
-              : GetScalarType<T[P], TestViolationLogGroupByOutputType[P]>
-            : GetScalarType<T[P], TestViolationLogGroupByOutputType[P]>
-        }
-      >
-    >
-
-
-  export type TestViolationLogSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    testId?: boolean
-    userId?: boolean
-    type?: boolean
-    timestamp?: boolean
-    detail?: boolean
-  }, ExtArgs["result"]["testViolationLog"]>
-
-  export type TestViolationLogSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
-    id?: boolean
-    testId?: boolean
-    userId?: boolean
-    type?: boolean
-    timestamp?: boolean
-    detail?: boolean
-  }, ExtArgs["result"]["testViolationLog"]>
-
-  export type TestViolationLogSelectScalar = {
-    id?: boolean
-    testId?: boolean
-    userId?: boolean
-    type?: boolean
-    timestamp?: boolean
-    detail?: boolean
-  }
-
-
-  export type $TestViolationLogPayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    name: "TestViolationLog"
-    objects: {}
-    scalars: $Extensions.GetPayloadResult<{
-      id: string
-      testId: string
-      userId: string
-      type: string
-      timestamp: Date
-      detail: string | null
-    }, ExtArgs["result"]["testViolationLog"]>
-    composites: {}
-  }
-
-  type TestViolationLogGetPayload<S extends boolean | null | undefined | TestViolationLogDefaultArgs> = $Result.GetResult<Prisma.$TestViolationLogPayload, S>
-
-  type TestViolationLogCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
-    Omit<TestViolationLogFindManyArgs, 'select' | 'include' | 'distinct'> & {
-      select?: TestViolationLogCountAggregateInputType | true
-    }
-
-  export interface TestViolationLogDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
-    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['TestViolationLog'], meta: { name: 'TestViolationLog' } }
-    /**
-     * Find zero or one TestViolationLog that matches the filter.
-     * @param {TestViolationLogFindUniqueArgs} args - Arguments to find a TestViolationLog
-     * @example
-     * // Get one TestViolationLog
-     * const testViolationLog = await prisma.testViolationLog.findUnique({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUnique<T extends TestViolationLogFindUniqueArgs>(args: SelectSubset<T, TestViolationLogFindUniqueArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
-
-    /**
-     * Find one TestViolationLog that matches the filter or throw an error with `error.code='P2025'` 
-     * if no matches were found.
-     * @param {TestViolationLogFindUniqueOrThrowArgs} args - Arguments to find a TestViolationLog
-     * @example
-     * // Get one TestViolationLog
-     * const testViolationLog = await prisma.testViolationLog.findUniqueOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findUniqueOrThrow<T extends TestViolationLogFindUniqueOrThrowArgs>(args: SelectSubset<T, TestViolationLogFindUniqueOrThrowArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
-
-    /**
-     * Find the first TestViolationLog that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogFindFirstArgs} args - Arguments to find a TestViolationLog
-     * @example
-     * // Get one TestViolationLog
-     * const testViolationLog = await prisma.testViolationLog.findFirst({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirst<T extends TestViolationLogFindFirstArgs>(args?: SelectSubset<T, TestViolationLogFindFirstArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
-
-    /**
-     * Find the first TestViolationLog that matches the filter or
-     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogFindFirstOrThrowArgs} args - Arguments to find a TestViolationLog
-     * @example
-     * // Get one TestViolationLog
-     * const testViolationLog = await prisma.testViolationLog.findFirstOrThrow({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     */
-    findFirstOrThrow<T extends TestViolationLogFindFirstOrThrowArgs>(args?: SelectSubset<T, TestViolationLogFindFirstOrThrowArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
-
-    /**
-     * Find zero or more TestViolationLogs that matches the filter.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogFindManyArgs} args - Arguments to filter and select certain fields only.
-     * @example
-     * // Get all TestViolationLogs
-     * const testViolationLogs = await prisma.testViolationLog.findMany()
-     * 
-     * // Get first 10 TestViolationLogs
-     * const testViolationLogs = await prisma.testViolationLog.findMany({ take: 10 })
-     * 
-     * // Only select the `id`
-     * const testViolationLogWithIdOnly = await prisma.testViolationLog.findMany({ select: { id: true } })
-     * 
-     */
-    findMany<T extends TestViolationLogFindManyArgs>(args?: SelectSubset<T, TestViolationLogFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "findMany">>
-
-    /**
-     * Create a TestViolationLog.
-     * @param {TestViolationLogCreateArgs} args - Arguments to create a TestViolationLog.
-     * @example
-     * // Create one TestViolationLog
-     * const TestViolationLog = await prisma.testViolationLog.create({
-     *   data: {
-     *     // ... data to create a TestViolationLog
-     *   }
-     * })
-     * 
-     */
-    create<T extends TestViolationLogCreateArgs>(args: SelectSubset<T, TestViolationLogCreateArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "create">, never, ExtArgs>
-
-    /**
-     * Create many TestViolationLogs.
-     * @param {TestViolationLogCreateManyArgs} args - Arguments to create many TestViolationLogs.
-     * @example
-     * // Create many TestViolationLogs
-     * const testViolationLog = await prisma.testViolationLog.createMany({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     *     
-     */
-    createMany<T extends TestViolationLogCreateManyArgs>(args?: SelectSubset<T, TestViolationLogCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create many TestViolationLogs and returns the data saved in the database.
-     * @param {TestViolationLogCreateManyAndReturnArgs} args - Arguments to create many TestViolationLogs.
-     * @example
-     * // Create many TestViolationLogs
-     * const testViolationLog = await prisma.testViolationLog.createManyAndReturn({
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * 
-     * // Create many TestViolationLogs and only return the `id`
-     * const testViolationLogWithIdOnly = await prisma.testViolationLog.createManyAndReturn({ 
-     *   select: { id: true },
-     *   data: [
-     *     // ... provide data here
-     *   ]
-     * })
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * 
-     */
-    createManyAndReturn<T extends TestViolationLogCreateManyAndReturnArgs>(args?: SelectSubset<T, TestViolationLogCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "createManyAndReturn">>
-
-    /**
-     * Delete a TestViolationLog.
-     * @param {TestViolationLogDeleteArgs} args - Arguments to delete one TestViolationLog.
-     * @example
-     * // Delete one TestViolationLog
-     * const TestViolationLog = await prisma.testViolationLog.delete({
-     *   where: {
-     *     // ... filter to delete one TestViolationLog
-     *   }
-     * })
-     * 
-     */
-    delete<T extends TestViolationLogDeleteArgs>(args: SelectSubset<T, TestViolationLogDeleteArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "delete">, never, ExtArgs>
-
-    /**
-     * Update one TestViolationLog.
-     * @param {TestViolationLogUpdateArgs} args - Arguments to update one TestViolationLog.
-     * @example
-     * // Update one TestViolationLog
-     * const testViolationLog = await prisma.testViolationLog.update({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    update<T extends TestViolationLogUpdateArgs>(args: SelectSubset<T, TestViolationLogUpdateArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "update">, never, ExtArgs>
-
-    /**
-     * Delete zero or more TestViolationLogs.
-     * @param {TestViolationLogDeleteManyArgs} args - Arguments to filter TestViolationLogs to delete.
-     * @example
-     * // Delete a few TestViolationLogs
-     * const { count } = await prisma.testViolationLog.deleteMany({
-     *   where: {
-     *     // ... provide filter here
-     *   }
-     * })
-     * 
-     */
-    deleteMany<T extends TestViolationLogDeleteManyArgs>(args?: SelectSubset<T, TestViolationLogDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Update zero or more TestViolationLogs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogUpdateManyArgs} args - Arguments to update one or more rows.
-     * @example
-     * // Update many TestViolationLogs
-     * const testViolationLog = await prisma.testViolationLog.updateMany({
-     *   where: {
-     *     // ... provide filter here
-     *   },
-     *   data: {
-     *     // ... provide data here
-     *   }
-     * })
-     * 
-     */
-    updateMany<T extends TestViolationLogUpdateManyArgs>(args: SelectSubset<T, TestViolationLogUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
-
-    /**
-     * Create or update one TestViolationLog.
-     * @param {TestViolationLogUpsertArgs} args - Arguments to update or create a TestViolationLog.
-     * @example
-     * // Update or create a TestViolationLog
-     * const testViolationLog = await prisma.testViolationLog.upsert({
-     *   create: {
-     *     // ... data to create a TestViolationLog
-     *   },
-     *   update: {
-     *     // ... in case it already exists, update
-     *   },
-     *   where: {
-     *     // ... the filter for the TestViolationLog we want to update
-     *   }
-     * })
-     */
-    upsert<T extends TestViolationLogUpsertArgs>(args: SelectSubset<T, TestViolationLogUpsertArgs<ExtArgs>>): Prisma__TestViolationLogClient<$Result.GetResult<Prisma.$TestViolationLogPayload<ExtArgs>, T, "upsert">, never, ExtArgs>
-
-
-    /**
-     * Count the number of TestViolationLogs.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogCountArgs} args - Arguments to filter TestViolationLogs to count.
-     * @example
-     * // Count the number of TestViolationLogs
-     * const count = await prisma.testViolationLog.count({
-     *   where: {
-     *     // ... the filter for the TestViolationLogs we want to count
-     *   }
-     * })
-    **/
-    count<T extends TestViolationLogCountArgs>(
-      args?: Subset<T, TestViolationLogCountArgs>,
-    ): Prisma.PrismaPromise<
-      T extends $Utils.Record<'select', any>
-        ? T['select'] extends true
-          ? number
-          : GetScalarType<T['select'], TestViolationLogCountAggregateOutputType>
-        : number
-    >
-
-    /**
-     * Allows you to perform aggregations operations on a TestViolationLog.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
-     * @example
-     * // Ordered by age ascending
-     * // Where email contains prisma.io
-     * // Limited to the 10 users
-     * const aggregations = await prisma.user.aggregate({
-     *   _avg: {
-     *     age: true,
-     *   },
-     *   where: {
-     *     email: {
-     *       contains: "prisma.io",
-     *     },
-     *   },
-     *   orderBy: {
-     *     age: "asc",
-     *   },
-     *   take: 10,
-     * })
-    **/
-    aggregate<T extends TestViolationLogAggregateArgs>(args: Subset<T, TestViolationLogAggregateArgs>): Prisma.PrismaPromise<GetTestViolationLogAggregateType<T>>
-
-    /**
-     * Group by TestViolationLog.
-     * Note, that providing `undefined` is treated as the value not being there.
-     * Read more here: https://pris.ly/d/null-undefined
-     * @param {TestViolationLogGroupByArgs} args - Group by arguments.
-     * @example
-     * // Group by city, order by createdAt, get count
-     * const result = await prisma.user.groupBy({
-     *   by: ['city', 'createdAt'],
-     *   orderBy: {
-     *     createdAt: true
-     *   },
-     *   _count: {
-     *     _all: true
-     *   },
-     * })
-     * 
-    **/
-    groupBy<
-      T extends TestViolationLogGroupByArgs,
-      HasSelectOrTake extends Or<
-        Extends<'skip', Keys<T>>,
-        Extends<'take', Keys<T>>
-      >,
-      OrderByArg extends True extends HasSelectOrTake
-        ? { orderBy: TestViolationLogGroupByArgs['orderBy'] }
-        : { orderBy?: TestViolationLogGroupByArgs['orderBy'] },
-      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
-      ByFields extends MaybeTupleToUnion<T['by']>,
-      ByValid extends Has<ByFields, OrderFields>,
-      HavingFields extends GetHavingFields<T['having']>,
-      HavingValid extends Has<ByFields, HavingFields>,
-      ByEmpty extends T['by'] extends never[] ? True : False,
-      InputErrors extends ByEmpty extends True
-      ? `Error: "by" must not be empty.`
-      : HavingValid extends False
-      ? {
-          [P in HavingFields]: P extends ByFields
-            ? never
-            : P extends string
-            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
-            : [
-                Error,
-                'Field ',
-                P,
-                ` in "having" needs to be provided in "by"`,
-              ]
-        }[HavingFields]
-      : 'take' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "take", you also need to provide "orderBy"'
-      : 'skip' extends Keys<T>
-      ? 'orderBy' extends Keys<T>
-        ? ByValid extends True
-          ? {}
-          : {
-              [P in OrderFields]: P extends ByFields
-                ? never
-                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-            }[OrderFields]
-        : 'Error: If you provide "skip", you also need to provide "orderBy"'
-      : ByValid extends True
-      ? {}
-      : {
-          [P in OrderFields]: P extends ByFields
-            ? never
-            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
-        }[OrderFields]
-    >(args: SubsetIntersection<T, TestViolationLogGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetTestViolationLogGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
-  /**
-   * Fields of the TestViolationLog model
-   */
-  readonly fields: TestViolationLogFieldRefs;
-  }
-
-  /**
-   * The delegate class that acts as a "Promise-like" for TestViolationLog.
-   * Why is this prefixed with `Prisma__`?
-   * Because we want to prevent naming conflicts as mentioned in
-   * https://github.com/prisma/prisma-client-js/issues/707
-   */
-  export interface Prisma__TestViolationLogClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
-    readonly [Symbol.toStringTag]: "PrismaPromise"
-    /**
-     * Attaches callbacks for the resolution and/or rejection of the Promise.
-     * @param onfulfilled The callback to execute when the Promise is resolved.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of which ever callback is executed.
-     */
-    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
-    /**
-     * Attaches a callback for only the rejection of the Promise.
-     * @param onrejected The callback to execute when the Promise is rejected.
-     * @returns A Promise for the completion of the callback.
-     */
-    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
-    /**
-     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
-     * resolved value cannot be modified from the callback.
-     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
-     * @returns A Promise for the completion of the callback.
-     */
-    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
-  }
-
-
-
-
-  /**
-   * Fields of the TestViolationLog model
-   */ 
-  interface TestViolationLogFieldRefs {
-    readonly id: FieldRef<"TestViolationLog", 'String'>
-    readonly testId: FieldRef<"TestViolationLog", 'String'>
-    readonly userId: FieldRef<"TestViolationLog", 'String'>
-    readonly type: FieldRef<"TestViolationLog", 'String'>
-    readonly timestamp: FieldRef<"TestViolationLog", 'DateTime'>
-    readonly detail: FieldRef<"TestViolationLog", 'String'>
-  }
-    
-
-  // Custom InputTypes
-  /**
-   * TestViolationLog findUnique
-   */
-  export type TestViolationLogFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * Filter, which TestViolationLog to fetch.
-     */
-    where: TestViolationLogWhereUniqueInput
-  }
-
-  /**
-   * TestViolationLog findUniqueOrThrow
-   */
-  export type TestViolationLogFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * Filter, which TestViolationLog to fetch.
-     */
-    where: TestViolationLogWhereUniqueInput
-  }
-
-  /**
-   * TestViolationLog findFirst
-   */
-  export type TestViolationLogFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * Filter, which TestViolationLog to fetch.
-     */
-    where?: TestViolationLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TestViolationLogs to fetch.
-     */
-    orderBy?: TestViolationLogOrderByWithRelationInput | TestViolationLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for TestViolationLogs.
-     */
-    cursor?: TestViolationLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TestViolationLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TestViolationLogs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of TestViolationLogs.
-     */
-    distinct?: TestViolationLogScalarFieldEnum | TestViolationLogScalarFieldEnum[]
-  }
-
-  /**
-   * TestViolationLog findFirstOrThrow
-   */
-  export type TestViolationLogFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * Filter, which TestViolationLog to fetch.
-     */
-    where?: TestViolationLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TestViolationLogs to fetch.
-     */
-    orderBy?: TestViolationLogOrderByWithRelationInput | TestViolationLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for searching for TestViolationLogs.
-     */
-    cursor?: TestViolationLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TestViolationLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TestViolationLogs.
-     */
-    skip?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
-     * 
-     * Filter by unique combinations of TestViolationLogs.
-     */
-    distinct?: TestViolationLogScalarFieldEnum | TestViolationLogScalarFieldEnum[]
-  }
-
-  /**
-   * TestViolationLog findMany
-   */
-  export type TestViolationLogFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * Filter, which TestViolationLogs to fetch.
-     */
-    where?: TestViolationLogWhereInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
-     * 
-     * Determine the order of TestViolationLogs to fetch.
-     */
-    orderBy?: TestViolationLogOrderByWithRelationInput | TestViolationLogOrderByWithRelationInput[]
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
-     * 
-     * Sets the position for listing TestViolationLogs.
-     */
-    cursor?: TestViolationLogWhereUniqueInput
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Take `±n` TestViolationLogs from the position of the cursor.
-     */
-    take?: number
-    /**
-     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
-     * 
-     * Skip the first `n` TestViolationLogs.
-     */
-    skip?: number
-    distinct?: TestViolationLogScalarFieldEnum | TestViolationLogScalarFieldEnum[]
-  }
-
-  /**
-   * TestViolationLog create
-   */
-  export type TestViolationLogCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * The data needed to create a TestViolationLog.
-     */
-    data: XOR<TestViolationLogCreateInput, TestViolationLogUncheckedCreateInput>
-  }
-
-  /**
-   * TestViolationLog createMany
-   */
-  export type TestViolationLogCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to create many TestViolationLogs.
-     */
-    data: TestViolationLogCreateManyInput | TestViolationLogCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * TestViolationLog createManyAndReturn
-   */
-  export type TestViolationLogCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelectCreateManyAndReturn<ExtArgs> | null
-    /**
-     * The data used to create many TestViolationLogs.
-     */
-    data: TestViolationLogCreateManyInput | TestViolationLogCreateManyInput[]
-    skipDuplicates?: boolean
-  }
-
-  /**
-   * TestViolationLog update
-   */
-  export type TestViolationLogUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * The data needed to update a TestViolationLog.
-     */
-    data: XOR<TestViolationLogUpdateInput, TestViolationLogUncheckedUpdateInput>
-    /**
-     * Choose, which TestViolationLog to update.
-     */
-    where: TestViolationLogWhereUniqueInput
-  }
-
-  /**
-   * TestViolationLog updateMany
-   */
-  export type TestViolationLogUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * The data used to update TestViolationLogs.
-     */
-    data: XOR<TestViolationLogUpdateManyMutationInput, TestViolationLogUncheckedUpdateManyInput>
-    /**
-     * Filter which TestViolationLogs to update
-     */
-    where?: TestViolationLogWhereInput
-  }
-
-  /**
-   * TestViolationLog upsert
-   */
-  export type TestViolationLogUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * The filter to search for the TestViolationLog to update in case it exists.
-     */
-    where: TestViolationLogWhereUniqueInput
-    /**
-     * In case the TestViolationLog found by the `where` argument doesn't exist, create a new TestViolationLog with this data.
-     */
-    create: XOR<TestViolationLogCreateInput, TestViolationLogUncheckedCreateInput>
-    /**
-     * In case the TestViolationLog was found with the provided `where` argument, update it with this data.
-     */
-    update: XOR<TestViolationLogUpdateInput, TestViolationLogUncheckedUpdateInput>
-  }
-
-  /**
-   * TestViolationLog delete
-   */
-  export type TestViolationLogDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
-    /**
-     * Filter which TestViolationLog to delete.
-     */
-    where: TestViolationLogWhereUniqueInput
-  }
-
-  /**
-   * TestViolationLog deleteMany
-   */
-  export type TestViolationLogDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Filter which TestViolationLogs to delete
-     */
-    where?: TestViolationLogWhereInput
-  }
-
-  /**
-   * TestViolationLog without action
-   */
-  export type TestViolationLogDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
-    /**
-     * Select specific fields to fetch from the TestViolationLog
-     */
-    select?: TestViolationLogSelect<ExtArgs> | null
   }
 
 
@@ -25933,11 +24792,7 @@ export namespace Prisma {
     approvedById: 'approvedById',
     rejectionNote: 'rejectionNote',
     postTestAttempts: 'postTestAttempts',
-    maxPostTestAttempts: 'maxPostTestAttempts',
-    hasCheatedPostTest: 'hasCheatedPostTest',
-    cheatedAtAttempt: 'cheatedAtAttempt',
-    hasCheatedPreTest: 'hasCheatedPreTest',
-    preTestCheatingCount: 'preTestCheatingCount'
+    maxPostTestAttempts: 'maxPostTestAttempts'
   };
 
   export type EnrollmentScalarFieldEnum = (typeof EnrollmentScalarFieldEnum)[keyof typeof EnrollmentScalarFieldEnum]
@@ -25969,14 +24824,8 @@ export namespace Prisma {
     updatedAt: 'updatedAt',
     completedAt: 'completedAt',
     startedAt: 'startedAt',
-    cheatedReason: 'cheatedReason',
-    isCheated: 'isCheated',
-    cheatedAt: 'cheatedAt',
-    forceSubmittedAt: 'forceSubmittedAt',
     status: 'status',
-    timeSpent: 'timeSpent',
-    violationCount: 'violationCount',
-    violationLogs: 'violationLogs'
+    timeSpent: 'timeSpent'
   };
 
   export type TestAttemptScalarFieldEnum = (typeof TestAttemptScalarFieldEnum)[keyof typeof TestAttemptScalarFieldEnum]
@@ -25988,9 +24837,6 @@ export namespace Prisma {
     userId: 'userId',
     enrollmentId: 'enrollmentId',
     attemptNumber: 'attemptNumber',
-    isCheated: 'isCheated',
-    cheatedAt: 'cheatedAt',
-    forceSubmittedAt: 'forceSubmittedAt',
     score: 'score',
     status: 'status',
     startedAt: 'startedAt',
@@ -25998,18 +24844,6 @@ export namespace Prisma {
   };
 
   export type TestSessionScalarFieldEnum = (typeof TestSessionScalarFieldEnum)[keyof typeof TestSessionScalarFieldEnum]
-
-
-  export const TestViolationLogScalarFieldEnum: {
-    id: 'id',
-    testId: 'testId',
-    userId: 'userId',
-    type: 'type',
-    timestamp: 'timestamp',
-    detail: 'detail'
-  };
-
-  export type TestViolationLogScalarFieldEnum = (typeof TestViolationLogScalarFieldEnum)[keyof typeof TestViolationLogScalarFieldEnum]
 
 
   export const TestAnswerScalarFieldEnum: {
@@ -27093,10 +25927,6 @@ export namespace Prisma {
     rejectionNote?: StringNullableFilter<"Enrollment"> | string | null
     postTestAttempts?: IntFilter<"Enrollment"> | number
     maxPostTestAttempts?: IntFilter<"Enrollment"> | number
-    hasCheatedPostTest?: BoolFilter<"Enrollment"> | boolean
-    cheatedAtAttempt?: IntNullableFilter<"Enrollment"> | number | null
-    hasCheatedPreTest?: BoolFilter<"Enrollment"> | boolean
-    preTestCheatingCount?: IntFilter<"Enrollment"> | number
     approvedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     course?: XOR<CourseRelationFilter, CourseWhereInput>
     user?: XOR<UserRelationFilter, UserWhereInput>
@@ -27123,10 +25953,6 @@ export namespace Prisma {
     rejectionNote?: SortOrderInput | SortOrder
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    hasCheatedPostTest?: SortOrder
-    cheatedAtAttempt?: SortOrderInput | SortOrder
-    hasCheatedPreTest?: SortOrder
-    preTestCheatingCount?: SortOrder
     approvedBy?: UserOrderByWithRelationInput
     course?: CourseOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
@@ -27157,10 +25983,6 @@ export namespace Prisma {
     rejectionNote?: StringNullableFilter<"Enrollment"> | string | null
     postTestAttempts?: IntFilter<"Enrollment"> | number
     maxPostTestAttempts?: IntFilter<"Enrollment"> | number
-    hasCheatedPostTest?: BoolFilter<"Enrollment"> | boolean
-    cheatedAtAttempt?: IntNullableFilter<"Enrollment"> | number | null
-    hasCheatedPreTest?: BoolFilter<"Enrollment"> | boolean
-    preTestCheatingCount?: IntFilter<"Enrollment"> | number
     approvedBy?: XOR<UserNullableRelationFilter, UserWhereInput> | null
     course?: XOR<CourseRelationFilter, CourseWhereInput>
     user?: XOR<UserRelationFilter, UserWhereInput>
@@ -27187,10 +26009,6 @@ export namespace Prisma {
     rejectionNote?: SortOrderInput | SortOrder
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    hasCheatedPostTest?: SortOrder
-    cheatedAtAttempt?: SortOrderInput | SortOrder
-    hasCheatedPreTest?: SortOrder
-    preTestCheatingCount?: SortOrder
     _count?: EnrollmentCountOrderByAggregateInput
     _avg?: EnrollmentAvgOrderByAggregateInput
     _max?: EnrollmentMaxOrderByAggregateInput
@@ -27220,10 +26038,6 @@ export namespace Prisma {
     rejectionNote?: StringNullableWithAggregatesFilter<"Enrollment"> | string | null
     postTestAttempts?: IntWithAggregatesFilter<"Enrollment"> | number
     maxPostTestAttempts?: IntWithAggregatesFilter<"Enrollment"> | number
-    hasCheatedPostTest?: BoolWithAggregatesFilter<"Enrollment"> | boolean
-    cheatedAtAttempt?: IntNullableWithAggregatesFilter<"Enrollment"> | number | null
-    hasCheatedPreTest?: BoolWithAggregatesFilter<"Enrollment"> | boolean
-    preTestCheatingCount?: IntWithAggregatesFilter<"Enrollment"> | number
   }
 
   export type NotificationWhereInput = {
@@ -27311,14 +26125,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"TestAttempt"> | Date | string
     completedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
     startedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
-    cheatedReason?: StringNullableFilter<"TestAttempt"> | string | null
-    isCheated?: BoolFilter<"TestAttempt"> | boolean
-    cheatedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
     status?: EnumTestAttemptStatusFilter<"TestAttempt"> | $Enums.TestAttemptStatus
     timeSpent?: IntFilter<"TestAttempt"> | number
-    violationCount?: IntFilter<"TestAttempt"> | number
-    violationLogs?: JsonNullableFilter<"TestAttempt">
     answers?: TestAnswerListRelationFilter
     test?: XOR<TestRelationFilter, TestWhereInput>
     user?: XOR<UserRelationFilter, UserWhereInput>
@@ -27337,14 +26145,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
     startedAt?: SortOrderInput | SortOrder
-    cheatedReason?: SortOrderInput | SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrderInput | SortOrder
-    forceSubmittedAt?: SortOrderInput | SortOrder
     status?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
-    violationLogs?: SortOrderInput | SortOrder
     answers?: TestAnswerOrderByRelationAggregateInput
     test?: TestOrderByWithRelationInput
     user?: UserOrderByWithRelationInput
@@ -27366,14 +26168,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"TestAttempt"> | Date | string
     completedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
     startedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
-    cheatedReason?: StringNullableFilter<"TestAttempt"> | string | null
-    isCheated?: BoolFilter<"TestAttempt"> | boolean
-    cheatedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
     status?: EnumTestAttemptStatusFilter<"TestAttempt"> | $Enums.TestAttemptStatus
     timeSpent?: IntFilter<"TestAttempt"> | number
-    violationCount?: IntFilter<"TestAttempt"> | number
-    violationLogs?: JsonNullableFilter<"TestAttempt">
     answers?: TestAnswerListRelationFilter
     test?: XOR<TestRelationFilter, TestWhereInput>
     user?: XOR<UserRelationFilter, UserWhereInput>
@@ -27392,14 +26188,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     completedAt?: SortOrderInput | SortOrder
     startedAt?: SortOrderInput | SortOrder
-    cheatedReason?: SortOrderInput | SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrderInput | SortOrder
-    forceSubmittedAt?: SortOrderInput | SortOrder
     status?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
-    violationLogs?: SortOrderInput | SortOrder
     _count?: TestAttemptCountOrderByAggregateInput
     _avg?: TestAttemptAvgOrderByAggregateInput
     _max?: TestAttemptMaxOrderByAggregateInput
@@ -27422,14 +26212,8 @@ export namespace Prisma {
     updatedAt?: DateTimeWithAggregatesFilter<"TestAttempt"> | Date | string
     completedAt?: DateTimeNullableWithAggregatesFilter<"TestAttempt"> | Date | string | null
     startedAt?: DateTimeNullableWithAggregatesFilter<"TestAttempt"> | Date | string | null
-    cheatedReason?: StringNullableWithAggregatesFilter<"TestAttempt"> | string | null
-    isCheated?: BoolWithAggregatesFilter<"TestAttempt"> | boolean
-    cheatedAt?: DateTimeNullableWithAggregatesFilter<"TestAttempt"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableWithAggregatesFilter<"TestAttempt"> | Date | string | null
     status?: EnumTestAttemptStatusWithAggregatesFilter<"TestAttempt"> | $Enums.TestAttemptStatus
     timeSpent?: IntWithAggregatesFilter<"TestAttempt"> | number
-    violationCount?: IntWithAggregatesFilter<"TestAttempt"> | number
-    violationLogs?: JsonNullableWithAggregatesFilter<"TestAttempt">
   }
 
   export type TestSessionWhereInput = {
@@ -27441,9 +26225,6 @@ export namespace Prisma {
     userId?: StringFilter<"TestSession"> | string
     enrollmentId?: StringNullableFilter<"TestSession"> | string | null
     attemptNumber?: IntFilter<"TestSession"> | number
-    isCheated?: BoolFilter<"TestSession"> | boolean
-    cheatedAt?: DateTimeNullableFilter<"TestSession"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableFilter<"TestSession"> | Date | string | null
     score?: FloatNullableFilter<"TestSession"> | number | null
     status?: EnumTestAttemptStatusFilter<"TestSession"> | $Enums.TestAttemptStatus
     startedAt?: DateTimeFilter<"TestSession"> | Date | string
@@ -27457,9 +26238,6 @@ export namespace Prisma {
     userId?: SortOrder
     enrollmentId?: SortOrderInput | SortOrder
     attemptNumber?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrderInput | SortOrder
-    forceSubmittedAt?: SortOrderInput | SortOrder
     score?: SortOrderInput | SortOrder
     status?: SortOrder
     startedAt?: SortOrder
@@ -27476,9 +26254,6 @@ export namespace Prisma {
     userId?: StringFilter<"TestSession"> | string
     enrollmentId?: StringNullableFilter<"TestSession"> | string | null
     attemptNumber?: IntFilter<"TestSession"> | number
-    isCheated?: BoolFilter<"TestSession"> | boolean
-    cheatedAt?: DateTimeNullableFilter<"TestSession"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableFilter<"TestSession"> | Date | string | null
     score?: FloatNullableFilter<"TestSession"> | number | null
     status?: EnumTestAttemptStatusFilter<"TestSession"> | $Enums.TestAttemptStatus
     startedAt?: DateTimeFilter<"TestSession"> | Date | string
@@ -27492,9 +26267,6 @@ export namespace Prisma {
     userId?: SortOrder
     enrollmentId?: SortOrderInput | SortOrder
     attemptNumber?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrderInput | SortOrder
-    forceSubmittedAt?: SortOrderInput | SortOrder
     score?: SortOrderInput | SortOrder
     status?: SortOrder
     startedAt?: SortOrder
@@ -27515,70 +26287,10 @@ export namespace Prisma {
     userId?: StringWithAggregatesFilter<"TestSession"> | string
     enrollmentId?: StringNullableWithAggregatesFilter<"TestSession"> | string | null
     attemptNumber?: IntWithAggregatesFilter<"TestSession"> | number
-    isCheated?: BoolWithAggregatesFilter<"TestSession"> | boolean
-    cheatedAt?: DateTimeNullableWithAggregatesFilter<"TestSession"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableWithAggregatesFilter<"TestSession"> | Date | string | null
     score?: FloatNullableWithAggregatesFilter<"TestSession"> | number | null
     status?: EnumTestAttemptStatusWithAggregatesFilter<"TestSession"> | $Enums.TestAttemptStatus
     startedAt?: DateTimeWithAggregatesFilter<"TestSession"> | Date | string
     submittedAt?: DateTimeNullableWithAggregatesFilter<"TestSession"> | Date | string | null
-  }
-
-  export type TestViolationLogWhereInput = {
-    AND?: TestViolationLogWhereInput | TestViolationLogWhereInput[]
-    OR?: TestViolationLogWhereInput[]
-    NOT?: TestViolationLogWhereInput | TestViolationLogWhereInput[]
-    id?: StringFilter<"TestViolationLog"> | string
-    testId?: StringFilter<"TestViolationLog"> | string
-    userId?: StringFilter<"TestViolationLog"> | string
-    type?: StringFilter<"TestViolationLog"> | string
-    timestamp?: DateTimeFilter<"TestViolationLog"> | Date | string
-    detail?: StringNullableFilter<"TestViolationLog"> | string | null
-  }
-
-  export type TestViolationLogOrderByWithRelationInput = {
-    id?: SortOrder
-    testId?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    timestamp?: SortOrder
-    detail?: SortOrderInput | SortOrder
-  }
-
-  export type TestViolationLogWhereUniqueInput = Prisma.AtLeast<{
-    id?: string
-    AND?: TestViolationLogWhereInput | TestViolationLogWhereInput[]
-    OR?: TestViolationLogWhereInput[]
-    NOT?: TestViolationLogWhereInput | TestViolationLogWhereInput[]
-    testId?: StringFilter<"TestViolationLog"> | string
-    userId?: StringFilter<"TestViolationLog"> | string
-    type?: StringFilter<"TestViolationLog"> | string
-    timestamp?: DateTimeFilter<"TestViolationLog"> | Date | string
-    detail?: StringNullableFilter<"TestViolationLog"> | string | null
-  }, "id">
-
-  export type TestViolationLogOrderByWithAggregationInput = {
-    id?: SortOrder
-    testId?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    timestamp?: SortOrder
-    detail?: SortOrderInput | SortOrder
-    _count?: TestViolationLogCountOrderByAggregateInput
-    _max?: TestViolationLogMaxOrderByAggregateInput
-    _min?: TestViolationLogMinOrderByAggregateInput
-  }
-
-  export type TestViolationLogScalarWhereWithAggregatesInput = {
-    AND?: TestViolationLogScalarWhereWithAggregatesInput | TestViolationLogScalarWhereWithAggregatesInput[]
-    OR?: TestViolationLogScalarWhereWithAggregatesInput[]
-    NOT?: TestViolationLogScalarWhereWithAggregatesInput | TestViolationLogScalarWhereWithAggregatesInput[]
-    id?: StringWithAggregatesFilter<"TestViolationLog"> | string
-    testId?: StringWithAggregatesFilter<"TestViolationLog"> | string
-    userId?: StringWithAggregatesFilter<"TestViolationLog"> | string
-    type?: StringWithAggregatesFilter<"TestViolationLog"> | string
-    timestamp?: DateTimeWithAggregatesFilter<"TestViolationLog"> | Date | string
-    detail?: StringNullableWithAggregatesFilter<"TestViolationLog"> | string | null
   }
 
   export type TestAnswerWhereInput = {
@@ -29014,10 +27726,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     approvedBy?: UserCreateNestedOneWithoutApprovedEnrollmentsInput
     course: CourseCreateNestedOneWithoutEnrollmentsInput
     user: UserCreateNestedOneWithoutEnrollmentsInput
@@ -29044,10 +27752,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     testSessions?: TestSessionUncheckedCreateNestedManyWithoutEnrollmentInput
     testAttempts?: TestAttemptUncheckedCreateNestedManyWithoutEnrollmentInput
   }
@@ -29068,10 +27772,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     approvedBy?: UserUpdateOneWithoutApprovedEnrollmentsNestedInput
     course?: CourseUpdateOneRequiredWithoutEnrollmentsNestedInput
     user?: UserUpdateOneRequiredWithoutEnrollmentsNestedInput
@@ -29098,10 +27798,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     testSessions?: TestSessionUncheckedUpdateManyWithoutEnrollmentNestedInput
     testAttempts?: TestAttemptUncheckedUpdateManyWithoutEnrollmentNestedInput
   }
@@ -29125,10 +27821,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
   }
 
   export type EnrollmentUpdateManyMutationInput = {
@@ -29147,10 +27839,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type EnrollmentUncheckedUpdateManyInput = {
@@ -29172,10 +27860,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type NotificationCreateInput = {
@@ -29263,14 +27947,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerCreateNestedManyWithoutTestAttemptInput
     test: TestCreateNestedOneWithoutAttemptsInput
     user: UserCreateNestedOneWithoutTestAttemptsInput
@@ -29289,14 +27967,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedCreateNestedManyWithoutTestAttemptInput
   }
 
@@ -29309,14 +27981,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUpdateManyWithoutTestAttemptNestedInput
     test?: TestUpdateOneRequiredWithoutAttemptsNestedInput
     user?: UserUpdateOneRequiredWithoutTestAttemptsNestedInput
@@ -29335,14 +28001,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedUpdateManyWithoutTestAttemptNestedInput
   }
 
@@ -29358,14 +28018,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type TestAttemptUpdateManyMutationInput = {
@@ -29377,14 +28031,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type TestAttemptUncheckedUpdateManyInput = {
@@ -29399,14 +28047,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type TestSessionCreateInput = {
@@ -29414,9 +28056,6 @@ export namespace Prisma {
     testId: string
     userId: string
     attemptNumber?: number
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     score?: number | null
     status?: $Enums.TestAttemptStatus
     startedAt?: Date | string
@@ -29430,9 +28069,6 @@ export namespace Prisma {
     userId: string
     enrollmentId?: string | null
     attemptNumber?: number
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     score?: number | null
     status?: $Enums.TestAttemptStatus
     startedAt?: Date | string
@@ -29444,9 +28080,6 @@ export namespace Prisma {
     testId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29460,9 +28093,6 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     enrollmentId?: NullableStringFieldUpdateOperationsInput | string | null
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29475,9 +28105,6 @@ export namespace Prisma {
     userId: string
     enrollmentId?: string | null
     attemptNumber?: number
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     score?: number | null
     status?: $Enums.TestAttemptStatus
     startedAt?: Date | string
@@ -29489,9 +28116,6 @@ export namespace Prisma {
     testId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29504,76 +28128,10 @@ export namespace Prisma {
     userId?: StringFieldUpdateOperationsInput | string
     enrollmentId?: NullableStringFieldUpdateOperationsInput | string | null
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     submittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-  }
-
-  export type TestViolationLogCreateInput = {
-    id?: string
-    testId: string
-    userId: string
-    type: string
-    timestamp: Date | string
-    detail?: string | null
-  }
-
-  export type TestViolationLogUncheckedCreateInput = {
-    id?: string
-    testId: string
-    userId: string
-    type: string
-    timestamp: Date | string
-    detail?: string | null
-  }
-
-  export type TestViolationLogUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    testId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-    detail?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type TestViolationLogUncheckedUpdateInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    testId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-    detail?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type TestViolationLogCreateManyInput = {
-    id?: string
-    testId: string
-    userId: string
-    type: string
-    timestamp: Date | string
-    detail?: string | null
-  }
-
-  export type TestViolationLogUpdateManyMutationInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    testId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-    detail?: NullableStringFieldUpdateOperationsInput | string | null
-  }
-
-  export type TestViolationLogUncheckedUpdateManyInput = {
-    id?: StringFieldUpdateOperationsInput | string
-    testId?: StringFieldUpdateOperationsInput | string
-    userId?: StringFieldUpdateOperationsInput | string
-    type?: StringFieldUpdateOperationsInput | string
-    timestamp?: DateTimeFieldUpdateOperationsInput | Date | string
-    detail?: NullableStringFieldUpdateOperationsInput | string | null
   }
 
   export type TestAnswerCreateInput = {
@@ -31113,17 +29671,11 @@ export namespace Prisma {
     rejectionNote?: SortOrder
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    hasCheatedPostTest?: SortOrder
-    cheatedAtAttempt?: SortOrder
-    hasCheatedPreTest?: SortOrder
-    preTestCheatingCount?: SortOrder
   }
 
   export type EnrollmentAvgOrderByAggregateInput = {
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    cheatedAtAttempt?: SortOrder
-    preTestCheatingCount?: SortOrder
   }
 
   export type EnrollmentMaxOrderByAggregateInput = {
@@ -31145,10 +29697,6 @@ export namespace Prisma {
     rejectionNote?: SortOrder
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    hasCheatedPostTest?: SortOrder
-    cheatedAtAttempt?: SortOrder
-    hasCheatedPreTest?: SortOrder
-    preTestCheatingCount?: SortOrder
   }
 
   export type EnrollmentMinOrderByAggregateInput = {
@@ -31170,17 +29718,11 @@ export namespace Prisma {
     rejectionNote?: SortOrder
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    hasCheatedPostTest?: SortOrder
-    cheatedAtAttempt?: SortOrder
-    hasCheatedPreTest?: SortOrder
-    preTestCheatingCount?: SortOrder
   }
 
   export type EnrollmentSumOrderByAggregateInput = {
     postTestAttempts?: SortOrder
     maxPostTestAttempts?: SortOrder
-    cheatedAtAttempt?: SortOrder
-    preTestCheatingCount?: SortOrder
   }
 
   export type EnumEnrollmentStatusWithAggregatesFilter<$PrismaModel = never> = {
@@ -31260,28 +29802,6 @@ export namespace Prisma {
     notIn?: $Enums.TestAttemptStatus[] | ListEnumTestAttemptStatusFieldRefInput<$PrismaModel>
     not?: NestedEnumTestAttemptStatusFilter<$PrismaModel> | $Enums.TestAttemptStatus
   }
-  export type JsonNullableFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-  }
 
   export type EnrollmentNullableRelationFilter = {
     is?: EnrollmentWhereInput | null
@@ -31300,21 +29820,14 @@ export namespace Prisma {
     updatedAt?: SortOrder
     completedAt?: SortOrder
     startedAt?: SortOrder
-    cheatedReason?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrder
-    forceSubmittedAt?: SortOrder
     status?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
-    violationLogs?: SortOrder
   }
 
   export type TestAttemptAvgOrderByAggregateInput = {
     attemptNumber?: SortOrder
     score?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
   }
 
   export type TestAttemptMaxOrderByAggregateInput = {
@@ -31329,13 +29842,8 @@ export namespace Prisma {
     updatedAt?: SortOrder
     completedAt?: SortOrder
     startedAt?: SortOrder
-    cheatedReason?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrder
-    forceSubmittedAt?: SortOrder
     status?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
   }
 
   export type TestAttemptMinOrderByAggregateInput = {
@@ -31350,20 +29858,14 @@ export namespace Prisma {
     updatedAt?: SortOrder
     completedAt?: SortOrder
     startedAt?: SortOrder
-    cheatedReason?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrder
-    forceSubmittedAt?: SortOrder
     status?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
   }
 
   export type TestAttemptSumOrderByAggregateInput = {
     attemptNumber?: SortOrder
     score?: SortOrder
     timeSpent?: SortOrder
-    violationCount?: SortOrder
   }
 
   export type FloatNullableWithAggregatesFilter<$PrismaModel = never> = {
@@ -31391,31 +29893,6 @@ export namespace Prisma {
     _min?: NestedEnumTestAttemptStatusFilter<$PrismaModel>
     _max?: NestedEnumTestAttemptStatusFilter<$PrismaModel>
   }
-  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
-    | PatchUndefined<
-        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
-        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
-      >
-    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
-
-  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
-    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    path?: string[]
-    string_contains?: string | StringFieldRefInput<$PrismaModel>
-    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
-    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
-    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
-    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
-    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
-    _count?: NestedIntNullableFilter<$PrismaModel>
-    _min?: NestedJsonNullableFilter<$PrismaModel>
-    _max?: NestedJsonNullableFilter<$PrismaModel>
-  }
 
   export type TestSessionCountOrderByAggregateInput = {
     id?: SortOrder
@@ -31423,9 +29900,6 @@ export namespace Prisma {
     userId?: SortOrder
     enrollmentId?: SortOrder
     attemptNumber?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrder
-    forceSubmittedAt?: SortOrder
     score?: SortOrder
     status?: SortOrder
     startedAt?: SortOrder
@@ -31443,9 +29917,6 @@ export namespace Prisma {
     userId?: SortOrder
     enrollmentId?: SortOrder
     attemptNumber?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrder
-    forceSubmittedAt?: SortOrder
     score?: SortOrder
     status?: SortOrder
     startedAt?: SortOrder
@@ -31458,9 +29929,6 @@ export namespace Prisma {
     userId?: SortOrder
     enrollmentId?: SortOrder
     attemptNumber?: SortOrder
-    isCheated?: SortOrder
-    cheatedAt?: SortOrder
-    forceSubmittedAt?: SortOrder
     score?: SortOrder
     status?: SortOrder
     startedAt?: SortOrder
@@ -31470,33 +29938,6 @@ export namespace Prisma {
   export type TestSessionSumOrderByAggregateInput = {
     attemptNumber?: SortOrder
     score?: SortOrder
-  }
-
-  export type TestViolationLogCountOrderByAggregateInput = {
-    id?: SortOrder
-    testId?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    timestamp?: SortOrder
-    detail?: SortOrder
-  }
-
-  export type TestViolationLogMaxOrderByAggregateInput = {
-    id?: SortOrder
-    testId?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    timestamp?: SortOrder
-    detail?: SortOrder
-  }
-
-  export type TestViolationLogMinOrderByAggregateInput = {
-    id?: SortOrder
-    testId?: SortOrder
-    userId?: SortOrder
-    type?: SortOrder
-    timestamp?: SortOrder
-    detail?: SortOrder
   }
 
   export type OptionNullableRelationFilter = {
@@ -31668,6 +30109,28 @@ export namespace Prisma {
     permissionId?: SortOrder
     createdAt?: SortOrder
   }
+  export type JsonNullableFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+  }
 
   export type SchedulerLogCountOrderByAggregateInput = {
     id?: SortOrder
@@ -31704,6 +30167,31 @@ export namespace Prisma {
 
   export type SchedulerLogSumOrderByAggregateInput = {
     duration?: SortOrder
+  }
+  export type JsonNullableWithAggregatesFilter<$PrismaModel = never> = 
+    | PatchUndefined<
+        Either<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, Exclude<keyof Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>,
+        Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>
+      >
+    | OptionalFlat<Omit<Required<JsonNullableWithAggregatesFilterBase<$PrismaModel>>, 'path'>>
+
+  export type JsonNullableWithAggregatesFilterBase<$PrismaModel = never> = {
+    equals?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    path?: string[]
+    string_contains?: string | StringFieldRefInput<$PrismaModel>
+    string_starts_with?: string | StringFieldRefInput<$PrismaModel>
+    string_ends_with?: string | StringFieldRefInput<$PrismaModel>
+    array_contains?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_starts_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    array_ends_with?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | null
+    lt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    lte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gt?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    gte?: InputJsonValue | JsonFieldRefInput<$PrismaModel>
+    not?: InputJsonValue | JsonFieldRefInput<$PrismaModel> | JsonNullValueFilter
+    _count?: NestedIntNullableFilter<$PrismaModel>
+    _min?: NestedJsonNullableFilter<$PrismaModel>
+    _max?: NestedJsonNullableFilter<$PrismaModel>
   }
 
   export type LoginAttemptCountOrderByAggregateInput = {
@@ -33865,10 +32353,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     course: CourseCreateNestedOneWithoutEnrollmentsInput
     user: UserCreateNestedOneWithoutEnrollmentsInput
     testSessions?: TestSessionCreateNestedManyWithoutEnrollmentInput
@@ -33893,10 +32377,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     testSessions?: TestSessionUncheckedCreateNestedManyWithoutEnrollmentInput
     testAttempts?: TestAttemptUncheckedCreateNestedManyWithoutEnrollmentInput
   }
@@ -33927,10 +32407,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     approvedBy?: UserCreateNestedOneWithoutApprovedEnrollmentsInput
     course: CourseCreateNestedOneWithoutEnrollmentsInput
     testSessions?: TestSessionCreateNestedManyWithoutEnrollmentInput
@@ -33955,10 +32431,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     testSessions?: TestSessionUncheckedCreateNestedManyWithoutEnrollmentInput
     testAttempts?: TestAttemptUncheckedCreateNestedManyWithoutEnrollmentInput
   }
@@ -34012,14 +32484,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerCreateNestedManyWithoutTestAttemptInput
     test: TestCreateNestedOneWithoutAttemptsInput
     enrollment?: EnrollmentCreateNestedOneWithoutTestAttemptsInput
@@ -34036,14 +32502,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedCreateNestedManyWithoutTestAttemptInput
   }
 
@@ -34201,10 +32661,6 @@ export namespace Prisma {
     rejectionNote?: StringNullableFilter<"Enrollment"> | string | null
     postTestAttempts?: IntFilter<"Enrollment"> | number
     maxPostTestAttempts?: IntFilter<"Enrollment"> | number
-    hasCheatedPostTest?: BoolFilter<"Enrollment"> | boolean
-    cheatedAtAttempt?: IntNullableFilter<"Enrollment"> | number | null
-    hasCheatedPreTest?: BoolFilter<"Enrollment"> | boolean
-    preTestCheatingCount?: IntFilter<"Enrollment"> | number
   }
 
   export type EnrollmentUpsertWithWhereUniqueWithoutUserInput = {
@@ -34284,14 +32740,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFilter<"TestAttempt"> | Date | string
     completedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
     startedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
-    cheatedReason?: StringNullableFilter<"TestAttempt"> | string | null
-    isCheated?: BoolFilter<"TestAttempt"> | boolean
-    cheatedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableFilter<"TestAttempt"> | Date | string | null
     status?: EnumTestAttemptStatusFilter<"TestAttempt"> | $Enums.TestAttemptStatus
     timeSpent?: IntFilter<"TestAttempt"> | number
-    violationCount?: IntFilter<"TestAttempt"> | number
-    violationLogs?: JsonNullableFilter<"TestAttempt">
   }
 
   export type UserProgressUpsertWithWhereUniqueWithoutUserInput = {
@@ -34451,10 +32901,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     approvedBy?: UserCreateNestedOneWithoutApprovedEnrollmentsInput
     user: UserCreateNestedOneWithoutEnrollmentsInput
     testSessions?: TestSessionCreateNestedManyWithoutEnrollmentInput
@@ -34479,10 +32925,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     testSessions?: TestSessionUncheckedCreateNestedManyWithoutEnrollmentInput
     testAttempts?: TestAttemptUncheckedCreateNestedManyWithoutEnrollmentInput
   }
@@ -35147,14 +33589,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerCreateNestedManyWithoutTestAttemptInput
     user: UserCreateNestedOneWithoutTestAttemptsInput
     enrollment?: EnrollmentCreateNestedOneWithoutTestAttemptsInput
@@ -35171,14 +33607,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedCreateNestedManyWithoutTestAttemptInput
   }
 
@@ -35962,9 +34392,6 @@ export namespace Prisma {
     testId: string
     userId: string
     attemptNumber?: number
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     score?: number | null
     status?: $Enums.TestAttemptStatus
     startedAt?: Date | string
@@ -35976,9 +34403,6 @@ export namespace Prisma {
     testId: string
     userId: string
     attemptNumber?: number
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     score?: number | null
     status?: $Enums.TestAttemptStatus
     startedAt?: Date | string
@@ -36004,14 +34428,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerCreateNestedManyWithoutTestAttemptInput
     test: TestCreateNestedOneWithoutAttemptsInput
     user: UserCreateNestedOneWithoutTestAttemptsInput
@@ -36028,14 +34446,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedCreateNestedManyWithoutTestAttemptInput
   }
 
@@ -36255,9 +34667,6 @@ export namespace Prisma {
     userId?: StringFilter<"TestSession"> | string
     enrollmentId?: StringNullableFilter<"TestSession"> | string | null
     attemptNumber?: IntFilter<"TestSession"> | number
-    isCheated?: BoolFilter<"TestSession"> | boolean
-    cheatedAt?: DateTimeNullableFilter<"TestSession"> | Date | string | null
-    forceSubmittedAt?: DateTimeNullableFilter<"TestSession"> | Date | string | null
     score?: FloatNullableFilter<"TestSession"> | number | null
     status?: EnumTestAttemptStatusFilter<"TestSession"> | $Enums.TestAttemptStatus
     startedAt?: DateTimeFilter<"TestSession"> | Date | string
@@ -36540,10 +34949,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     approvedBy?: UserCreateNestedOneWithoutApprovedEnrollmentsInput
     course: CourseCreateNestedOneWithoutEnrollmentsInput
     user: UserCreateNestedOneWithoutEnrollmentsInput
@@ -36569,10 +34974,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     testSessions?: TestSessionUncheckedCreateNestedManyWithoutEnrollmentInput
   }
 
@@ -36730,10 +35131,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     approvedBy?: UserUpdateOneWithoutApprovedEnrollmentsNestedInput
     course?: CourseUpdateOneRequiredWithoutEnrollmentsNestedInput
     user?: UserUpdateOneRequiredWithoutEnrollmentsNestedInput
@@ -36759,10 +35156,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     testSessions?: TestSessionUncheckedUpdateManyWithoutEnrollmentNestedInput
   }
 
@@ -36782,10 +35175,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     approvedBy?: UserCreateNestedOneWithoutApprovedEnrollmentsInput
     course: CourseCreateNestedOneWithoutEnrollmentsInput
     user: UserCreateNestedOneWithoutEnrollmentsInput
@@ -36811,10 +35200,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
     testAttempts?: TestAttemptUncheckedCreateNestedManyWithoutEnrollmentInput
   }
 
@@ -36850,10 +35235,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     approvedBy?: UserUpdateOneWithoutApprovedEnrollmentsNestedInput
     course?: CourseUpdateOneRequiredWithoutEnrollmentsNestedInput
     user?: UserUpdateOneRequiredWithoutEnrollmentsNestedInput
@@ -36879,10 +35260,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     testAttempts?: TestAttemptUncheckedUpdateManyWithoutEnrollmentNestedInput
   }
 
@@ -36941,14 +35318,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     test: TestCreateNestedOneWithoutAttemptsInput
     user: UserCreateNestedOneWithoutTestAttemptsInput
     enrollment?: EnrollmentCreateNestedOneWithoutTestAttemptsInput
@@ -36966,14 +35337,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type TestAttemptCreateOrConnectWithoutAnswersInput = {
@@ -37059,14 +35424,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     test?: TestUpdateOneRequiredWithoutAttemptsNestedInput
     user?: UserUpdateOneRequiredWithoutTestAttemptsNestedInput
     enrollment?: EnrollmentUpdateOneWithoutTestAttemptsNestedInput
@@ -37084,14 +35443,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type CourseCreateWithoutAutoEnrollRulesInput = {
@@ -37764,10 +36117,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
   }
 
   export type EnrollmentCreateManyUserInput = {
@@ -37788,10 +36137,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
   }
 
   export type NotificationCreateManyUserInput = {
@@ -37815,14 +36160,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type UserProgressCreateManyUserInput = {
@@ -37879,10 +36218,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     course?: CourseUpdateOneRequiredWithoutEnrollmentsNestedInput
     user?: UserUpdateOneRequiredWithoutEnrollmentsNestedInput
     testSessions?: TestSessionUpdateManyWithoutEnrollmentNestedInput
@@ -37907,10 +36242,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     testSessions?: TestSessionUncheckedUpdateManyWithoutEnrollmentNestedInput
     testAttempts?: TestAttemptUncheckedUpdateManyWithoutEnrollmentNestedInput
   }
@@ -37933,10 +36264,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type EnrollmentUpdateWithoutUserInput = {
@@ -37955,10 +36282,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     approvedBy?: UserUpdateOneWithoutApprovedEnrollmentsNestedInput
     course?: CourseUpdateOneRequiredWithoutEnrollmentsNestedInput
     testSessions?: TestSessionUpdateManyWithoutEnrollmentNestedInput
@@ -37983,10 +36306,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     testSessions?: TestSessionUncheckedUpdateManyWithoutEnrollmentNestedInput
     testAttempts?: TestAttemptUncheckedUpdateManyWithoutEnrollmentNestedInput
   }
@@ -38009,10 +36328,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type NotificationUpdateWithoutUserInput = {
@@ -38054,14 +36369,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUpdateManyWithoutTestAttemptNestedInput
     test?: TestUpdateOneRequiredWithoutAttemptsNestedInput
     enrollment?: EnrollmentUpdateOneWithoutTestAttemptsNestedInput
@@ -38078,14 +36387,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedUpdateManyWithoutTestAttemptNestedInput
   }
 
@@ -38100,14 +36403,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type UserProgressUpdateWithoutUserInput = {
@@ -38251,10 +36548,6 @@ export namespace Prisma {
     rejectionNote?: string | null
     postTestAttempts?: number
     maxPostTestAttempts?: number
-    hasCheatedPostTest?: boolean
-    cheatedAtAttempt?: number | null
-    hasCheatedPreTest?: boolean
-    preTestCheatingCount?: number
   }
 
   export type ModuleCreateManyCourseInput = {
@@ -38332,10 +36625,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     approvedBy?: UserUpdateOneWithoutApprovedEnrollmentsNestedInput
     user?: UserUpdateOneRequiredWithoutEnrollmentsNestedInput
     testSessions?: TestSessionUpdateManyWithoutEnrollmentNestedInput
@@ -38360,10 +36649,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
     testSessions?: TestSessionUncheckedUpdateManyWithoutEnrollmentNestedInput
     testAttempts?: TestAttemptUncheckedUpdateManyWithoutEnrollmentNestedInput
   }
@@ -38386,10 +36671,6 @@ export namespace Prisma {
     rejectionNote?: NullableStringFieldUpdateOperationsInput | string | null
     postTestAttempts?: IntFieldUpdateOperationsInput | number
     maxPostTestAttempts?: IntFieldUpdateOperationsInput | number
-    hasCheatedPostTest?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAtAttempt?: NullableIntFieldUpdateOperationsInput | number | null
-    hasCheatedPreTest?: BoolFieldUpdateOperationsInput | boolean
-    preTestCheatingCount?: IntFieldUpdateOperationsInput | number
   }
 
   export type ModuleUpdateWithoutCourseInput = {
@@ -38740,14 +37021,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type QuestionUpdateWithoutTestInput = {
@@ -38784,14 +37059,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUpdateManyWithoutTestAttemptNestedInput
     user?: UserUpdateOneRequiredWithoutTestAttemptsNestedInput
     enrollment?: EnrollmentUpdateOneWithoutTestAttemptsNestedInput
@@ -38808,14 +37077,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedUpdateManyWithoutTestAttemptNestedInput
   }
 
@@ -38830,14 +37093,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type OptionCreateManyQuestionInput = {
@@ -38943,9 +37200,6 @@ export namespace Prisma {
     testId: string
     userId: string
     attemptNumber?: number
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     score?: number | null
     status?: $Enums.TestAttemptStatus
     startedAt?: Date | string
@@ -38963,14 +37217,8 @@ export namespace Prisma {
     updatedAt?: Date | string
     completedAt?: Date | string | null
     startedAt?: Date | string | null
-    cheatedReason?: string | null
-    isCheated?: boolean
-    cheatedAt?: Date | string | null
-    forceSubmittedAt?: Date | string | null
     status?: $Enums.TestAttemptStatus
     timeSpent?: number
-    violationCount?: number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type TestSessionUpdateWithoutEnrollmentInput = {
@@ -38978,9 +37226,6 @@ export namespace Prisma {
     testId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38992,9 +37237,6 @@ export namespace Prisma {
     testId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -39006,9 +37248,6 @@ export namespace Prisma {
     testId?: StringFieldUpdateOperationsInput | string
     userId?: StringFieldUpdateOperationsInput | string
     attemptNumber?: IntFieldUpdateOperationsInput | number
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     score?: NullableFloatFieldUpdateOperationsInput | number | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     startedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -39024,14 +37263,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUpdateManyWithoutTestAttemptNestedInput
     test?: TestUpdateOneRequiredWithoutAttemptsNestedInput
     user?: UserUpdateOneRequiredWithoutTestAttemptsNestedInput
@@ -39048,14 +37281,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
     answers?: TestAnswerUncheckedUpdateManyWithoutTestAttemptNestedInput
   }
 
@@ -39070,14 +37297,8 @@ export namespace Prisma {
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     completedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     startedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    cheatedReason?: NullableStringFieldUpdateOperationsInput | string | null
-    isCheated?: BoolFieldUpdateOperationsInput | boolean
-    cheatedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
-    forceSubmittedAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     status?: EnumTestAttemptStatusFieldUpdateOperationsInput | $Enums.TestAttemptStatus
     timeSpent?: IntFieldUpdateOperationsInput | number
-    violationCount?: IntFieldUpdateOperationsInput | number
-    violationLogs?: NullableJsonNullValueInput | InputJsonValue
   }
 
   export type TestAnswerCreateManyTestAttemptInput = {
@@ -39229,10 +37450,6 @@ export namespace Prisma {
      * @deprecated Use TestSessionDefaultArgs instead
      */
     export type TestSessionArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TestSessionDefaultArgs<ExtArgs>
-    /**
-     * @deprecated Use TestViolationLogDefaultArgs instead
-     */
-    export type TestViolationLogArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = TestViolationLogDefaultArgs<ExtArgs>
     /**
      * @deprecated Use TestAnswerDefaultArgs instead
      */

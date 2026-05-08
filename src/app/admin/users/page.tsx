@@ -55,7 +55,7 @@ export default async function AdminUsersPage() {
     }
     
     // Active = exclude PENDING, REJECTED, COMPLETED, FAILED (only ongoing)
-    if (!["PENDING", "REJECTED", "COMPLETED", "FAILED", "CHEATING"].includes(stat.status)) {
+    if (!["PENDING", "REJECTED", "COMPLETED", "FAILED"].includes(stat.status)) {
       statsByUser[stat.userId].active += stat._count.status;
     }
   }
@@ -77,7 +77,6 @@ export default async function AdminUsersPage() {
       completedEnrollments: stats.completed,
       inProgressEnrollments: stats.inProgress,
       activeEnrollments: stats.active,
-      hasCheated: u.enrollments.some((en) => en.status === "CHEATING"),
     };
   });
 

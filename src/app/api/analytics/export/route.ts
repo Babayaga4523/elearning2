@@ -59,8 +59,6 @@ export async function GET() {
       userId: true,
       score: true,
       passed: true,
-      isCheated: true,
-      cheatedReason: true,
       createdAt: true,
       test: { select: { type: true, courseId: true, passingScore: true } },
     },
@@ -91,19 +89,11 @@ export async function GET() {
     const bestPost   = bestPostAttempt?.score ?? null;
     const postPassed = bestPostAttempt?.passed ?? null;
 
-    // Detect cheating: check if any test attempt has isCheated flag
-    // or if enrollment status is CHEATING
-    const cheatingAttempt = userAttempts.find((a) => a.test.type === "POST" && a.isCheated);
-    const isCheated = e.status === "CHEATING" || !!cheatingAttempt;
-    const cheatReason = cheatingAttempt?.cheatedReason ?? null;
-
     return {
       ...e,
       bestPre,
       bestPost,
       postPassed,
-      isCheated,
-      cheatReason,
       categoryName: e.course.category?.name ?? "-",
     };
   });
@@ -115,7 +105,6 @@ export async function GET() {
   const inProgress = enrollments.filter((e) => e.status === "IN_PROGRESS").length;
   const pending    = enrollments.filter((e) => e.status === "PENDING").length;
   const rejected   = enrollments.filter((e) => e.status === "REJECTED").length;
-  const cheating   = enrollments.filter((e) => e.status === "CHEATING").length;
   const finished   = completed + failed;
 
   const postScores = enriched
@@ -146,7 +135,7 @@ export async function GET() {
     ["Total Enrollment",         total],
     ["Kursus Selesai (Lulus)",   completed],
     ["Kursus Gagal",             failed],
-    ["Curang / Diblokir",        cheating],
+
     ["Kursus Berjalan",          inProgress],
     ["Menunggu Persetujuan",     pending],
     ["Ditolak",                  rejected],
@@ -169,7 +158,7 @@ export async function GET() {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 2 — Riwayat Enrollment
   // ═══════════════════════════════════════════════════════════════════════════
-  const S2_COLS = 14;
+  const S2_COLS = 12;
   const s2 = wb.addWorksheet("Riwayat Enrollment");
   s2.columns = [
     { header: "NIP",               key: "nip",          width: 20 },
@@ -184,8 +173,6 @@ export async function GET() {
     { header: "NILAI PRE-TEST",    key: "preScore",     width: 15 },
     { header: "NILAI POST-TEST",   key: "postScore",    width: 15 },
     { header: "HASIL POST-TEST",   key: "postPassed",   width: 16 },
-    { header: "DETEKSI CURANG",    key: "isCheated",    width: 16 },
-    { header: "ALASAN CURANG",     key: "cheatReason",  width: 30 },
   ];
 
   styleTitle(s2, 1, "Riwayat Enrollment Seluruh Karyawan — BNI Finance", S2_COLS);
@@ -206,21 +193,11 @@ export async function GET() {
       preScore:     e.bestPre ?? "—",
       postScore:    e.bestPost ?? "—",
       postPassed:   e.postPassed,
-      isCheated:    e.isCheated ? "Ya" : "Tidak",
-      cheatReason:  e.cheatReason ?? "—",
     });
 
     applyDataRow(row, i);
     applyStatusCell(row.getCell("status"), e.status);
     applyPassedCell(row.getCell("postPassed"), e.postPassed);
-
-    // Color the cheating detection cell
-    const cheatCell = row.getCell("isCheated");
-    if (e.isCheated) {
-      cheatCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_FAILED_FG }, name: "Calibri" };
-      cheatCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BRAND.STATUS_FAILED_BG } };
-    }
-    cheatCell.alignment = { horizontal: "center", vertical: "middle" };
 
     ["enrolledAt", "preScore", "postScore"].forEach((key) => {
       row.getCell(key).alignment = { horizontal: "center", vertical: "middle" };
@@ -232,7 +209,7 @@ export async function GET() {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 3 — Rekap Per Departemen
   // ═══════════════════════════════════════════════════════════════════════════
-  const S3_COLS = 10;
+  const S3_COLS = 9;
   const s3 = wb.addWorksheet("Rekap Per Departemen");
   s3.columns = [
     { header: "DEPARTEMEN",        key: "dept",       width: 26 },
@@ -242,7 +219,6 @@ export async function GET() {
     { header: "BERJALAN",          key: "inProgress", width: 14 },
     { header: "MENUNGGU",          key: "pending",    width: 14 },
     { header: "DITOLAK",           key: "rejected",   width: 14 },
-    { header: "CURANG",            key: "cheating",   width: 14 },
     { header: "RATA-RATA POST",    key: "avgPost",    width: 18 },
     { header: "TINGKAT LULUS %",   key: "passRate",   width: 18 },
   ];
@@ -269,7 +245,6 @@ export async function GET() {
     const dInProgress = items.filter((e) => e.status === "IN_PROGRESS").length;
     const dPending    = items.filter((e) => e.status === "PENDING").length;
     const dRejected   = items.filter((e) => e.status === "REJECTED").length;
-    const dCheating   = items.filter((e) => e.status === "CHEATING").length;
     const dFinished   = dCompleted + dFailed;
     const dPostScores = items
       .map((e) => e.bestPost)
@@ -289,13 +264,12 @@ export async function GET() {
       inProgress: dInProgress,
       pending:    dPending,
       rejected:   dRejected,
-      cheating:   dCheating,
       avgPost:    dAvgPost,
       passRate:   dPassRate,
     });
 
     applyDataRow(row, i);
-    ["total", "completed", "failed", "inProgress", "pending", "rejected", "cheating", "avgPost", "passRate"].forEach(
+    ["total", "completed", "failed", "inProgress", "pending", "rejected", "avgPost", "passRate"].forEach(
       (key) => { row.getCell(key).alignment = { horizontal: "center", vertical: "middle" }; }
     );
 
@@ -315,7 +289,7 @@ export async function GET() {
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 4 — Rekap Per Kursus
   // ═══════════════════════════════════════════════════════════════════════════
-  const S4_COLS = 10;
+  const S4_COLS = 9;
   const s4 = wb.addWorksheet("Rekap Per Kursus");
   s4.columns = [
     { header: "JUDUL KURSUS",      key: "course",     width: 36 },
@@ -324,7 +298,6 @@ export async function GET() {
     { header: "SELESAI",           key: "completed",  width: 14 },
     { header: "GAGAL",             key: "failed",     width: 14 },
     { header: "BERJALAN",          key: "inProgress", width: 14 },
-    { header: "CURANG",            key: "cheating",   width: 14 },
     { header: "RATA-RATA POST",    key: "avgPost",    width: 18 },
     { header: "TINGKAT LULUS %",   key: "passRate",   width: 18 },
     { header: "KARYAWAN UNIK",     key: "uniqueUsers", width: 16 },
@@ -356,7 +329,6 @@ export async function GET() {
     const cCompleted  = items.filter((e) => e.status === "COMPLETED").length;
     const cFailed     = items.filter((e) => e.status === "FAILED").length;
     const cInProgress = items.filter((e) => e.status === "IN_PROGRESS").length;
-    const cCheating   = items.filter((e) => e.status === "CHEATING").length;
     const cFinished   = cCompleted + cFailed;
     const cPostScores = items
       .map((e) => e.bestPost)
@@ -375,23 +347,15 @@ export async function GET() {
       completed:  cCompleted,
       failed:     cFailed,
       inProgress: cInProgress,
-      cheating:   cCheating,
       avgPost:    cAvgPost,
       passRate:   cPassRate,
       uniqueUsers: new Set(items.map((e) => e.userId)).size,
     });
 
     applyDataRow(row, i);
-    ["total", "completed", "failed", "inProgress", "cheating", "avgPost", "passRate", "uniqueUsers"].forEach(
+    ["total", "completed", "failed", "inProgress", "avgPost", "passRate", "uniqueUsers"].forEach(
       (key) => { row.getCell(key).alignment = { horizontal: "center", vertical: "middle" }; }
     );
-
-    // Color the cheating cell
-    if (cCheating > 0) {
-      const cheatCell = row.getCell("cheating");
-      cheatCell.font = { bold: true, size: 10, color: { argb: BRAND.STATUS_FAILED_FG }, name: "Calibri" };
-      cheatCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: BRAND.STATUS_FAILED_BG } };
-    }
 
     // Color the pass rate cell
     const passRateValue = parseFloat(cPassRate);

@@ -61,9 +61,6 @@ export default async function CourseReportPage({ params }: Props) {
         testId: true,
         score: true,
         passed: true,
-        violationCount: true,
-        isCheated: true,
-        cheatedReason: true,
         createdAt: true,
         test: { select: { type: true, title: true, passingScore: true } },
       },
@@ -93,20 +90,7 @@ export default async function CourseReportPage({ params }: Props) {
 
   const preAttemptsByUser: Record<string, number> = {};
   const postAttemptsByUser: Record<string, number> = {};
-  const fraudStatusByUser: Record<string, { isCheated: boolean; reason: string | null; violationCount: number }> = {};
   for (const a of (testAttempts as any[])) {
-    if (a.isCheated) {
-      const existing = fraudStatusByUser[a.userId];
-      // Keep the highest-violation cheated attempt as representative detail
-      if (!existing || (a.violationCount ?? 0) > existing.violationCount) {
-        fraudStatusByUser[a.userId] = {
-          isCheated: true,
-          reason: a.cheatedReason ?? null,
-          violationCount: a.violationCount ?? 0,
-        };
-      }
-    }
-
     if (a.test.type === "PRE") {
       if (!preAttemptsByUser[a.userId] || a.score > preAttemptsByUser[a.userId]) {
         preAttemptsByUser[a.userId] = a.score;
@@ -129,7 +113,6 @@ export default async function CourseReportPage({ params }: Props) {
     const modulePct = totalModules > 0 ? Math.round((completedModules / totalModules) * 100) : 0;
     const preTest = (course.tests as any[]).find((t: any) => t.type === "PRE");
     const postTest = (course.tests as any[]).find((t: any) => t.type === "POST");
-    const fraudInfo = fraudStatusByUser[userId] ?? { isCheated: false, reason: null, violationCount: 0 };
 
     return {
       userId,
@@ -138,7 +121,7 @@ export default async function CourseReportPage({ params }: Props) {
       department: e.user.department ?? "-",
       nip: e.user.nip ?? "-",
       lokasi: e.user.lokasi ?? "-",
-      status: fraudInfo.isCheated && e.status !== "COMPLETED" ? "CHEATING" : e.status,
+      status: e.status,
       enrolledAt: e.createdAt.toISOString(),
       completedModules,
       totalModules,
@@ -151,9 +134,6 @@ export default async function CourseReportPage({ params }: Props) {
       postTestTitle: postTest?.title ?? null,
       postPassing: postTest?.passingScore ?? 70,
       postTestPassed: postScore !== null ? postScore >= (postTest?.passingScore ?? 70) : null,
-      isCheated: fraudInfo.isCheated,
-      cheatedReason: fraudInfo.reason,
-      violationCount: fraudInfo.violationCount,
     };
   });
 

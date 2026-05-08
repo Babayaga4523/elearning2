@@ -15,7 +15,6 @@ function formatStatus(status: string): string {
     COMPLETED: "Selesai",
     REJECTED: "Ditolak",
     FAILED: "Gagal",
-    CHEATING: "Tercurigai Curang",
   };
   return statusMap[status] || status;
 }
@@ -33,7 +32,7 @@ export default async function KaryawanCalendarPage() {
   const enrollments = await db.enrollment.findMany({
     where: {
       userId,
-      status: { notIn: ["REJECTED", "PENDING", "CHEATING", "FAILED"] },
+      status: { notIn: ["REJECTED", "PENDING", "FAILED"] },
       deadline: { gte: startRange, lte: endRange },
     },
     include: {

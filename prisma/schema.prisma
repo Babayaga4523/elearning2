@@ -173,15 +173,9 @@ model Enrollment {
   approvedById        String?
   rejectionNote       String?
   
-  // Tracking post-test attempts & cheating
+  // Tracking post-test attempts
   postTestAttempts    Int              @default(0)
   maxPostTestAttempts Int              @default(3)
-  hasCheatedPostTest  Boolean          @default(false)
-  cheatedAtAttempt    Int?             // curang di percobaan ke berapa
-  
-  // Tracking pre-test cheating (NEW)
-  hasCheatedPreTest    Boolean         @default(false)
-  preTestCheatingCount Int             @default(0)
   
   approvedBy    User?            @relation("ApprovedEnrollments", fields: [approvedById], references: [id])
   course        Course           @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -222,14 +216,8 @@ model TestAttempt {
   updatedAt        DateTime          @updatedAt
   completedAt      DateTime?
   startedAt        DateTime?
-  cheatedReason    String?
-  isCheated        Boolean           @default(false)
-  cheatedAt        DateTime?
-  forceSubmittedAt DateTime?
   status           TestAttemptStatus @default(ONGOING)
   timeSpent        Int               @default(0)
-  violationCount   Int               @default(0)
-  violationLogs    Json?
   answers          TestAnswer[]
   test             Test              @relation(fields: [testId], references: [id], onDelete: Cascade)
   user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -238,7 +226,6 @@ model TestAttempt {
   @@index([userId])
   @@index([testId])
   @@index([enrollmentId])
-  @@index([isCheated])
   @@index([attemptNumber])
 }
 
@@ -248,9 +235,6 @@ model TestSession {
   userId           String
   enrollmentId     String?           // untuk link ke enrollment
   attemptNumber    Int               @default(1)
-  isCheated        Boolean           @default(false)
-  cheatedAt        DateTime?
-  forceSubmittedAt DateTime?
   score            Float?
   status           TestAttemptStatus @default(ONGOING)
   startedAt        DateTime          @default(now())
@@ -261,17 +245,6 @@ model TestSession {
   @@index([testId, userId])
   @@index([enrollmentId])
   @@index([status])
-}
-
-model TestViolationLog {
-  id        String   @id @default(cuid())
-  testId    String
-  userId    String
-  type      String
-  timestamp DateTime
-  detail    String?
-
-  @@index([testId, userId])
 }
 
 model TestAnswer {
@@ -454,7 +427,6 @@ enum EnrollmentStatus {
   FAILED
   PENDING
   REJECTED
-  CHEATING
 }
 
 enum NotificationType {

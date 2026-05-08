@@ -29,8 +29,6 @@ export default async function EnrollmentsPage() {
         // Post-test tracking fields (explicit selection - no type casting)
         postTestAttempts: true,
         maxPostTestAttempts: true,
-        hasCheatedPostTest: true,
-        cheatedAtAttempt: true,
         user: {
           select: { id: true, name: true, email: true, department: true, nip: true, lokasi: true },
         },
@@ -104,8 +102,6 @@ export default async function EnrollmentsPage() {
       courseTitle: e.course?.title ?? "-",
       postTestAttempts: e.postTestAttempts,
       maxPostTestAttempts: e.maxPostTestAttempts,
-      hasCheatedPostTest: e.hasCheatedPostTest,
-      cheatedAtAttempt: e.cheatedAtAttempt,
       courseCategory: e.course?.category?.name ?? "-",
       status: e.status as string,
       enrolledAt: e.createdAt.toISOString(),
