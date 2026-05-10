@@ -5,7 +5,7 @@ import { TestRulesModal } from "./test-rules-modal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { CheckCircle2, Lock, Clock, ChevronRight } from "lucide-react";
+import { CheckCircle2, Lock, Clock, ChevronRight, RotateCcw, Eye } from "lucide-react";
 
 interface TestStepWithModalProps {
   courseId: string;
@@ -22,6 +22,8 @@ interface TestStepWithModalProps {
     passingScore: number;
     maxAttempts: number;
     attemptCount: number;
+    remainingAttempts?: number;
+    passedKKM?: boolean;
     randomizeQuestions?: boolean;
     randomizeOptions?: boolean;
   };
@@ -43,23 +45,83 @@ export function TestStepWithModal({
 }: TestStepWithModalProps) {
   const [showModal, setShowModal] = useState(false);
 
+  // Determine if user can retry:
+  // - Has remaining attempts (maxAttempts = 0 means unlimited)
+  // - Has NOT passed KKM OR wants to improve score
+  const hasAttemptsLeft = testInfo.maxAttempts === 0 || testInfo.attemptCount < testInfo.maxAttempts;
+  const canRetry = hasAttemptsLeft;
+  const hasPassedKKM = testStatus === "LULUS" || testInfo.passedKKM;
+  const hasResult = done && resultUrl;
+
   const handleClick = () => {
     if (locked) return;
-    
-    // PERFECT RETRY LOGIC:
-    // Calculate if user can retry based on attempts only
-    const hasAttemptsLeft = testInfo.maxAttempts === 0 || testInfo.attemptCount < testInfo.maxAttempts;
-    
-    // RULE 1: If no attempts left, redirect to result page (cannot retry)
-    if (done && resultUrl && !hasAttemptsLeft) {
+
+    // RULE 1: If no attempts left, redirect to result page
+    if (hasResult && !canRetry) {
       window.location.href = resultUrl;
       return;
     }
-    
-    // RULE 2: If has attempts left (regardless of pass/fail), show modal to allow retry
-    // This allows users to improve their score even after passing
-    // The system will always take the BEST (highest) score as final result
+
+    // RULE 2: If has attempts left, show modal to allow retry
     setShowModal(true);
+  };
+
+  // Determine which icon and text to show
+  const renderStatusIcon = () => {
+    if (locked) {
+      return <Lock className="h-4 w-4" />;
+    }
+    if (done && hasPassedKKM) {
+      return <CheckCircle2 className="h-5 w-5" />;
+    }
+    if (testInfo.attemptCount > 0) {
+      return <RotateCcw className="h-4 w-4" />;
+    }
+    return <span>★</span>;
+  };
+
+  const renderStatusBadge = () => {
+    if (testStatus === "LULUS") {
+      return (
+        <Badge className="text-xs bg-green-100 text-green-700 border-0 gap-1">
+          <CheckCircle2 className="h-3 w-3" />
+          Lulus
+        </Badge>
+      );
+    }
+    if (testStatus === "GAGAL" && hasAttemptsLeft) {
+      return (
+        <Badge className="text-xs bg-orange-100 text-orange-700 border-0 gap-1">
+          <RotateCcw className="h-3 w-3" />
+          Gagal — {testInfo.remainingAttempts !== undefined && testInfo.remainingAttempts < 999
+            ? `${testInfo.remainingAttempts} percobaan tersisa`
+            : "Coba lagi"}
+        </Badge>
+      );
+    }
+    if (testStatus === "GAGAL" && !hasAttemptsLeft) {
+      return (
+        <Badge className="text-xs bg-red-100 text-red-700 border-0">
+          Tidak Lulus
+        </Badge>
+      );
+    }
+    if (testStatus === "KECURANGAN") {
+      return (
+        <Badge className="text-xs bg-red-900 text-red-100 border-0">
+          Kecurangan
+        </Badge>
+      );
+    }
+    if (done) {
+      return (
+        <Badge className="text-xs bg-blue-100 text-blue-700 border-0 gap-1">
+          <Eye className="h-3 w-3" />
+          Dilihat
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
@@ -78,20 +140,16 @@ export function TestStepWithModal({
             <div
               className={cn(
                 "h-10 w-10 rounded-lg flex items-center justify-center shrink-0 font-semibold",
-                done
-                  ? "bg-green-100 text-green-700"
-                  : locked
+                locked
                   ? "bg-slate-100 text-slate-400"
+                  : hasPassedKKM
+                  ? "bg-green-100 text-green-700"
+                  : testInfo.attemptCount > 0
+                  ? "bg-orange-100 text-orange-700"
                   : "bg-blue-100 text-blue-700"
               )}
             >
-              {done ? (
-                <CheckCircle2 className="h-5 w-5" />
-              ) : locked ? (
-                <Lock className="h-4 w-4" />
-              ) : (
-                <span>★</span>
-              )}
+              {renderStatusIcon()}
             </div>
 
             {/* Content */}
@@ -100,21 +158,7 @@ export function TestStepWithModal({
                 <Badge variant="secondary" className="text-xs">
                   {testType === "PRE" ? "Pre-Test" : "Post-Test"}
                 </Badge>
-                {testStatus === "LULUS" && (
-                  <Badge className="text-xs bg-green-100 text-green-700 border-0">
-                    Lulus
-                  </Badge>
-                )}
-                {testStatus === "GAGAL" && (
-                  <Badge className="text-xs bg-red-100 text-red-700 border-0">
-                    Gagal
-                  </Badge>
-                )}
-                {testStatus === "KECURANGAN" && (
-                  <Badge className="text-xs bg-red-900 text-red-100 border-0">
-                    Kecurangan
-                  </Badge>
-                )}
+                {renderStatusBadge()}
               </div>
 
               <h4 className="text-sm font-semibold text-slate-900 mb-1">
@@ -174,7 +218,7 @@ export function TestStepWithModal({
                         : "bg-red-50 text-red-700 border border-red-200"
                     )}>
                       <span>⭐</span>
-                      <span>Nilai Terbaik: {Number(bestScore).toFixed(0)}</span>
+                      <span>Nilai Terbaik: {Number(bestScore).toFixed(0)}%</span>
                     </div>
                   </div>
                 )}
@@ -188,8 +232,30 @@ export function TestStepWithModal({
               )}
             </div>
 
-            {/* Arrow */}
-            {!locked && <ChevronRight className="h-5 w-5 text-slate-400 shrink-0" />}
+            {/* Arrow / Action Indicator */}
+            {!locked && (
+              <div className="flex items-center gap-2 shrink-0">
+                {canRetry && hasResult && !hasPassedKKM && (
+                  <Badge variant="outline" className="text-xs text-orange-600 border-orange-300 bg-orange-50 gap-1">
+                    <RotateCcw className="h-3 w-3" />
+                    Ulangi
+                  </Badge>
+                )}
+                {canRetry && hasPassedKKM && (
+                  <Badge variant="outline" className="text-xs text-blue-600 border-blue-300 bg-blue-50 gap-1">
+                    <RotateCcw className="h-3 w-3" />
+                    Tingkatkan
+                  </Badge>
+                )}
+                {!canRetry && hasResult && (
+                  <Badge variant="outline" className="text-xs text-slate-600 border-slate-300 gap-1">
+                    <Eye className="h-3 w-3" />
+                    Hasil
+                  </Badge>
+                )}
+                <ChevronRight className="h-5 w-5 text-slate-400" />
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

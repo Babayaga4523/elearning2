@@ -40,46 +40,60 @@ export default async function TestResultPage({
   const correctCount = attempt.answers.filter((a: any) => a.isCorrect).length;
   const wrongCount = totalQ - correctCount;
 
+  // Count actual SUBMITTED attempts for this test (server-side validation)
   const attemptCount = await db.testAttempt.count({
-    where: { userId: session.user.id, testId: attempt.testId },
+    where: { userId: session.user.id, testId: attempt.testId, status: "SUBMITTED" },
   });
 
   // PERFECT LOGIC: Get BEST (highest) score from all attempts
   const allAttempts = await db.testAttempt.findMany({
-    where: { userId: session.user.id, testId: attempt.testId },
+    where: { userId: session.user.id, testId: attempt.testId, status: "SUBMITTED" },
     select: { score: true, passed: true },
     orderBy: { score: 'desc' }
   });
-  
+
   const bestAttempt = allAttempts[0];
   const bestScore = bestAttempt ? Math.round(bestAttempt.score ?? 0) : score;
   const hasBestScore = allAttempts.length > 1; // Show best score only if multiple attempts
   const isCurrentBest = score === bestScore;
   const hasPassedBefore = allAttempts.some(a => a.passed);
 
-  const enrollment = await db.enrollment.findUnique({
-    where: { userId_courseId: { userId: session.user.id, courseId: params.courseId } },
-    select: { maxPostTestAttempts: true, postTestAttempts: true }
-  });
-
-  const effectiveMaxAttempts = enrollment?.maxPostTestAttempts ?? attempt.test.maxAttempts ?? 3;
-  const remainingAttempts = effectiveMaxAttempts > 0 
-    ? Math.max(0, effectiveMaxAttempts - (enrollment?.postTestAttempts ?? attemptCount))
+  // Get max attempts from test configuration
+  const effectiveMaxAttempts = attempt.test.maxAttempts > 0 ? attempt.test.maxAttempts : 999;
+  const remainingAttempts = effectiveMaxAttempts > 0
+    ? Math.max(0, effectiveMaxAttempts - attemptCount)
     : Infinity;
-  const canTryAgain = effectiveMaxAttempts === 0 || remainingAttempts > 0;
+  const canTryAgain = effectiveMaxAttempts > 0
+    ? attemptCount < effectiveMaxAttempts
+    : true; // Unlimited if maxAttempts = 0
 
   // Determine status color theme
   let statusColor = "#f59e0b"; // fail
   let statusText = "text-[#f59e0b]";
   let statusBg = "bg-[#f59e0b]";
   let statusBorder = "border-[#f59e0b]";
-  
+
   if (isPassed) {
     statusColor = "#10b981";
     statusText = "text-[#10b981]";
     statusBg = "bg-[#10b981]";
     statusBorder = "border-[#10b981]";
   }
+
+  // Better status messaging
+  const getStatusMessage = () => {
+    if (isPassed) {
+      if (hasBestScore && !isCurrentBest) {
+        return `Nilai Anda kali ini ${score}%, namun nilai terbaik Anda tetap ${bestScore}%. Sistem akan menggunakan nilai tertinggi sebagai hasil akhir.`;
+      }
+      return `Selamat, Anda telah lulus ujian ini dengan nilai yang memuaskan. ${canTryAgain ? "Anda masih bisa mencoba lagi untuk meningkatkan nilai." : ""}`;
+    }
+    // Failed
+    if (!canTryAgain) {
+      return `Anda telah menggunakan semua ${attempt.test.maxAttempts} kesempatan dan belum mencapai batas kelulusan. Silakan hubungi admin jika memerlukan bantuan.`;
+    }
+    return `Anda belum mencapai batas kelulusan (${passingScore}%). Pelajari kembali materi dan coba lagi. Sisa percobaan: ${remainingAttempts === Infinity ? "Unlimited" : remainingAttempts}.`;
+  };
 
   // Time calculation
   const getDuration = () => {
@@ -169,11 +183,7 @@ export default async function TestResultPage({
                 )}
               </h2>
               <p className="text-base text-[#544435] max-w-2xl">
-                {isPassed
-                    ? hasBestScore && !isCurrentBest
-                      ? `Nilai Anda kali ini ${score}%, namun nilai terbaik Anda tetap ${bestScore}%. Sistem akan menggunakan nilai tertinggi sebagai hasil akhir.`
-                      : `Selamat, Anda telah lulus ujian ini dengan nilai yang memuaskan. ${canTryAgain ? "Anda masih bisa mencoba lagi untuk meningkatkan nilai." : ""}`
-                    : `Anda belum mencapai batas kelulusan. ${canTryAgain ? "Pelajari kembali materi dan coba lagi." : "Anda telah menggunakan semua kesempatan."}`}
+                {getStatusMessage()}
               </p>
               <p className="text-xs font-semibold text-[#544435] mt-3">
                 Batas kelulusan: {passingScore}% • 

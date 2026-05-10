@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  Timer, 
-  ChevronRight, 
-  ChevronLeft, 
+import {
+  Timer,
+  ChevronRight,
+  ChevronLeft,
   Send,
   AlertCircle,
   CheckCircle2,
@@ -13,7 +13,8 @@ import {
   BookmarkCheck,
   PanelRightClose,
   PanelRightOpen,
-  Loader2
+  Loader2,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -32,6 +33,7 @@ import {
 } from "@/components/ui/dialog";
 import { submitTest } from "@/actions/test";
 import { toast } from "sonner";
+import { useTestProtection } from "@/hooks/use-test-protection";
 
 interface TestClientProps {
   test: any;
@@ -42,15 +44,27 @@ interface TestClientProps {
   userId: string;
 }
 
-export function TestClient({ 
-  test, 
-  courseId, 
-  attemptNumber, 
+export function TestClient({
+  test,
+  courseId,
+  attemptNumber,
   userId,
-  startedAt 
+  startedAt
 }: TestClientProps) {
   const router = useRouter();
-  
+
+  // Enable test protection (disable right-click, copy, paste, keyboard shortcuts)
+  useTestProtection({ enabled: true, allowPrint: false });
+
+  // Show protection warning when user tries to copy/right-click
+  const [protectionWarning, setProtectionWarning] = useState<string | null>(null);
+
+  const showProtectionWarning = useCallback((message: string) => {
+    setProtectionWarning(message);
+    toast.warning(message, { duration: 2000 });
+    setTimeout(() => setProtectionWarning(null), 2000);
+  }, []);
+
   // Storage Key
   const STORAGE_KEY = `elearning_${userId}_${test.id}_${attemptNumber}_progress`;
 
@@ -60,16 +74,9 @@ export function TestClient({
   const [markedQuestions, setMarkedQuestions] = useState<Set<number>>(new Set());
   const [shuffledQuestions, setShuffledQuestions] = useState<any[]>(() => [...test.questions]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
   const [timeLeft, setTimeLeft] = useState(test.duration * 60);
   const [showSidebar, setShowSidebar] = useState(true);
-  const [showSubmitDialog, setShowSubmitDialog] = useState(false);
-  
-  // Proctoring States
-  const [violations, setViolations] = useState(0);
-  const [showViolationWarning, setShowViolationWarning] = useState(false);
-  const [violationMessage, setViolationMessage] = useState("");
-  const MAX_VIOLATIONS = 3;
-
   // Offline States
   const [isOnline, setIsOnline] = useState(true);
   const [showOfflineWarning, setShowOfflineWarning] = useState(false);
@@ -188,78 +195,6 @@ export function TestClient({
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
   }, [currentQuestionIndex, isSubmitting, markedQuestions]);
-
-  // Proctoring System
-  useEffect(() => {
-    if (!isReady || isSubmitting) return;
-
-    const reportViolation = async (type: string, detail?: string) => {
-      try {
-        const response = await fetch(`/api/courses/${courseId}/tests/${test.id}/violation`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            type,
-            timestamp: new Date().toISOString(),
-            detail: detail || null,
-          }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.shouldForceSubmit) {
-            toast.error("Terlalu banyak pelanggaran. Ujian akan otomatis disubmit.");
-            setTimeout(() => handleSubmit(), 2000);
-          } else {
-            setViolations(data.currentCount);
-            setViolationMessage("⚠️ Jangan berpindah tab! Pelanggaran: " + data.currentCount + "/3");
-            setShowViolationWarning(true);
-            setTimeout(() => setShowViolationWarning(false), 5000);
-          }
-        }
-      } catch (error) {
-        console.error("Failed to report violation:", error);
-      }
-    };
-
-    // Detect tab switch (ONLY THIS COUNTS AS VIOLATION)
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        reportViolation("TAB_SWITCH", "User switched tab or minimized window");
-      }
-    };
-
-    // Prevent copy/paste (NO VIOLATION REPORT - just prevent)
-    const handleCopy = (e: ClipboardEvent) => {
-      e.preventDefault();
-      toast.error("Copy text tidak diperbolehkan", { duration: 2000 });
-    };
-
-    const handlePaste = (e: ClipboardEvent) => {
-      e.preventDefault();
-      toast.error("Paste tidak diperbolehkan", { duration: 2000 });
-    };
-
-    // Prevent right click (NO VIOLATION REPORT - just prevent)
-    const handleContextMenu = (e: MouseEvent) => {
-      e.preventDefault();
-      toast.error("Klik kanan tidak diperbolehkan", { duration: 2000 });
-    };
-
-    // Add event listeners
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-    document.addEventListener("copy", handleCopy);
-    document.addEventListener("paste", handlePaste);
-    document.addEventListener("contextmenu", handleContextMenu);
-    
-    // Cleanup
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      document.removeEventListener("copy", handleCopy);
-      document.removeEventListener("paste", handlePaste);
-      document.removeEventListener("contextmenu", handleContextMenu);
-    };
-  }, [isReady, isSubmitting, courseId, test.id]);
 
   // Online/Offline Detection
   useEffect(() => {
@@ -397,15 +332,22 @@ export function TestClient({
 
   return (
     <>
-      <div className="min-h-screen bg-background flex flex-col">
+      <div
+        className="min-h-screen bg-background flex flex-col select-none"
+        onContextMenu={(e) => e.preventDefault()}
+      >
         
         {/* Header */}
-        <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur">
           <div className="container flex h-14 items-center justify-between px-3 sm:px-4">
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Badge variant={test.type === 'PRE' ? 'default' : 'secondary'} className="shrink-0 text-xs">
                 {test.type === 'PRE' ? 'Pre-Test' : 'Post-Test'}
               </Badge>
+              <Separator orientation="vertical" className="h-4" />
+              <div className="relative" title="Proteksi aktif - Klik kanan dinonaktifkan">
+                <Shield className="h-3.5 w-3.5 text-green-600 shrink-0" />
+              </div>
               <Separator orientation="vertical" className="h-4" />
               <div className="min-w-0">
                 <h1 className="text-xs sm:text-sm font-medium truncate">{test.title}</h1>
@@ -437,14 +379,6 @@ export function TestClient({
                 </Badge>
               )}
 
-              {/* Violation Counter */}
-              {violations > 0 && (
-                <Badge variant="destructive" className="text-xs gap-1">
-                  <AlertCircle className="h-3 w-3" />
-                  {violations}/{MAX_VIOLATIONS}
-                </Badge>
-              )}
-
               <div className={cn(
                 "flex items-center gap-1.5 px-2.5 py-1 rounded-md border font-mono text-xs font-medium",
                 timeLeft < 300 
@@ -460,6 +394,16 @@ export function TestClient({
           </div>
         </div>
 
+        {/* Protection Warning Banner */}
+        {protectionWarning && (
+          <div className="bg-red-600 text-white px-4 py-2 text-center animate-pulse">
+            <div className="container flex items-center justify-center gap-2 text-sm font-semibold">
+              <Shield className="h-4 w-4" />
+              {protectionWarning}
+            </div>
+          </div>
+        )}
+
         {/* Offline Warning Banner */}
         {showOfflineWarning && (
           <div className="bg-yellow-500 text-yellow-950 px-4 py-2 text-center">
@@ -470,21 +414,8 @@ export function TestClient({
           </div>
         )}
 
-        {/* Violation Warning Banner */}
-        {showViolationWarning && (
-          <div className="bg-destructive text-destructive-foreground px-4 py-2 text-center animate-in slide-in-from-top">
-            <div className="container flex items-center justify-center gap-2 text-sm font-semibold">
-              <AlertCircle className="h-4 w-4" />
-              {violationMessage} ({violations}/{MAX_VIOLATIONS} pelanggaran)
-            </div>
-          </div>
-        )}
-
         {/* Main Content */}
         <div className="flex-1 flex overflow-hidden">
-          
-          {/* Question Area */}
-          <div className="flex-1 overflow-y-auto">
             <div className="container max-w-3xl py-4 px-3 sm:px-4 space-y-4">
               
               {/* Progress */}
@@ -527,12 +458,24 @@ export function TestClient({
 
                 <CardContent className="space-y-4">
                   {/* Question Text */}
-                  <div className="rounded-md border bg-muted/50 p-3">
+                  <div
+                    className="rounded-md border bg-muted/50 p-3"
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    draggable={false}
+                  >
                     <p className="text-sm leading-relaxed">{currentQuestion.text}</p>
                   </div>
 
                   {/* Options */}
-                  <div className="space-y-2">
+                  <div
+                    className="space-y-2"
+                    onCopy={(e) => e.preventDefault()}
+                    onCut={(e) => e.preventDefault()}
+                    onPaste={(e) => e.preventDefault()}
+                    draggable={false}
+                  >
                     {currentQuestion.options.map((option: any, index: number) => {
                       const char = String.fromCharCode(65 + index);
                       const isSelected = answers[currentQuestion.id] === option.id;
@@ -622,7 +565,6 @@ export function TestClient({
                 </div>
               )}
             </div>
-          </div>
 
           {/* Sidebar */}
           {showSidebar && (
@@ -661,33 +603,6 @@ export function TestClient({
                         </CardContent>
                       </Card>
                     </div>
-                  </div>
-
-                  <Separator />
-
-                  {/* Proctoring Info */}
-                  <div className="space-y-2">
-                    <h3 className="text-xs font-semibold">Pengawasan</h3>
-                    <Card className={cn(
-                      violations >= MAX_VIOLATIONS ? "border-destructive" : 
-                      violations > 0 ? "border-yellow-500" : "border-green-500"
-                    )}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground">Pelanggaran</span>
-                          <Badge variant={violations >= MAX_VIOLATIONS ? "destructive" : violations > 0 ? "outline" : "secondary"} className="text-xs">
-                            {violations}/{MAX_VIOLATIONS}
-                          </Badge>
-                        </div>
-                        <p className="text-[10px] text-muted-foreground mt-2 leading-relaxed">
-                          {violations >= MAX_VIOLATIONS 
-                            ? "Batas pelanggaran tercapai!" 
-                            : violations > 0 
-                              ? "Hindari pelanggaran lebih lanjut"
-                              : "Tidak ada pelanggaran"}
-                        </p>
-                      </CardContent>
-                    </Card>
                   </div>
 
                   <Separator />

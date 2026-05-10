@@ -107,9 +107,11 @@ export async function deleteTest(id: string) {
  * Submit Test — Simplified Logic (No Anti-Cheat):
  * PRE-TEST: score recorded, proceed to modules
  * POST-TEST: pass → COMPLETED, fail → FAILED (can retake within limit)
+ *
+ * ATTENTION: maxAttempts is now taken from test.maxAttempts (configured per test by admin)
  */
 export async function submitTest(
-  testId: string, 
+  testId: string,
   answersData: { questionId: string, optionId: string }[]
 ) {
   const session = await auth();
@@ -119,6 +121,7 @@ export async function submitTest(
   }
 
   const userId = session.user.id;
+  const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
   const ALLOWED_ENROLLMENT_STATUSES = ["IN_PROGRESS", "FAILED", "COMPLETED"] as const;
 
   // 1. Fetch test data and session
@@ -147,22 +150,36 @@ export async function submitTest(
     throw new Error("INVALID_SESSION: Test session not found. Please restart the test.");
   }
 
-  if (!enrollment) throw new Error("Not enrolled in this course");
-  if (!ALLOWED_ENROLLMENT_STATUSES.includes(enrollment.status as (typeof ALLOWED_ENROLLMENT_STATUSES)[number])) {
-    throw new Error("ENROLLMENT_NOT_ACTIVE");
-  }
-
-  // 2. Check Post-Test retake limit
-  if (test.type === "POST") {
-    const postTestAttempts = (enrollment as any).postTestAttempts ?? 0;
-    const maxPostTestAttempts = (enrollment as any).maxPostTestAttempts ?? 3;
-    
-    if (postTestAttempts >= maxPostTestAttempts && enrollment.status !== "COMPLETED") {
-      throw new Error("MAX_POSTTEST_ATTEMPTS_REACHED");
+  // Admin can bypass enrollment check for test preview/practice
+  // Non-admin users must be enrolled
+  if (!isAdmin) {
+    if (!enrollment) throw new Error("Not enrolled in this course");
+    if (!ALLOWED_ENROLLMENT_STATUSES.includes(enrollment.status as (typeof ALLOWED_ENROLLMENT_STATUSES)[number])) {
+      throw new Error("ENROLLMENT_NOT_ACTIVE");
     }
   }
 
-  // 3. Duration Validation
+  // 2. Count actual SUBMITTED attempts from TestAttempt table
+  const actualAttemptCount = await db.testAttempt.count({
+    where: {
+      userId,
+      testId: testId,
+      status: "SUBMITTED",
+    },
+  });
+
+  // 3. Get max attempts from test configuration (admin configurable per test)
+  // If maxAttempts = 0, it means unlimited attempts
+  const maxAttemptsFromTest = test.maxAttempts ?? 0;
+  // For post-test, also check enrollment's maxPostTestAttempts as fallback override
+  const effectiveMaxAttempts = maxAttemptsFromTest;
+
+  // Validate: reject if already used all attempts (server-side validation)
+  if (!isAdmin && effectiveMaxAttempts > 0 && actualAttemptCount >= effectiveMaxAttempts) {
+    throw new Error("MAX_POSTTEST_ATTEMPTS_REACHED");
+  }
+
+  // 4. Duration Validation
   const startedAt = testSession.startedAt;
   const timeSpent = Math.floor((Date.now() - startedAt.getTime()) / 1000);
   const durationSeconds = test.duration * 60;
@@ -172,11 +189,11 @@ export async function submitTest(
     throw new Error("WAKTU_HABIS");
   }
 
-  if (test.course.deadlineDate && test.course.deadlineDate.getTime() < Date.now()) {
+  if (test.course.deadlineDate && new Date(test.course.deadlineDate).getTime() < Date.now()) {
     throw new Error("DEADLINE_PASSED");
   }
 
-  // 4. Calculate Score
+  // 5. Calculate Score
   let correctCount = 0;
   test.questions.forEach((question: { id: string, options: { id: string, isCorrect: boolean }[] }) => {
     const userAnswer = answersData.find((a) => a.questionId === question.id);
@@ -188,46 +205,46 @@ export async function submitTest(
 
   const totalQuestions = test.questions.length;
   const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+  const finalPassed = score >= test.passingScore;
 
-  // 5. Determine status based on test type
-  const isPreTest = test.type === "PRE";
-  const isPostTest = test.type === "POST";
-  
-  const enrollmentAttempts = (enrollment as any).postTestAttempts ?? 0;
-  const maxAttempts = (enrollment as any).maxPostTestAttempts ?? 3;
-  const nextAttemptNumber = isPostTest ? (enrollmentAttempts + 1) : 1;
+  // 6. Determine attempt number (next = actualAttemptCount + 1)
+  const nextAttemptNumber = actualAttemptCount + 1;
 
-  let finalPassed = false;
+  // Calculate remaining attempts for response
+  const remainingAttempts = effectiveMaxAttempts > 0
+    ? Math.max(0, effectiveMaxAttempts - nextAttemptNumber)
+    : 999; // Unlimited
+
   let enrollmentUpdate: any = {};
 
-  if (isPreTest) {
-    finalPassed = score >= test.passingScore;
-    // Pre-test: just record score, no enrollment status change
-    enrollmentUpdate = {};
-  } else if (isPostTest) {
-    finalPassed = score >= test.passingScore;
-    
+  // 7. Update enrollment status (only for POST test with enrollment)
+  if (test.type === "POST" && enrollment && !isAdmin) {
     if (finalPassed) {
       enrollmentUpdate = {
         status: "COMPLETED",
-        postTestAttempts: nextAttemptNumber,
-      } as any;
+      };
     } else {
-      enrollmentUpdate = {
-        status: "FAILED",
-        postTestAttempts: nextAttemptNumber,
-      } as any;
+      // Only set FAILED if already out of attempts
+      if (effectiveMaxAttempts > 0 && actualAttemptCount + 1 >= effectiveMaxAttempts) {
+        enrollmentUpdate = {
+          status: "FAILED",
+        };
+      }
+      // If still has attempts left, keep IN_PROGRESS so they can retry
     }
+  } else if (test.type === "POST" && isAdmin) {
+    // Admin bypass: no enrollment update
+    enrollmentUpdate = {};
   }
 
-  // 6. Execute Transaction
+  // 8. Execute Transaction
   const attempt = await db.$transaction(async (tx: any) => {
     // Create TestAttempt
     const testAttempt = await tx.testAttempt.create({
       data: {
         userId,
         testId: testId,
-        enrollmentId: enrollment.id,
+        enrollmentId: enrollment?.id ?? null,
         attemptNumber: nextAttemptNumber,
         score,
         passed: finalPassed,
@@ -252,8 +269,8 @@ export async function submitTest(
       }),
     });
 
-    // Update Enrollment (if needed)
-    if (Object.keys(enrollmentUpdate).length > 0) {
+    // Update Enrollment (only if enrollment exists and update is needed)
+    if (enrollment && Object.keys(enrollmentUpdate).length > 0) {
       await tx.enrollment.update({
         where: { id: enrollment.id },
         data: enrollmentUpdate,
@@ -278,21 +295,28 @@ export async function submitTest(
   // Revalidate paths
   revalidatePath(`/courses/${test.courseId}`);
   revalidatePath("/dashboard");
-  if (isPostTest) {
+  if (test.type === "POST") {
     revalidatePath(`/courses/${test.courseId}/tests/${testId}`);
   }
 
   return {
     ...attempt,
     passed: finalPassed,
-    canRetake: isPostTest && !finalPassed && nextAttemptNumber < maxAttempts,
-    remainingAttempts: isPostTest ? Math.max(0, maxAttempts - nextAttemptNumber) : 0,
+    // Can retake if: not passed AND has remaining attempts
+    canRetake: !finalPassed && remainingAttempts > 0,
+    // For admin, always can retake
+    canRetakeForAdmin: isAdmin,
+    remainingAttempts,
+    maxAttempts: effectiveMaxAttempts,
+    bestScore: score, // This attempt is the best so far (will be recalculated on result page)
   };
 }
 
 /**
  * Check if user can retake post-test
  * Returns: { canRetake: boolean, remainingAttempts: number, lastAttempt?: any }
+ *
+ * Uses test.maxAttempts for attempt counting (per-test admin configuration)
  */
 export async function canRetakePostTest(courseId: string) {
   const session = await auth();
@@ -301,46 +325,82 @@ export async function canRetakePostTest(courseId: string) {
   }
 
   const userId = session.user.id;
+  const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
 
   const enrollment = await db.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId } },
   });
 
+  // Admin can always retake (for preview/practice purposes)
+  if (isAdmin) {
+    return {
+      canRetake: true,
+      remainingAttempts: 999, // Unlimited for admin
+      postTestAttempts: 0,
+      maxPostTestAttempts: 999,
+      status: "ADMIN_BYPASS",
+      lastAttempt: null,
+    };
+  }
+
   if (!enrollment) {
     return { canRetake: false, remainingAttempts: 0, reason: "Not enrolled" };
   }
 
-  // Get last post-test session
+  // Get post-test configuration
   const postTest = await db.test.findFirst({
     where: {
       courseId: courseId,
       type: "POST"
     },
-    select: { id: true }
+    select: { id: true, maxAttempts: true, passingScore: true }
   });
 
-  const lastPostTestSession = postTest ? await db.testSession.findFirst({
+  if (!postTest) {
+    return { canRetake: false, remainingAttempts: 0, reason: "No post-test found" };
+  }
+
+  // Count actual SUBMITTED attempts for this test
+  const actualAttemptCount = await db.testAttempt.count({
+    where: {
+      userId,
+      testId: postTest.id,
+      status: "SUBMITTED",
+    },
+  });
+
+  const lastPostTestSession = await db.testSession.findFirst({
     where: {
       enrollmentId: enrollment.id,
       testId: postTest.id
     },
     orderBy: { startedAt: "desc" }
-  }) : null;
+  });
 
   // If already COMPLETED, cannot retake
   if ((enrollment.status as string) === "COMPLETED") {
-    return { canRetake: false, remainingAttempts: 0, reason: "Already completed" };
+    return {
+      canRetake: false,
+      remainingAttempts: 0,
+      postTestAttempts: actualAttemptCount,
+      maxPostTestAttempts: postTest.maxAttempts,
+      status: enrollment.status,
+      lastAttempt: lastPostTestSession || null,
+    };
   }
 
-  const postTestAttempts = (enrollment as any).postTestAttempts ?? 0;
-  const maxPostTestAttempts = (enrollment as any).maxPostTestAttempts ?? 3;
-  const remainingAttempts = Math.max(0, maxPostTestAttempts - postTestAttempts);
-  
+  // Determine remaining attempts
+  const maxAttemptsFromTest = postTest.maxAttempts ?? 0;
+  const remainingAttempts = maxAttemptsFromTest > 0
+    ? Math.max(0, maxAttemptsFromTest - actualAttemptCount)
+    : 999; // Unlimited if maxAttempts = 0
+
   return {
-    canRetake: remainingAttempts > 0 && (enrollment.status as string) !== "COMPLETED",
+    canRetake: remainingAttempts > 0,
     remainingAttempts,
-    postTestAttempts,
-    maxPostTestAttempts,
+    postTestAttempts: actualAttemptCount,
+    maxPostTestAttempts: postTest.maxAttempts,
+    passingScore: postTest.passingScore,
     status: enrollment.status,
     lastAttempt: lastPostTestSession || null,
   };

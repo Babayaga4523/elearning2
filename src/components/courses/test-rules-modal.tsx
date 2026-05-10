@@ -37,6 +37,8 @@ interface TestRulesModalProps {
     passingScore: number;
     maxAttempts: number;
     attemptCount: number;
+    remainingAttempts?: number;
+    passedKKM?: boolean;
     randomizeQuestions?: boolean;
     randomizeOptions?: boolean;
   };
@@ -61,14 +63,16 @@ export function TestRulesModal({
     router.push(`/courses/${courseId}/tests/${testId}`);
   };
 
-  const remainingAttempts = testInfo.maxAttempts === 0 
-    ? "Unlimited" 
-    : Math.max(0, testInfo.maxAttempts - testInfo.attemptCount);
+  const remainingAttempts = testInfo.remainingAttempts !== undefined
+    ? testInfo.remainingAttempts
+    : testInfo.maxAttempts === 0
+      ? "Unlimited"
+      : Math.max(0, testInfo.maxAttempts - testInfo.attemptCount);
 
-  const isLastAttempt = testInfo.maxAttempts > 0 && 
+  const isLastAttempt = testInfo.maxAttempts > 0 &&
     testInfo.attemptCount >= testInfo.maxAttempts - 1;
 
-  const hasNoAttemptsLeft = testInfo.maxAttempts > 0 && 
+  const hasNoAttemptsLeft = testInfo.maxAttempts > 0 &&
     testInfo.attemptCount >= testInfo.maxAttempts;
 
   return (

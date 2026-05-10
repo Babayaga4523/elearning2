@@ -45,11 +45,11 @@ export default async function TestPlayerPage({
 
   const enrollment = await db.enrollment.findUnique({
     where: { userId_courseId: { userId, courseId: params.courseId } },
-    select: { 
+    select: {
       id: true,
-      status: true, 
-      maxPostTestAttempts: true, 
-      postTestAttempts: true 
+      status: true,
+      maxPostTestAttempts: true,
+      postTestAttempts: true
     },
   });
 
@@ -62,40 +62,35 @@ export default async function TestPlayerPage({
     return redirect(`/courses/${params.courseId}`);
   }
 
-  const attempts = await db.testAttempt.findMany({
+  // Count actual SUBMITTED attempts from TestAttempt table (server-side validation)
+  const actualAttemptCount = await db.testAttempt.count({
+    where: {
+      userId,
+      testId: params.testId,
+      status: "SUBMITTED",
+    },
+  });
+
+  // Get the latest attempt for redirection
+  const latestAttempt = await db.testAttempt.findFirst({
     where: { userId, testId: params.testId },
     orderBy: { createdAt: "desc" },
   });
 
-  const bestPassedAttempt = attempts.find((a) => a.passed);
-  const latestAttempt = attempts[0];
-
   // Admin can preview test without restrictions
   if (!isAdmin) {
-    // RULE 1: Check if user can still retry based on max attempts
-    // Get effective max attempts (enrollment override or test default)
-    const effectiveMaxAttempts = test.type === "POST" 
-      ? (enrollment?.maxPostTestAttempts ?? test.maxAttempts ?? 3)
-      : (test.maxAttempts ?? 0);
-    
-    // Count actual attempts from database
-    const actualAttemptCount = attempts.length;
-    
-    // RULE 2: If max attempts is set (> 0) and user has used all attempts, redirect to latest result
-    // Example: maxAttempts = 2, actualAttempts = 2 → cannot retry (2 >= 2)
-    //          maxAttempts = 2, actualAttempts = 1 → can retry (1 < 2)
-    //          maxAttempts = 0 → unlimited, always can retry
+    // Get effective max attempts from test configuration (admin configurable per test)
+    // If maxAttempts = 0, it means unlimited attempts
+    const effectiveMaxAttempts = test.maxAttempts > 0 ? test.maxAttempts : 999;
+
+    // RULE: If max attempts is set (> 0) and user has used all attempts, redirect to latest result
     const hasUsedAllAttempts = effectiveMaxAttempts > 0 && actualAttemptCount >= effectiveMaxAttempts;
-    
+
     if (hasUsedAllAttempts && latestAttempt) {
       return redirect(
         `/courses/${params.courseId}/tests/${params.testId}/result?attemptId=${latestAttempt.id}`
       );
     }
-
-    // RULE 3: If user still has attempts left, allow them to take/retry the test
-    // This allows users to improve their score even after passing
-    // The system will always take the BEST (highest) score as final result
   }
 
   if (test.type === "POST" && !isAdmin) {
@@ -116,11 +111,11 @@ export default async function TestPlayerPage({
 
   const now = new Date();
   const durationMs = test.duration * 60 * 1000;
-  
+
   let startedAt: string;
 
   // Logic: Jika belum ada session, ATAU session terakhir sudah kadaluarsa, ATAU session terakhir sudah pernah disubmit (ada attempt baru setelah session start), maka buat session baru.
-  const isSessionValid = latestSession && 
+  const isSessionValid = latestSession &&
     (now.getTime() - latestSession.startedAt.getTime() < durationMs) &&
     (!latestAttempt || latestSession.startedAt.getTime() > latestAttempt.createdAt.getTime());
 
@@ -139,7 +134,8 @@ export default async function TestPlayerPage({
     startedAt = latestSession!.startedAt.toISOString();
   }
 
-  const attemptNumber = attempts.length + 1;
+  // Attempt number is actual attempt count + 1
+  const attemptNumber = actualAttemptCount + 1;
 
   return (
     <TestClient

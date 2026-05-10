@@ -4,13 +4,14 @@ import { useMemo, useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
   Search, BookOpen, CheckCircle2, Clock, ChevronRight, ChevronLeft, X, Filter,
-  List, Building, Scale, Users, Terminal, Brain, Calendar
+  List, Building, Scale, Users, Terminal, Brain, AlertTriangle, CalendarClock
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
-import { format } from "date-fns";
+import { format, differenceInDays, isPast, isToday } from "date-fns";
 import { id as idLocale } from "date-fns/locale";
 import { Pagination } from "@/components/admin/Pagination";
+import { cn } from "@/lib/utils";
 
 interface CatalogClientProps {
   courses: any[];
@@ -297,14 +298,30 @@ export function CatalogClient({
                           {course.description || "Pelajari materi ini untuk meningkatkan kompetensi dan keahlian Anda di lingkungan perusahaan."}
                         </p>
                         
-                        {/* Deadline */}
+                        {/* Deadline - Enhanced Display */}
                         {course.deadlineDate && (
-                          <div className="mb-3 flex items-center gap-2 text-xs">
-                            <Calendar className="w-4 h-4 text-[#f7941d]" />
-                            <span className="text-[#544435]">
-                              Deadline: <span className="font-semibold text-[#0b1c30]">
-                                {format(new Date(course.deadlineDate), "dd MMM yyyy", { locale: idLocale })}
-                              </span>
+                          <div className={cn(
+                            "mb-3 flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border",
+                            isPast(new Date(course.deadlineDate))
+                              ? "bg-red-50 text-red-700 border-red-200"
+                              : differenceInDays(new Date(course.deadlineDate), new Date()) <= 3
+                                ? "bg-amber-50 text-amber-700 border-amber-200"
+                                : "bg-[#eff4ff] text-[#006970] border-blue-200"
+                          )}>
+                            {isPast(new Date(course.deadlineDate)) ? (
+                              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+                            ) : (
+                              <CalendarClock className="w-3.5 h-3.5 shrink-0" />
+                            )}
+                            <span className="font-medium">
+                              {isPast(new Date(course.deadlineDate))
+                                ? "Deadline Terlewat"
+                                : isToday(new Date(course.deadlineDate))
+                                  ? "Deadline Hari Ini"
+                                  : `${differenceInDays(new Date(course.deadlineDate), new Date())} hari lagi`}
+                            </span>
+                            <span className="text-[10px] opacity-75">
+                              {format(new Date(course.deadlineDate), "dd MMM yyyy", { locale: idLocale })}
                             </span>
                           </div>
                         )}

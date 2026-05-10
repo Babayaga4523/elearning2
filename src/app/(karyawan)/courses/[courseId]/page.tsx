@@ -44,6 +44,7 @@ type TestWithAttempts = {
   randomizeQuestions: boolean;
   randomizeOptions: boolean;
   attempts: TestAttempt[];
+  _count?: { attempts: number };
 };
 
 type Enrollment = {
@@ -89,7 +90,7 @@ export default async function StudentCourseDetailPage({
   const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
 
   const course = (await db.course.findUnique({
-    where: { 
+    where: {
       id: params.courseId,
       ...(isAdmin ? {} : { isPublished: true })
     },
@@ -106,6 +107,9 @@ export default async function StudentCourseDetailPage({
             where: { userId },
             orderBy: { createdAt: "desc" },
           },
+          _count: {
+            select: { attempts: { where: { userId, status: "SUBMITTED" } } }
+          }
         },
       },
       enrollments: { where: { userId } },
@@ -149,20 +153,21 @@ export default async function StudentCourseDetailPage({
   const nextModuleId = isAllModulesCompleted
     ? null
     : course.modules.find((m) => !m.userProgress[0]?.isCompleted)?.id;
-  
-  // Calculate best scores for pre-test and post-test
-  const preBestScore = preTest?.attempts.length 
+
+  // Calculate best scores for pre-test and post-test (highest score from all attempts)
+  const preBestScore = preTest?.attempts.length
     ? Math.max(...preTest.attempts.filter(a => !a.isCheated && a.score !== null).map(a => a.score!))
     : null;
-  
+
   const postBestScore = postTest?.attempts.length
     ? Math.max(...postTest.attempts.filter(a => !a.isCheated && a.score !== null).map(a => a.score!))
     : null;
 
+  // Get latest attempt for status display
   const latestPreAttempt = preTest?.attempts[0];
-  const preStatus = latestPreAttempt 
-    ? latestPreAttempt.isCheated 
-      ? "KECURANGAN" as const 
+  const preStatus = latestPreAttempt
+    ? latestPreAttempt.isCheated
+      ? "KECURANGAN" as const
       : latestPreAttempt.passed ? "LULUS" as const : "GAGAL" as const
     : null;
 
@@ -172,6 +177,18 @@ export default async function StudentCourseDetailPage({
       ? "KECURANGAN" as const
       : latestPostAttempt.passed ? "LULUS" as const : "GAGAL" as const
     : null;
+
+  // Calculate remaining attempts for display
+  const preAttemptCount = preTest?._count?.attempts ?? preTest?.attempts.length ?? 0;
+  const postAttemptCount = postTest?._count?.attempts ?? postTest?.attempts.length ?? 0;
+  const preMaxAttempts = preTest?.maxAttempts ?? 0;
+  const postMaxAttempts = postTest?.maxAttempts ?? 0;
+  const preRemaining = preMaxAttempts > 0 ? Math.max(0, preMaxAttempts - preAttemptCount) : 999;
+  const postRemaining = postMaxAttempts > 0 ? Math.max(0, postMaxAttempts - postAttemptCount) : 999;
+
+  // Determine if passed KKM (best score >= passing score)
+  const prePassedKKM = preBestScore !== null && preBestScore >= (preTest?.passingScore ?? 70);
+  const postPassedKKM = postBestScore !== null && postBestScore >= (postTest?.passingScore ?? 70);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -278,7 +295,9 @@ export default async function StudentCourseDetailPage({
                     duration: preTest.duration,
                     passingScore: preTest.passingScore ?? 70,
                     maxAttempts: preTest.maxAttempts,
-                    attemptCount: preTest.attempts.length,
+                    attemptCount: preAttemptCount,
+                    remainingAttempts: preRemaining,
+                    passedKKM: prePassedKKM,
                     randomizeQuestions: preTest.randomizeQuestions,
                     randomizeOptions: preTest.randomizeOptions,
                   }}
@@ -337,7 +356,9 @@ export default async function StudentCourseDetailPage({
                     duration: postTest.duration,
                     passingScore: postTest.passingScore ?? 70,
                     maxAttempts: postTest.maxAttempts,
-                    attemptCount: postTest.attempts.length,
+                    attemptCount: postAttemptCount,
+                    remainingAttempts: postRemaining,
+                    passedKKM: postPassedKKM,
                     randomizeQuestions: postTest.randomizeQuestions,
                     randomizeOptions: postTest.randomizeOptions,
                   }}
