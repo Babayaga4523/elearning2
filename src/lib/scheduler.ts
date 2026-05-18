@@ -272,6 +272,64 @@ export async function runProactiveReminders() {
 }
 
 /**
+ * ─── MARK EXPIRED ENROLLMENTS AS FAILED ─────────────────────────────────────
+ * Core logic: jika enrollment sudah melewati deadline dan belum COMPLETED,
+ * maka status otomatis berubah menjadi FAILED.
+ * Dipanggil dari deadline monitoring dan dari server actions halaman.
+ */
+export async function markExpiredEnrollmentsAsFailed(): Promise<{
+  marked: number;
+  enrollmentIds: string[];
+}> {
+  const nowWIB = toZonedTime(new Date(), TIMEZONE);
+  const todayWIB = new Date(nowWIB);
+  todayWIB.setHours(0, 0, 0, 0);
+
+  // Cari semua enrollment yang deadline-nya sudah lewat
+  // dan statusnya masih IN_PROGRESS (bukan COMPLETED, FAILED, REJECTED, PENDING)
+  const expiredEnrollments = await db.enrollment.findMany({
+    where: {
+      deadline: { lt: todayWIB },
+      status: { in: ["IN_PROGRESS"] },
+    },
+    select: { id: true, userId: true, courseId: true, deadline: true },
+  });
+
+  if (expiredEnrollments.length === 0) {
+    return { marked: 0, enrollmentIds: [] };
+  }
+
+  const enrollmentIds = expiredEnrollments.map((e) => e.id);
+
+  // Update semua enrollment yang expired ke FAILED secara atomic
+  await db.enrollment.updateMany({
+    where: { id: { in: enrollmentIds } },
+    data: { status: "FAILED" },
+  });
+
+  // Buat notifikasi untuk setiap user
+  const notificationData = expiredEnrollments.map((e) => ({
+    userId: e.userId,
+    type: "SYSTEM" as const,
+    title: "Kursus Gagal - Deadline Terlewati",
+    body: `Anda tidak menyelesaikan kursus dalam batas waktu yang ditentukan. Status kursus Anda telah diubah menjadi Gagal.`,
+    href: `/courses`,
+  }));
+
+  // Batch create notifications
+  await db.notification.createMany({
+    data: notificationData,
+    skipDuplicates: true,
+  });
+
+  console.log(
+    `[DEADLINE] Marked ${expiredEnrollments.length} expired enrollments as FAILED.`
+  );
+
+  return { marked: expiredEnrollments.length, enrollmentIds };
+}
+
+/**
  * ─── DEADLINE MONITORING ENGINE ─────────────────────────────────────────────
  * CRITICAL FIX #1: Uses WIB timezone for accurate date calculations
  */
@@ -343,6 +401,12 @@ async function generateDeadlineReport(enrollments: any[]) {
 export async function runDeadlineMonitoring() {
   const start = Date.now();
   
+  // ── STEP 1: Tandai semua enrollment yang expired sebagai FAILED ──────────
+  // Ini adalah langkah utama: ubah status IN_PROGRESS → FAILED untuk semua
+  // enrollment yang sudah melewati deadline.
+  const failedResult = await markExpiredEnrollmentsAsFailed();
+  console.log(`[DEADLINE] Marked ${failedResult.marked} enrollments as FAILED.`);
+
   // CRITICAL FIX #1: Get today at midnight in WIB timezone
   const nowWIB = toZonedTime(new Date(), TIMEZONE);
   const todayWIB = new Date(nowWIB);
@@ -351,12 +415,12 @@ export async function runDeadlineMonitoring() {
   // CRITICAL FIX #2: Use transaction with atomic update to prevent race condition
   // This ensures only ONE scheduler instance processes each enrollment
   const expiredEnrollments = await db.$transaction(async (tx) => {
-    // Find enrollments that need reporting
+    // Find enrollments that need reporting (now including FAILED status)
     const enrollments = await tx.enrollment.findMany({
       where: {
         deadline: { lt: todayWIB },
         reportedAt: null,
-        status: { notIn: ["COMPLETED"] },
+        status: { notIn: ["COMPLETED", "PENDING", "REJECTED"] },
       },
       include: {
         user: { select: { name: true, email: true, department: true, nip: true } },
@@ -475,7 +539,7 @@ export async function runDeadlineMonitoring() {
     data: {
       jobName: "deadline-monitoring",
       status: failedRecipients.length === 0 ? "SUCCESS" : "PARTIAL_FAILURE",
-      message: `${sentCount} laporan terkirim. ${failedRecipients.length} gagal.`,
+      message: `${failedResult.marked} enrollment ditandai GAGAL. ${sentCount} laporan terkirim. ${failedRecipients.length} gagal.`,
       duration: Date.now() - start,
       failedRecipients: failedRecipients,
     }
@@ -483,6 +547,7 @@ export async function runDeadlineMonitoring() {
 
   return { 
     status: failedRecipients.length === 0 ? "SUCCESS" : "PARTIAL_FAILURE",
+    markedAsFailed: failedResult.marked,
     sent: sentCount,
     failed: failedRecipients.length,
     successfulEnrollments: successfulEnrollmentIds.length

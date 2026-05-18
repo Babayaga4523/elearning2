@@ -41,17 +41,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Parse query parameters
+    // Parse and validate query parameters
     const searchParams = request.nextUrl.searchParams;
     const courseId = searchParams.get("courseId") || undefined;
     const moduleId = searchParams.get("moduleId") || undefined;
     const department = searchParams.get("department") || undefined;
-    const startDate = searchParams.get("startDate")
-      ? new Date(searchParams.get("startDate")!)
-      : undefined;
-    const endDate = searchParams.get("endDate")
-      ? new Date(searchParams.get("endDate")!)
-      : undefined;
+
+    let startDate: Date | undefined;
+    let endDate: Date | undefined;
+
+    const startDateStr = searchParams.get("startDate");
+    const endDateStr = searchParams.get("endDate");
+
+    if (startDateStr) {
+      startDate = new Date(startDateStr);
+      if (isNaN(startDate.getTime())) {
+        return NextResponse.json(
+          { success: false, error: "Format startDate tidak valid." },
+          { status: 400 }
+        );
+      }
+    }
+
+    if (endDateStr) {
+      endDate = new Date(endDateStr);
+      if (isNaN(endDate.getTime())) {
+        return NextResponse.json(
+          { success: false, error: "Format endDate tidak valid." },
+          { status: 400 }
+        );
+      }
+    }
 
     // Get analytics
     const analytics = await PDFProgressService.getAnalytics({

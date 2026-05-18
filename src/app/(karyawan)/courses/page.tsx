@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { CatalogClient } from "./_components/catalog-client";
+import { checkAndUpdateExpiredEnrollments } from "@/actions/enrollment-deadline";
 
 export default async function CoursesPage({
   searchParams,
@@ -13,6 +14,10 @@ export default async function CoursesPage({
   if (!session || !session.user?.id) {
     return redirect("/");
   }
+
+  // ── Auto-check: tandai enrollment yang expired sebagai FAILED ─────────────
+  // Karyawan langsung melihat status terkini saat membuka halaman kursus.
+  await checkAndUpdateExpiredEnrollments();
 
   const userId = session.user.id;
 

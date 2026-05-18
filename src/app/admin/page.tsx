@@ -22,10 +22,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { startOfMonth, subMonths, format } from "date-fns";
 import { id as localeId } from "date-fns/locale";
+import { checkAndUpdateExpiredEnrollments } from "@/actions/enrollment-deadline";
 
 export const dynamic = "force-dynamic";
 
 export default async function AdminDashboard() {
+  // ── Auto-check: tandai enrollment yang expired sebagai FAILED ─────────────
+  await checkAndUpdateExpiredEnrollments();
+
   const sixMonthsAgo = startOfMonth(subMonths(new Date(), 5));
 
   const [

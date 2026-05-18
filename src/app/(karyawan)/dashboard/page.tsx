@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import DashboardClient from "./_components/DashboardClient";
+import { checkAndUpdateExpiredEnrollments } from "@/actions/enrollment-deadline";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -9,6 +10,9 @@ export default async function DashboardPage() {
   if (!session || !session.user?.id) {
     return redirect("/");
   }
+
+  // ── Auto-check: tandai enrollment yang expired sebagai FAILED ─────────────
+  await checkAndUpdateExpiredEnrollments();
 
   const isAdmin = session?.user?.activeRole === "ADMIN" || session?.user?.activeRole === "SUPER_ADMIN";
   const userId = session.user.id;

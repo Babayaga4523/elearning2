@@ -190,39 +190,12 @@ export class PDFProgressService {
     moduleId: string
   ): Promise<void> {
     try {
-      // Check if UserProgress exists
-      const userProgress = await db.userProgress.findUnique({
-        where: {
-          userId_moduleId: {
-            userId,
-            moduleId,
-          },
-        },
+      // Use upsert for atomic find-or-create + update
+      await db.userProgress.upsert({
+        where: { userId_moduleId: { userId, moduleId } },
+        update: { isCompleted: true },
+        create: { userId, moduleId, isCompleted: true },
       });
-
-      if (userProgress) {
-        // Update existing
-        await db.userProgress.update({
-          where: {
-            userId_moduleId: {
-              userId,
-              moduleId,
-            },
-          },
-          data: {
-            isCompleted: true,
-          },
-        });
-      } else {
-        // Create new
-        await db.userProgress.create({
-          data: {
-            userId,
-            moduleId,
-            isCompleted: true,
-          },
-        });
-      }
 
       log.info("Module completion updated", {
         context: "pdf-progress",
@@ -408,28 +381,11 @@ export class PDFProgressService {
     moduleId: string
   ): Promise<void> {
     try {
-      const existing = await db.pDFProgress.findUnique({
-        where: {
-          userId_moduleId: {
-            userId,
-            moduleId,
-          },
-        },
+      // Use atomic increment to avoid race conditions
+      await db.pDFProgress.updateMany({
+        where: { userId, moduleId },
+        data: { readCount: { increment: 1 } },
       });
-
-      if (existing) {
-        await db.pDFProgress.update({
-          where: {
-            userId_moduleId: {
-              userId,
-              moduleId,
-            },
-          },
-          data: {
-            readCount: existing.readCount + 1,
-          },
-        });
-      }
     } catch (error) {
       log.error("Failed to increment read count", {
         context: "pdf-progress",

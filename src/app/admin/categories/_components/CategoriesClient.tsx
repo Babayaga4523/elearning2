@@ -191,7 +191,7 @@ export function CategoriesClient({ categories }: CategoriesClientProps) {
                     <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                     <p className="text-slate-500">Belum ada kategori</p>
                     <p className="text-sm text-slate-400 mt-1">
-                      Klik tombol "Tambah Kategori" untuk membuat kategori baru
+                      Klik tombol &quot;Tambah Kategori&quot; untuk membuat kategori baru
                     </p>
                   </td>
                 </tr>

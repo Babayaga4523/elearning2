@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { EnrollmentsClient } from "./_components/EnrollmentsClient";
+import { checkAndUpdateExpiredEnrollments } from "@/actions/enrollment-deadline";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
@@ -7,6 +8,11 @@ export const metadata = {
 };
 
 export default async function EnrollmentsPage() {
+  // ── Auto-check: tandai enrollment yang expired sebagai FAILED ─────────────
+  // Ini memastikan status selalu terkini ketika admin membuka halaman ini,
+  // tanpa harus menunggu cron job berjalan.
+  await checkAndUpdateExpiredEnrollments();
+
   const [enrollments, courses, users] = await Promise.all([
     db.enrollment.findMany({
       orderBy: { createdAt: "desc" },

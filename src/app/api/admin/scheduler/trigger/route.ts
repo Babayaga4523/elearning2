@@ -4,7 +4,8 @@ import {
   runProactiveReminders, 
   runDeadlineMonitoring, 
   runAutoEnrollment, 
-  runDepartmentalReports 
+  runDepartmentalReports,
+  markExpiredEnrollmentsAsFailed,
 } from "@/lib/scheduler";
 import { isAdmin } from "@/lib/auth-helpers";
 
@@ -52,6 +53,9 @@ export async function POST(req: NextRequest) {
           },
         });
         result = await retryRes.json();
+        break;
+      case "mark-failed":
+        result = await markExpiredEnrollmentsAsFailed();
         break;
       default:
         return NextResponse.json({ error: "Invalid job name" }, { status: 400 });

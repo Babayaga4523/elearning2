@@ -2,6 +2,10 @@
  * API Route: Struggling Users Analytics
  * GET /api/admin/analytics/struggling-users
  * Admin-only endpoint to identify users who are struggling with courses
+ *
+ * FIXES:
+ * - Eliminated N+1 query problem (was: 3 queries per enrollment, now: 5 total)
+ * - Added input validation for daysThreshold and progressThreshold
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -17,166 +21,206 @@ export async function GET(request: NextRequest) {
 
     if (!session?.user?.id) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "Unauthorized. Please login.",
-        },
+        { success: false, error: "Unauthorized. Please login." },
         { status: 401 }
       );
     }
 
-    // Check admin role using new multi-role system
+    // Check admin role
     if (!isAdmin(session)) {
       log.error("Unauthorized access attempt to struggling users analytics", {
         email: session.user.email,
         activeRole: session.user.activeRole,
-        context: "api"
+        context: "api",
       });
       return NextResponse.json(
-        {
-          success: false,
-          error: "Forbidden. Admin access required.",
-        },
+        { success: false, error: "Forbidden. Admin access required." },
         { status: 403 }
       );
     }
 
-    // Parse query parameters
+    // Parse and validate query parameters
     const searchParams = request.nextUrl.searchParams;
     const courseId = searchParams.get("courseId") || undefined;
     const department = searchParams.get("department") || undefined;
-    const daysThreshold = parseInt(searchParams.get("days") || "7");
-    const progressThreshold = parseFloat(searchParams.get("progress") || "50");
 
-    // Get enrollments older than threshold
+    const daysThreshold = parseInt(searchParams.get("days") || "7");
+    if (isNaN(daysThreshold) || daysThreshold < 1 || daysThreshold > 365) {
+      return NextResponse.json(
+        { success: false, error: "Parameter 'days' harus berupa angka antara 1-365." },
+        { status: 400 }
+      );
+    }
+
+    const progressThreshold = parseFloat(searchParams.get("progress") || "50");
+    if (isNaN(progressThreshold) || progressThreshold < 0 || progressThreshold > 100) {
+      return NextResponse.json(
+        { success: false, error: "Parameter 'progress' harus berupa angka antara 0-100." },
+        { status: 400 }
+      );
+    }
+
+    // Calculate cutoff date
     const cutoffDate = new Date();
     cutoffDate.setDate(cutoffDate.getDate() - daysThreshold);
 
-    const whereClause: any = {
-      createdAt: {
-        lte: cutoffDate,
-      },
+    // Build where clause for enrollments
+    const whereClause: Record<string, unknown> = {
+      createdAt: { lte: cutoffDate },
       status: "IN_PROGRESS",
     };
 
-    if (courseId) {
-      whereClause.courseId = courseId;
-    }
+    if (courseId) whereClause.courseId = courseId;
+    if (department) whereClause.user = { department };
 
-    if (department) {
-      whereClause.user = {
-        department,
-      };
-    }
-
-    // Get enrollments with user and course data
+    // ─── STEP 1: Fetch all matching enrollments (single query) ───────────────
     const enrollments = await db.enrollment.findMany({
       where: whereClause,
       include: {
         user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            department: true,
-          },
+          select: { id: true, name: true, email: true, department: true },
         },
         course: {
           select: {
             id: true,
             title: true,
             modules: {
-              select: {
-                id: true,
-                title: true,
-                type: true,
-              },
+              select: { id: true, title: true, type: true },
             },
           },
         },
       },
     });
 
-    // Calculate progress for each enrollment
-    const strugglingUsers = [];
-
-    for (const enrollment of enrollments) {
-      const totalModules = enrollment.course.modules.length;
-      if (totalModules === 0) continue;
-
-      // Get completed modules
-      const completedModules = await db.userProgress.count({
-        where: {
-          userId: enrollment.userId,
-          moduleId: {
-            in: enrollment.course.modules.map((m) => m.id),
-          },
-          isCompleted: true,
+    if (enrollments.length === 0) {
+      return NextResponse.json({
+        success: true,
+        data: {
+          count: 0,
+          users: [],
+          filters: { daysThreshold, progressThreshold, courseId, department },
         },
       });
+    }
+
+    // ─── STEP 2: Batch-fetch all UserProgress (single query) ─────────────────
+    const allModuleIds = [
+      ...new Set(enrollments.flatMap((e) => e.course.modules.map((m) => m.id))),
+    ];
+    const allUserIds = [...new Set(enrollments.map((e) => e.userId))];
+
+    const allUserProgressList = await db.userProgress.findMany({
+      where: {
+        userId: { in: allUserIds },
+        moduleId: { in: allModuleIds },
+      },
+      select: { userId: true, moduleId: true, isCompleted: true },
+    });
+
+    // Build O(1) lookup map: "userId:moduleId" → isCompleted
+    const progressMap = new Map<string, boolean>();
+    for (const up of allUserProgressList) {
+      progressMap.set(`${up.userId}:${up.moduleId}`, up.isCompleted);
+    }
+
+    // ─── STEP 3: Identify struggling users without extra queries ─────────────
+    type StrugglingEntry = {
+      enrollment: (typeof enrollments)[0];
+      completionRate: number;
+      completedModules: number;
+      totalModules: number;
+      incompleteModule: { id: string; title: string; type: string } | undefined;
+    };
+
+    const strugglingEntries: StrugglingEntry[] = [];
+
+    for (const enrollment of enrollments) {
+      const { modules } = enrollment.course;
+      const totalModules = modules.length;
+      if (totalModules === 0) continue;
+
+      const completedModules = modules.filter(
+        (m) => progressMap.get(`${enrollment.userId}:${m.id}`) === true
+      ).length;
 
       const completionRate = (completedModules / totalModules) * 100;
 
-      // Check if user is struggling
       if (completionRate < progressThreshold) {
-        // Find the module they're stuck on
-        const userProgress = await db.userProgress.findMany({
-          where: {
-            userId: enrollment.userId,
-            moduleId: {
-              in: enrollment.course.modules.map((m) => m.id),
-            },
-          },
-          include: {
-            module: {
-              select: {
-                id: true,
-                title: true,
-                type: true,
-              },
-            },
-          },
-        });
-
-        // Find first incomplete module
-        const incompleteModule = enrollment.course.modules.find(
-          (module) =>
-            !userProgress.find(
-              (up) => up.moduleId === module.id && up.isCompleted
-            )
+        const incompleteModule = modules.find(
+          (m) => !progressMap.get(`${enrollment.userId}:${m.id}`)
         );
 
-        // Get video/PDF progress for stuck module
+        strugglingEntries.push({
+          enrollment,
+          completionRate,
+          completedModules,
+          totalModules,
+          incompleteModule,
+        });
+      }
+    }
+
+    // ─── STEP 4: Batch-fetch video & PDF progress for stuck modules ──────────
+    const videoStuck = strugglingEntries.filter(
+      (s) => s.incompleteModule?.type === "VIDEO"
+    );
+    const pdfStuck = strugglingEntries.filter(
+      (s) => s.incompleteModule?.type === "PDF"
+    );
+
+    const videoModuleIds = [...new Set(videoStuck.map((s) => s.incompleteModule!.id))];
+    const pdfModuleIds = [...new Set(pdfStuck.map((s) => s.incompleteModule!.id))];
+    const stuckUserIds = [...new Set(strugglingEntries.map((s) => s.enrollment.userId))];
+
+    const [videoProgressList, pdfProgressList] = await Promise.all([
+      videoModuleIds.length > 0
+        ? db.videoProgress.findMany({
+            where: {
+              userId: { in: stuckUserIds },
+              moduleId: { in: videoModuleIds },
+            },
+            select: { userId: true, moduleId: true, completionRate: true },
+          })
+        : Promise.resolve([]),
+      pdfModuleIds.length > 0
+        ? db.pDFProgress.findMany({
+            where: {
+              userId: { in: stuckUserIds },
+              moduleId: { in: pdfModuleIds },
+            },
+            select: { userId: true, moduleId: true, completionRate: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    // Build lookup maps for video & PDF progress
+    const videoProgressMap = new Map<string, number>();
+    for (const vp of videoProgressList) {
+      videoProgressMap.set(`${vp.userId}:${vp.moduleId}`, vp.completionRate);
+    }
+    const pdfProgressMap = new Map<string, number>();
+    for (const pp of pdfProgressList) {
+      pdfProgressMap.set(`${pp.userId}:${pp.moduleId}`, pp.completionRate);
+    }
+
+    // ─── STEP 5: Build final result ──────────────────────────────────────────
+    const strugglingUsers = strugglingEntries.map(
+      ({ enrollment, completionRate, completedModules, totalModules, incompleteModule }) => {
         let stuckModuleProgress = 0;
+
         if (incompleteModule) {
-          if (incompleteModule.type === "VIDEO") {
-            const videoProgress = await db.videoProgress.findUnique({
-              where: {
-                userId_moduleId: {
-                  userId: enrollment.userId,
-                  moduleId: incompleteModule.id,
-                },
-              },
-            });
-            stuckModuleProgress = videoProgress?.completionRate || 0;
-          } else if (incompleteModule.type === "PDF") {
-            const pdfProgress = await db.pDFProgress.findUnique({
-              where: {
-                userId_moduleId: {
-                  userId: enrollment.userId,
-                  moduleId: incompleteModule.id,
-                },
-              },
-            });
-            stuckModuleProgress = pdfProgress?.completionRate || 0;
-          }
+          const key = `${enrollment.userId}:${incompleteModule.id}`;
+          stuckModuleProgress =
+            incompleteModule.type === "VIDEO"
+              ? (videoProgressMap.get(key) ?? 0)
+              : (pdfProgressMap.get(key) ?? 0);
         }
 
         const daysSinceEnrollment = Math.floor(
           (Date.now() - enrollment.createdAt.getTime()) / (1000 * 60 * 60 * 24)
         );
 
-        strugglingUsers.push({
+        return {
           userId: enrollment.user.id,
           userName: enrollment.user.name || "Unknown",
           email: enrollment.user.email || "",
@@ -196,11 +240,11 @@ export async function GET(request: NextRequest) {
                 progress: Math.round(stuckModuleProgress * 10) / 10,
               }
             : null,
-        });
+        };
       }
-    }
+    );
 
-    // Sort by days since enrollment (descending)
+    // Sort by days since enrollment (longest waiting first)
     strugglingUsers.sort((a, b) => b.daysSinceEnrollment - a.daysSinceEnrollment);
 
     log.info("Struggling users analytics retrieved", {
@@ -215,12 +259,7 @@ export async function GET(request: NextRequest) {
       data: {
         count: strugglingUsers.length,
         users: strugglingUsers,
-        filters: {
-          daysThreshold,
-          progressThreshold,
-          courseId,
-          department,
-        },
+        filters: { daysThreshold, progressThreshold, courseId, department },
       },
     });
   } catch (error) {
@@ -230,10 +269,7 @@ export async function GET(request: NextRequest) {
     });
 
     return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to get analytics. Please try again.",
-      },
+      { success: false, error: "Failed to get analytics. Please try again." },
       { status: 500 }
     );
   }

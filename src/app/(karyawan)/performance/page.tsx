@@ -9,6 +9,7 @@ import Link from "next/link";
 import { ExportTranscriptButton } from "./_components/ExportTranscriptButton";
 import { TrendAreaChart, CompareBarChart } from "./_components/charts";
 import { PerformanceClient } from "./_components/PerformanceClient";
+import { checkAndUpdateExpiredEnrollments } from "@/actions/enrollment-deadline";
 
 const trendChartConfig = {
    score: { label: "Skor", color: "#f7941d" },
@@ -22,6 +23,9 @@ const compareChartConfig = {
 export default async function PerformancePage() {
    const session = await auth();
    if (!session?.user?.id) return redirect("/");
+
+   // ── Auto-check: tandai enrollment yang expired sebagai FAILED ─────────────
+   await checkAndUpdateExpiredEnrollments();
 
    const data = await getPerformanceData();
    

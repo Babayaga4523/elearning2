@@ -216,7 +216,7 @@ export default async function CourseTestsPage({ params }: PageProps) {
               <h4 className="font-semibold mb-2">Creating Tests</h4>
               <p className="text-muted-foreground">
                 Tests are automatically created when you create a course. You can add questions
-                using the "Import Questions" feature or manually through the test detail page.
+                using the &quot;Import Questions&quot; feature or manually through the test detail page.
               </p>
             </div>
             <div>

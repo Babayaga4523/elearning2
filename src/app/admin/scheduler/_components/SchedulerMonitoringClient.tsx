@@ -362,8 +362,9 @@ export function SchedulerMonitoringClient() {
             <CardContent>
               <div className="grid gap-4 md:grid-cols-2">
                 {[
+                  { name: "mark-failed", label: "⚠️ Tandai Enrollment Gagal", desc: "Ubah status IN_PROGRESS → FAILED untuk semua kursus yang melewati deadline (prioritas!)" },
                   { name: "reminders", label: "Proactive Reminders", desc: "Send H-7, H-3, H-1 reminders" },
-                  { name: "deadline-monitoring", label: "Deadline Monitoring", desc: "Check expired enrollments" },
+                  { name: "deadline-monitoring", label: "Deadline Monitoring", desc: "Check expired enrollments & send reports" },
                   { name: "auto-enrollment", label: "Auto Enrollment", desc: "Process enrollment rules" },
                   { name: "monthly-reports", label: "Monthly Reports", desc: "Generate department reports" },
                   { name: "retry-failed-emails", label: "Retry Failed Emails", desc: "Process retry queue" },
