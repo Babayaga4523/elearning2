@@ -5,8 +5,9 @@ import { sendEmailWithAttachment } from "@/lib/email";
 /**
  * Cron Job: Retry Failed Emails
  * Schedule: Every 6 hours
- * Vercel Cron: 0 star/6 star star star (Every 6 hours)
- * 
+ * Vercel Cron: 0 *\/6 * * *
+ * Security: Bearer token CRON_SECRET required
+ *
  * CRITICAL FIX #6: Retry mechanism with exponential backoff
  */
 export async function GET(req: Request) {

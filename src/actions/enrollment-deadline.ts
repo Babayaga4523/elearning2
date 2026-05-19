@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { markExpiredEnrollmentsAsFailed } from "@/lib/scheduler";
 
 /**
@@ -10,6 +11,11 @@ import { markExpiredEnrollmentsAsFailed } from "@/lib/scheduler";
 export async function checkAndUpdateExpiredEnrollments() {
   try {
     const result = await markExpiredEnrollmentsAsFailed();
+    // Revalidate paths so UI reflects the updated status
+    revalidatePath("/admin/enrollments");
+    revalidatePath("/admin/users");
+    revalidatePath("/dashboard");
+    revalidatePath("/courses");
     return { success: true, marked: result.marked };
   } catch (error: any) {
     console.error("[CHECK_EXPIRED_ENROLLMENTS] Error:", error);

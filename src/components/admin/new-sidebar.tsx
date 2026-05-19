@@ -1,12 +1,12 @@
 "use client";
 
 import React from "react";
-import { 
-  Users, 
-  BookOpen, 
-  LayoutDashboard, 
-  Settings, 
-  History, 
+import {
+  Users,
+  BookOpen,
+  LayoutDashboard,
+  Settings,
+  History,
   Calendar,
   Lock,
   FileBarChart,
@@ -40,19 +40,15 @@ interface MenuItem {
   href?: string;
   badge?: string;
   subItems?: { label: string; href: string; permission?: string }[];
-  // Permission required to see this menu item (if any)
   permission?: string;
-  // Show only for SUPER_ADMIN
   superAdminOnly?: boolean;
 }
 
-// ─── Menu items with RBAC permission mapping ────────────────────
 const menuItems: MenuItem[] = [
   {
     label: "Dashboard",
     icon: LayoutDashboard,
     href: "/admin",
-    // Dashboard is always visible to all admin roles
   },
   {
     label: "Manajemen Kursus",
@@ -102,7 +98,6 @@ const menuItems: MenuItem[] = [
     label: "Kalender",
     icon: Calendar,
     href: "/admin/calendar",
-    // Calendar is visible to all admin roles
   },
   {
     label: "Scheduler",
@@ -154,21 +149,16 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
     );
   };
 
-  // ─── Filter menu items based on user permissions ──────────────
   const visibleMenuItems = React.useMemo(() => {
     return menuItems.filter((item) => {
-      // Super Admin Only items
       if (item.superAdminOnly) {
         return isSuperAdmin;
       }
-      // No permission required — visible to all admin roles
       if (!item.permission) {
         return true;
       }
-      // Check if user has the required permission
       return hasPermission(item.permission);
     }).map((item) => {
-      // Also filter sub-items by permission
       if (item.subItems) {
         const filteredSubItems = item.subItems.filter((sub) => {
           if (!sub.permission) return true;
@@ -184,8 +174,8 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
     <div className="flex h-full flex-col bg-[#0F1C3F] border-r border-[#1A3060] shadow-xl">
       {/* Header */}
       <div className="flex h-24 items-center justify-between px-4 border-b border-white/10 bg-gradient-to-r from-[#0F1C3F] to-[#162754]">
-        <Link 
-          href="/admin" 
+        <Link
+          href="/admin"
           className={cn(
             "flex group transition-all duration-300",
             isCollapsed ? "justify-center w-full" : "flex-col items-center gap-3 w-full"
@@ -222,7 +212,7 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
             </div>
           )}
         </Link>
-        
+
         {!isCollapsed && (
           <Button
             variant="ghost"
@@ -245,9 +235,8 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
               const isActive = item.href ? pathname === item.href : false;
               const isSubItemActive = hasSubItems && item.subItems!.some(sub => pathname === sub.href);
               const Icon = item.icon;
-              
+
               if (hasSubItems) {
-                // Menu with sub-items
                 const content = (
                   <div key={item.label}>
                     <button
@@ -274,8 +263,7 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
                         </>
                       )}
                     </button>
-                    
-                    {/* Sub-items */}
+
                     {!isCollapsed && isExpanded && (
                       <div className="ml-7 mt-1 space-y-1">
                         {item.subItems!.map((subItem) => {
@@ -327,15 +315,14 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
                 return content;
               }
 
-              // Regular menu item
               const linkContent = (
                 <Link
                   key={item.href}
                   href={item.href!}
                   className={cn(
                     "group flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-semibold transition-all duration-200 relative",
-                    isActive 
-                      ? "bg-[#162754] text-white shadow-lg border border-white/10" 
+                    isActive
+                      ? "bg-[#162754] text-white shadow-lg border border-white/10"
                       : "text-slate-300 hover:bg-white/5 hover:text-white",
                     isCollapsed && "justify-center px-2"
                   )}

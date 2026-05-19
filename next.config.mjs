@@ -1,7 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
-  
   // Suppress hydration warnings caused by browser extensions
   reactStrictMode: true,
   

@@ -318,7 +318,7 @@ export async function approveEnrollment(enrollmentId: string) {
 
     console.log("[APPROVE_ENROLLMENT] Revalidating paths");
     revalidatePath("/admin/enrollments");
-    revalidatePath("/(karyawan)/courses", "layout");
+    revalidatePath("/courses", "layout");
     
     console.log("[APPROVE_ENROLLMENT] Approval completed successfully");
     return { success: true };
@@ -424,7 +424,7 @@ export async function rejectEnrollment(enrollmentId: string, note: string) {
 
     console.log("[REJECT_ENROLLMENT] Revalidating paths");
     revalidatePath("/admin/enrollments");
-    revalidatePath("/(karyawan)/courses", "layout");
+    revalidatePath("/courses", "layout");
     
     console.log("[REJECT_ENROLLMENT] Rejection completed successfully");
     return { success: true };

@@ -33,7 +33,7 @@ export default async function TestResultPage({
   }
 
   const isPassed = attempt.passed;
-  const score = Math.round(attempt.score);
+  const score = Math.round(attempt.score ?? 0);
   const passingScore = attempt.test.passingScore ?? 0;
   const testType = attempt.test.type;
   const totalQ = attempt.test.questions.length;
@@ -95,25 +95,41 @@ export default async function TestResultPage({
     return `Anda belum mencapai batas kelulusan (${passingScore}%). Pelajari kembali materi dan coba lagi. Sisa percobaan: ${remainingAttempts === Infinity ? "Unlimited" : remainingAttempts}.`;
   };
 
-  // Time calculation
+  // Time calculation — menggunakan timeSpent (detik) yang direkam saat submit,
+  // atau selisih startedAt→completedAt sebagai fallback.
   const getDuration = () => {
-    if (!attempt.completedAt) return "—";
-    const start = new Date(attempt.createdAt).getTime();
-    const end = new Date(attempt.completedAt).getTime();
-    const diff = Math.max(0, end - start);
-    const diffMins = Math.floor(diff / 60000);
-    const diffSecs = Math.floor((diff % 60000) / 1000);
-    if (diffMins === 0 && diffSecs === 0) return "< 1s";
-    return diffMins > 0 ? `${diffMins}m ${diffSecs}s` : `${diffSecs}s`;
+    // Primary: gunakan timeSpent (paling akurat, dihitung dari TestSession.startedAt)
+    if (attempt.timeSpent && attempt.timeSpent > 0) {
+      const totalSecs = attempt.timeSpent;
+      const hours = Math.floor(totalSecs / 3600);
+      const mins  = Math.floor((totalSecs % 3600) / 60);
+      const secs  = totalSecs % 60;
+      if (hours > 0) return `${hours}j ${mins}m ${secs}s`;
+      if (mins  > 0) return `${mins}m ${secs}s`;
+      return `${secs}s`;
+    }
+    // Fallback: startedAt → completedAt
+    if (attempt.startedAt && attempt.completedAt) {
+      const diff = Math.max(0, new Date(attempt.completedAt).getTime() - new Date(attempt.startedAt).getTime());
+      const totalSecs = Math.floor(diff / 1000);
+      const hours = Math.floor(totalSecs / 3600);
+      const mins  = Math.floor((totalSecs % 3600) / 60);
+      const secs  = totalSecs % 60;
+      if (totalSecs === 0) return "< 1s";
+      if (hours > 0) return `${hours}j ${mins}m ${secs}s`;
+      if (mins  > 0) return `${mins}m ${secs}s`;
+      return `${secs}s`;
+    }
+    return "—";
   };
 
   return (
     <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans min-h-screen">
       <main className="max-w-[1440px] mx-auto px-6 py-8">
-        
+
         {/* Premium Header */}
         <div className="flex flex-col gap-2 mb-8">
-          <Link 
+          <Link
             href={`/courses/${params.courseId}`}
             className="flex items-center text-[#006970] hover:text-[#f7941d] text-sm font-semibold gap-1 transition-colors w-fit"
           >
@@ -143,17 +159,17 @@ export default async function TestResultPage({
 
         {/* Dynamic Result Card */}
         <div className={`bg-[#ffffff] rounded-xl shadow-sm border border-[#dac2af] border-l-4 ${statusBorder} p-8 mb-8 relative overflow-hidden flex flex-col md:flex-row gap-8 items-center`}>
-          
+
           {/* Score Visualization */}
           <div className="relative w-48 h-48 flex-shrink-0">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
               <circle className="text-[#dce9ff]" cx="50" cy="50" fill="none" r="45" stroke="currentColor" strokeWidth="10"></circle>
-              <circle 
-                className={statusText} 
-                cx="50" cy="50" fill="none" r="45" 
-                stroke="currentColor" 
-                strokeDasharray="282.7" 
-                strokeDashoffset={282.7 * (1 - score / 100)} 
+              <circle
+                className={statusText}
+                cx="50" cy="50" fill="none" r="45"
+                stroke="currentColor"
+                strokeDasharray="282.7"
+                strokeDashoffset={282.7 * (1 - score / 100)}
                 strokeWidth="10"
                 style={{ transition: "stroke-dashoffset 1.5s ease-out" }}
               ></circle>
@@ -186,12 +202,12 @@ export default async function TestResultPage({
                 {getStatusMessage()}
               </p>
               <p className="text-xs font-semibold text-[#544435] mt-3">
-                Batas kelulusan: {passingScore}% • 
+                Batas kelulusan: {passingScore}% •
                 {hasBestScore && ` Nilai Terbaik: ${bestScore}% • `}
                 Sisa Percobaan: {effectiveMaxAttempts === 0 ? "Unlimited" : remainingAttempts}
               </p>
             </div>
-            
+
             <div className="flex flex-wrap gap-3 mt-auto">
               {/* PERFECT LOGIC: Allow retry if attempts left, regardless of pass/fail status */}
               {canTryAgain ? (
@@ -234,7 +250,7 @@ export default async function TestResultPage({
               <p className="text-xl font-bold text-[#0b1c30]">{correctCount} / {totalQ}</p>
             </div>
           </div>
-          
+
           <div className="bg-[#ffffff] rounded-lg shadow-sm border border-[#dac2af] p-6 flex items-center gap-6">
             <div className="w-12 h-12 rounded-full bg-[#e5eeff] flex items-center justify-center text-[#006970] flex-shrink-0">
               <Timer className="w-6 h-6" />
@@ -276,7 +292,7 @@ export default async function TestResultPage({
               Tampilkan Semua
             </span>
           </div>
-          
+
           <div className="p-8 flex flex-col gap-6 max-h-[800px] overflow-y-auto">
             {attempt.test.questions.map((question: any, idx: number) => {
               const userAnswer = attempt.answers.find((a: any) => a.questionId === question.id);
@@ -292,14 +308,14 @@ export default async function TestResultPage({
                       <XCircle className="w-6 h-6 fill-current text-white" />
                     )}
                   </div>
-                  
+
                   <div className="mb-4">
                     <span className="text-xs font-semibold text-[#544435]">Soal {idx + 1}</span>
                     <p className="text-base font-medium text-[#0b1c30] mt-1">
                       {question.text}
                     </p>
                   </div>
-                  
+
                   <div className="flex flex-col gap-3">
                     {question.options.map((option: any, optIdx: number) => {
                       const label = String.fromCharCode(65 + optIdx);

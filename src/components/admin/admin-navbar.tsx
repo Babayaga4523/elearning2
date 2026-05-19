@@ -1,8 +1,8 @@
 "use client";
 
 import { usePathname } from "next/navigation";
-import { 
-  Search, 
+import {
+  Search,
   ChevronRight,
   User,
   LogOut,
@@ -38,7 +38,6 @@ export const AdminNavbar = ({
 }: AdminNavbarProps) => {
   const pathname = usePathname();
 
-  // Generate breadcrumbs from pathname
   const segments = pathname.split("/").filter(Boolean);
   const breadcrumbs = segments.map((segment, index) => {
     const href = `/${segments.slice(0, index + 1).join("/")}`;
@@ -75,11 +74,11 @@ export const AdminNavbar = ({
         {/* Search - Desktop Only */}
         <div className="hidden lg:flex relative group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#E8A020] transition-colors" />
-          <input 
-            id="admin-search-console" 
-            name="q" 
-            type="text" 
-            placeholder="Search console..." 
+          <input
+            id="admin-search-console"
+            name="q"
+            type="text"
+            placeholder="Search console..."
             className="h-9 w-64 pl-10 pr-4 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#E8A020] focus:ring-2 focus:ring-[#E8A020]/20 transition-all text-sm font-medium outline-none placeholder:text-slate-400"
             suppressHydrationWarning
           />
@@ -109,7 +108,7 @@ export const AdminNavbar = ({
         }>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button 
+              <button
                 type="button"
                 className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-all outline-none group active:scale-95 border border-transparent hover:border-slate-200"
               >
@@ -142,11 +141,11 @@ export const AdminNavbar = ({
                   </DropdownMenuItem>
                 </Link>
               </div>
-              
+
               <DropdownMenuSeparator className="bg-slate-100 my-1.5" />
-              
+
               {/* Logout */}
-              <DropdownMenuItem 
+              <DropdownMenuItem
                 onClick={() => signOut({ callbackUrl: "/auth/login" })}
                 className="rounded-lg flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-rose-50 text-rose-600 transition-all focus:bg-rose-50 group"
               >

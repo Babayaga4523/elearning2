@@ -20,15 +20,20 @@ export async function createQuestion(testId: string, data: { text: string }) {
   return question;
 }
 
-export async function updateQuestion(id: string, data: { text: string }) {
+export async function updateQuestion(questionId: string, data: { text: string }) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
   const question = await db.question.update({
-    where: { id },
-    data: { ...data },
+    where: { id: questionId },
+    data: { text: data.text },
   });
 
+  // Get testId to revalidate path
+  const test = await db.test.findFirst({ where: { questions: { some: { id: questionId } } } });
+  if (test) {
+    revalidatePath(`/admin/courses/${test.courseId}/tests/${test.id}`);
+  }
   return question;
 }
 
@@ -36,11 +41,19 @@ export async function deleteQuestion(id: string, testId: string) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
+  // Get courseId before delete for revalidation
+  const test = await db.test.findFirst({
+    where: { id: testId },
+    select: { courseId: true }
+  });
+
   await db.question.delete({
     where: { id },
   });
 
-  revalidatePath(`/admin/courses/[courseId]/tests/${testId}`);
+  if (test) {
+    revalidatePath(`/admin/courses/${test.courseId}/tests/${testId}`);
+  }
 }
 
 export async function addOption(questionId: string, data: { text: string, isCorrect: boolean }) {
@@ -55,6 +68,13 @@ export async function addOption(questionId: string, data: { text: string, isCorr
     },
   });
 
+  // Get testId to revalidate path
+  const test = await db.test.findFirst({
+    where: { questions: { some: { id: questionId } } }
+  });
+  if (test) {
+    revalidatePath(`/admin/courses/${test.courseId}/tests/${test.id}`);
+  }
   return option;
 }
 
@@ -62,12 +82,30 @@ export async function deleteOption(id: string) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
+  // Get test info before delete
+  const option = await db.option.findUnique({
+    where: { id: id },
+    include: {
+      question: {
+        include: {
+          test: {
+            select: { id: true, courseId: true }
+          }
+        }
+      }
+    }
+  });
+
   await db.option.delete({
     where: { id },
   });
+
+  if (option?.question?.test) {
+    revalidatePath(`/admin/courses/${option.question.test.courseId}/tests/${option.question.test.id}`);
+  }
 }
 
-export async function updateTest(id: string, values: Partial<any>) {
+export async function updateTest(id: string, values: Record<string, unknown>) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
@@ -112,7 +150,7 @@ export async function deleteTest(id: string) {
  */
 export async function submitTest(
   testId: string,
-  answersData: { questionId: string, optionId: string }[]
+  answersData: { questionId: string; optionId: string }[]
 ) {
   const session = await auth();
 
@@ -131,18 +169,18 @@ export async function submitTest(
       course: { select: { id: true, deadlineDate: true } },
       questions: { include: { options: true } },
     },
-  }) as any;
+  });
 
   if (!test) throw new Error("Test tidak ditemukan");
 
   const [testSession, enrollment] = await Promise.all([
     db.testSession.findFirst({
       where: { testId, userId },
-      orderBy: { startedAt: 'desc' }
+      orderBy: { startedAt: "desc" },
     }),
     db.enrollment.findUnique({
       where: { userId_courseId: { userId, courseId: test.courseId } },
-    })
+    }),
   ]);
 
   // Require TestSession
@@ -195,13 +233,13 @@ export async function submitTest(
 
   // 5. Calculate Score
   let correctCount = 0;
-  test.questions.forEach((question: { id: string, options: { id: string, isCorrect: boolean }[] }) => {
+  for (const question of test.questions) {
     const userAnswer = answersData.find((a) => a.questionId === question.id);
     const correctOption = question.options.find((o) => o.isCorrect);
     if (userAnswer && correctOption && userAnswer.optionId === correctOption.id) {
       correctCount++;
     }
-  });
+  }
 
   const totalQuestions = test.questions.length;
   const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
@@ -215,22 +253,17 @@ export async function submitTest(
     ? Math.max(0, effectiveMaxAttempts - nextAttemptNumber)
     : 999; // Unlimited
 
-  let enrollmentUpdate: any = {};
+  let enrollmentUpdate: Record<string, unknown> = {};
 
   // 7. Update enrollment status (only for POST test with enrollment)
   if (test.type === "POST" && enrollment && !isAdmin) {
     if (finalPassed) {
-      enrollmentUpdate = {
-        status: "COMPLETED",
-      };
+      enrollmentUpdate = { status: "COMPLETED" };
     } else {
       // Only set FAILED if already out of attempts
       if (effectiveMaxAttempts > 0 && actualAttemptCount + 1 >= effectiveMaxAttempts) {
-        enrollmentUpdate = {
-          status: "FAILED",
-        };
+        enrollmentUpdate = { status: "FAILED" };
       }
-      // If still has attempts left, keep IN_PROGRESS so they can retry
     }
   } else if (test.type === "POST" && isAdmin) {
     // Admin bypass: no enrollment update
@@ -238,7 +271,7 @@ export async function submitTest(
   }
 
   // 8. Execute Transaction
-  const attempt = await db.$transaction(async (tx: any) => {
+  const attempt = await db.$transaction(async (tx) => {
     // Create TestAttempt
     const testAttempt = await tx.testAttempt.create({
       data: {
@@ -257,9 +290,9 @@ export async function submitTest(
 
     // Create TestAnswers
     await tx.testAnswer.createMany({
-      data: test.questions.map((q: any) => {
+      data: test.questions.map((q) => {
         const userAnswer = answersData.find((a) => a.questionId === q.id);
-        const correctOption = q.options.find((o: any) => o.isCorrect);
+        const correctOption = q.options.find((o) => o.isCorrect);
         return {
           testAttemptId: testAttempt.id,
           questionId: q.id,
@@ -302,21 +335,16 @@ export async function submitTest(
   return {
     ...attempt,
     passed: finalPassed,
-    // Can retake if: not passed AND has remaining attempts
     canRetake: !finalPassed && remainingAttempts > 0,
-    // For admin, always can retake
     canRetakeForAdmin: isAdmin,
     remainingAttempts,
     maxAttempts: effectiveMaxAttempts,
-    bestScore: score, // This attempt is the best so far (will be recalculated on result page)
+    bestScore: score,
   };
 }
 
 /**
  * Check if user can retake post-test
- * Returns: { canRetake: boolean, remainingAttempts: number, lastAttempt?: any }
- *
- * Uses test.maxAttempts for attempt counting (per-test admin configuration)
  */
 export async function canRetakePostTest(courseId: string) {
   const session = await auth();
@@ -335,7 +363,7 @@ export async function canRetakePostTest(courseId: string) {
   if (isAdmin) {
     return {
       canRetake: true,
-      remainingAttempts: 999, // Unlimited for admin
+      remainingAttempts: 999,
       postTestAttempts: 0,
       maxPostTestAttempts: 999,
       status: "ADMIN_BYPASS",
@@ -349,11 +377,8 @@ export async function canRetakePostTest(courseId: string) {
 
   // Get post-test configuration
   const postTest = await db.test.findFirst({
-    where: {
-      courseId: courseId,
-      type: "POST"
-    },
-    select: { id: true, maxAttempts: true, passingScore: true }
+    where: { courseId: courseId, type: "POST" },
+    select: { id: true, maxAttempts: true, passingScore: true },
   });
 
   if (!postTest) {
@@ -370,15 +395,12 @@ export async function canRetakePostTest(courseId: string) {
   });
 
   const lastPostTestSession = await db.testSession.findFirst({
-    where: {
-      enrollmentId: enrollment.id,
-      testId: postTest.id
-    },
-    orderBy: { startedAt: "desc" }
+    where: { enrollmentId: enrollment.id, testId: postTest.id },
+    orderBy: { startedAt: "desc" },
   });
 
   // If already COMPLETED, cannot retake
-  if ((enrollment.status as string) === "COMPLETED") {
+  if (enrollment.status === "COMPLETED") {
     return {
       canRetake: false,
       remainingAttempts: 0,
@@ -393,7 +415,7 @@ export async function canRetakePostTest(courseId: string) {
   const maxAttemptsFromTest = postTest.maxAttempts ?? 0;
   const remainingAttempts = maxAttemptsFromTest > 0
     ? Math.max(0, maxAttemptsFromTest - actualAttemptCount)
-    : 999; // Unlimited if maxAttempts = 0
+    : 999;
 
   return {
     canRetake: remainingAttempts > 0,
@@ -412,7 +434,6 @@ export async function canRetakePostTest(courseId: string) {
 export async function getTestAttemptDetail(attemptId: string) {
   const session = await auth();
 
-  // Only admin or attempt owner can view
   if (!session) throw new Error("Unauthorized");
 
   const attempt = await db.testAttempt.findUnique({
@@ -422,29 +443,28 @@ export async function getTestAttemptDetail(attemptId: string) {
         include: {
           questions: {
             orderBy: { createdAt: "asc" },
-            include: {
-              options: true
-            }
-          }
-        }
+            include: { options: true },
+          },
+        },
       },
       answers: {
-        include: {
-          selectedOption: true
-        }
-      }
-    } as any
+        include: { selectedOption: true },
+      },
+    },
   });
 
   if (!attempt) return null;
 
   // Security: Check if admin or owner
   const activeRole = session.user?.activeRole;
-  if ((activeRole !== "ADMIN" && activeRole !== "SUPER_ADMIN") && attempt.userId !== session.user?.id) {
+  if (
+    (activeRole !== "ADMIN" && activeRole !== "SUPER_ADMIN") &&
+    attempt.userId !== session.user?.id
+  ) {
     throw new Error("Unauthorized to view this attempt");
   }
 
-  return attempt as any;
+  return attempt;
 }
 
 /**
@@ -460,31 +480,42 @@ export async function getAllUserTestDetails(userId: string) {
       test: {
         include: {
           course: { select: { title: true } },
-        }
+        },
       },
       answers: {
         include: {
           question: true,
           selectedOption: true,
-          testAttempt: true
-        }
-      }
-    } as any,
-    orderBy: { createdAt: "desc" }
+          testAttempt: true,
+        },
+      },
+    },
+    orderBy: { createdAt: "desc" },
   });
 
-  // Fetch all questions for these tests to get the correct options
-  const results = await Promise.all(attempts.map(async (a: any) => {
-    const questionsWithCorrect = await db.question.findMany({
-      where: { testId: a.testId },
-      include: { options: { where: { isCorrect: true } } }
+  // Fix N+1: Fetch all questions in a single query instead of one per attempt
+  const testIds = [...new Set(attempts.map((a) => a.testId))];
+  const questionsWithCorrectMap = new Map<string, unknown[]>();
+
+  if (testIds.length > 0) {
+    const allQuestions = await db.question.findMany({
+      where: { testId: { in: testIds } },
+      include: { options: { where: { isCorrect: true } } },
     });
 
-    return {
-      ...a,
-      questionsWithCorrect
-    };
+    for (const question of allQuestions) {
+      if (!questionsWithCorrectMap.has(question.testId)) {
+        questionsWithCorrectMap.set(question.testId, []);
+      }
+      questionsWithCorrectMap.get(question.testId)!.push(question);
+    }
+  }
+
+  // Attach questions to each attempt
+  const results = attempts.map((a) => ({
+    ...a,
+    questionsWithCorrect: questionsWithCorrectMap.get(a.testId) ?? [],
   }));
 
-  return results as any;
+  return results;
 }

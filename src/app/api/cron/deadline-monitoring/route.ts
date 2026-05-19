@@ -3,8 +3,9 @@ import { runDeadlineMonitoring, cleanupOrphanedTestSessions } from "@/lib/schedu
 
 /**
  * Cron Job: Deadline Monitoring & Escalation
- * Schedule: Daily at 9 AM WIB
- * Vercel Cron: 0 2 * * * (9 AM WIB = 2 AM UTC)
+ * Schedule: Daily at 9 AM WIB (2 AM UTC)
+ * Vercel Cron: 0 2 * * *
+ * Security: Bearer token CRON_SECRET required
  */
 export async function GET(req: Request) {
   try {

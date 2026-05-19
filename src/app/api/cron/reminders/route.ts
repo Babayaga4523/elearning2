@@ -3,8 +3,9 @@ import { runProactiveReminders } from "@/lib/scheduler";
 
 /**
  * Cron Job: Proactive Reminders (H-7, H-3, H-1)
- * Schedule: Daily at 8 AM WIB
- * Vercel Cron: 0 1 * * * (8 AM WIB = 1 AM UTC)
+ * Schedule: Daily at 8 AM WIB (1 AM UTC)
+ * Vercel Cron: 0 1 * * *
+ * Security: Bearer token CRON_SECRET required
  */
 export async function GET(req: Request) {
   try {

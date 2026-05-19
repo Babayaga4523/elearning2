@@ -3,8 +3,9 @@ import { runDepartmentalReports } from "@/lib/scheduler";
 
 /**
  * Cron Job: Monthly Departmental Reports
- * Schedule: 1st of every month at 10 AM WIB
- * Vercel Cron: 0 3 1 * * (10 AM WIB = 3 AM UTC on 1st of month)
+ * Schedule: 1st of every month at 10 AM WIB (3 AM UTC)
+ * Vercel Cron: 0 3 1 * *
+ * Security: Bearer token CRON_SECRET required
  */
 export async function GET(req: Request) {
   try {

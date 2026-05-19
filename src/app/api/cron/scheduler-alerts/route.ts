@@ -1,6 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAndSendAlerts, checkRetryQueueHealth } from "@/lib/scheduler-alerts";
 
+/**
+ * Cron Job: Scheduler Alerts & Health Check
+ * Schedule: Every 12 hours
+ * Vercel Cron: 0 *\/12 * * *
+ * Security: Bearer token CRON_SECRET required
+ * Max Duration: 60 seconds
+ */
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 

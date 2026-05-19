@@ -3,8 +3,9 @@ import { runAutoEnrollment } from "@/lib/scheduler";
 
 /**
  * Cron Job: Auto Enrollment
- * Schedule: Daily at 1 AM WIB
- * Vercel Cron: 0 18 * * * (1 AM WIB = 6 PM UTC previous day)
+ * Schedule: Daily at 2 AM WIB (18:00 UTC previous day)
+ * Vercel Cron: 0 18 * * *
+ * Security: Bearer token CRON_SECRET required
  */
 export async function GET(req: Request) {
   try {

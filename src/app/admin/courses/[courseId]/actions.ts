@@ -122,7 +122,7 @@ export async function upsertModule(
       dataToSave.url = validatedData.tempPath;
       dataToSave.pdfUrl = validatedData.tempPath;
       dataToSave.originalFilename = validatedData.originalFilename;
-      dataToSave.fileSize = BigInt(validatedData.fileSize);
+      dataToSave.fileSize = Number(validatedData.fileSize);
     } else {
       dataToSave.url = validatedData.url;
       dataToSave.videoUrl = validatedData.url;

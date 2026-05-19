@@ -16,6 +16,11 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["var(--font-inter)", "system-ui", "-apple-system", "sans-serif"],
+        lexend: ["var(--font-lexend)", "system-ui", "sans-serif"],
+        mono: ["ui-monospace", "monospace"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",

@@ -1,7 +1,11 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx tsc *)"
+      "Bash(npx tsc *)",
+      "Bash(dir \"c:\\\\Users\\\\yoga.utama\\\\Desktop\\\\elearning 2\")",
+      "Bash(npm run *)",
+      "Bash(node -e \"require\\('./src/app/admin/page.tsx'\\)\")",
+      "WebFetch(domain:minimax-algeng-chat-tts-us.oss-us-east-1.aliyuncs.com)"
     ]
   }
 }

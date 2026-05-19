@@ -9,15 +9,15 @@ const transporter = nodemailer.createTransport({
     user: env.SMTP_USER,
     pass: env.SMTP_PASS,
   },
-  tls: { 
+  tls: {
     ciphers: "SSLv3",
     rejectUnauthorized: false // Sering dibutuhkan oleh korporat
-  }, 
+  },
 });
 
 export type EmailAttachment = {
   filename: string;
-  content: Buffer;
+  content: Buffer | Blob;
   contentType: string;
 };
 
@@ -35,14 +35,25 @@ export async function sendEmailWithAttachment({
   attachments?: EmailAttachment[];
 }) {
   console.log(`[EMAIL] Mengirim email ke: ${to}, subject: ${subject}`);
-  
+
+  // Convert Blob to Buffer if needed (for Edge/Serverless compatibility)
+  const processedAttachments = await Promise.all(
+    attachments.map(async (a) => ({
+      filename: a.filename,
+      content: a.content instanceof Blob
+        ? Buffer.from(await a.content.arrayBuffer())
+        : a.content,
+      contentType: a.contentType,
+    }))
+  );
+
   return transporter.sendMail({
     from: `"BNI Finance E-Learning" <${env.SMTP_USER}>`,
     to,
     cc,
     subject,
     html,
-    attachments: attachments.map((a) => ({
+    attachments: processedAttachments.map((a) => ({
       filename: a.filename,
       content: a.content,
       contentType: a.contentType,

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import DashboardClient from "./_components/DashboardClient";
 import { checkAndUpdateExpiredEnrollments } from "@/actions/enrollment-deadline";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const session = await auth();
 

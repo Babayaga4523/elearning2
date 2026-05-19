@@ -560,20 +560,30 @@ export async function runDeadlineMonitoring() {
  */
 export async function cleanupOrphanedTestSessions() {
   const start = Date.now();
-  
+
   // Find ongoing sessions
   const ongoingSessions = await db.testSession.findMany({
     where: { status: "ONGOING" },
+    include: {
+      enrollment: {
+        select: {
+          id: true,
+          courseId: true,
+          status: true,
+        }
+      }
+    }
   });
 
   let forceSubmitted = 0;
+  let enrollmentsMarkedFailed = 0;
 
   for (const session of ongoingSessions) {
     const test = await db.test.findUnique({
       where: { id: session.testId },
-      select: { duration: true }
+      select: { duration: true, type: true, passingScore: true }
     });
-    
+
     if (!test) continue;
 
     const durationMs = test.duration * 60 * 1000;
@@ -584,33 +594,86 @@ export async function cleanupOrphanedTestSessions() {
     if (new Date() > expiryTime) {
       // Force submit
       try {
-        await db.$transaction(async (tx) => {
-          await tx.testSession.update({
-            where: { id: session.id },
-            data: { 
-              status: "FORCE_SUBMITTED",
-              submittedAt: new Date()
-            }
-          });
+        const attemptNumber = session.attemptNumber;
 
-          // Attempt to find answers to calculate score, but since they closed the tab
-          // we might just have whatever they managed to auto-save.
-          // For simplicity, we just mark the attempt as failed with whatever score they had
-          // Since the prompt asks to "otomatis jalankan force-submit (status FORCE_SUBMITTED, nilai 0)"
-          
-          await tx.testAttempt.create({
-            data: {
+        // First create the TestAttempt (without answers relation)
+        const testAttempt = await db.testAttempt.create({
+          data: {
+            userId: session.userId,
+            testId: session.testId,
+            enrollmentId: session.enrollmentId ?? undefined,
+            attemptNumber: attemptNumber,
+            score: 0,
+            passed: false,
+            status: "FORCE_SUBMITTED",
+            startedAt: session.startedAt,
+            completedAt: new Date(),
+            timeSpent: Math.floor((Date.now() - session.startedAt.getTime()) / 1000),
+          },
+        });
+
+        // Copy any saved answers from TestAnswer table to the new attempt
+        // (user might have auto-saved some answers before closing)
+        const savedAnswers = await db.testAnswer.findMany({
+          where: {
+            testAttempt: {
               userId: session.userId,
               testId: session.testId,
-              score: 0,
-              passed: false,
-              answers: {},
+              status: "ONGOING",
             }
+          },
+        });
+
+        // Link saved answers to the force-submitted attempt
+        if (savedAnswers.length > 0) {
+          await db.testAnswer.updateMany({
+            where: {
+              id: { in: savedAnswers.map(a => a.id) }
+            },
+            data: {
+              testAttemptId: testAttempt.id,
+            },
           });
 
-          // Mark enrollment if it was a post-test
-          // Note: This is a simplified cleanup. In a full system, you'd calculate exact score from TestAnswer table if any.
+          // Recalculate score based on saved answers
+          const correctCount = savedAnswers.filter(a => a.isCorrect).length;
+          const totalQuestions = savedAnswers.length;
+          const score = totalQuestions > 0 ? (correctCount / totalQuestions) * 100 : 0;
+          const passingScore = test.passingScore ?? 70;
+
+          await db.testAttempt.update({
+            where: { id: testAttempt.id },
+            data: {
+              score,
+              passed: score >= passingScore,
+            },
+          });
+        }
+
+        // Update test session
+        await db.testSession.update({
+          where: { id: session.id },
+          data: {
+            status: "FORCE_SUBMITTED",
+            submittedAt: new Date(),
+            score: 0,
+          }
         });
+
+        // If this was a post-test and not passed, mark enrollment as FAILED
+        if (
+          session.enrollmentId &&
+          session.enrollment &&
+          test.type === "POST" &&
+          !testAttempt.passed
+        ) {
+          await db.enrollment.update({
+            where: { id: session.enrollmentId },
+            data: { status: "FAILED" },
+          });
+          enrollmentsMarkedFailed++;
+        }
+
         forceSubmitted++;
       } catch (err) {
         console.error("Failed to cleanup session", session.id, err);
@@ -618,18 +681,20 @@ export async function cleanupOrphanedTestSessions() {
     }
   }
 
-  if (forceSubmitted > 0) {
-    await db.schedulerLog.create({
-      data: {
-        jobName: "orphan-session-cleanup",
-        status: "SUCCESS",
-        message: `Cleaned up ${forceSubmitted} orphaned test sessions.`,
-        duration: Date.now() - start,
-      }
-    });
-  }
+  await db.schedulerLog.create({
+    data: {
+      jobName: "orphan-session-cleanup",
+      status: "SUCCESS",
+      message: `Cleaned up ${forceSubmitted} orphaned test sessions. ${enrollmentsMarkedFailed} enrollments marked FAILED.`,
+      duration: Date.now() - start,
+      metadata: {
+        cleaned: forceSubmitted,
+        enrollmentsFailed: enrollmentsMarkedFailed,
+      },
+    }
+  });
 
-  return { cleaned: forceSubmitted };
+  return { cleaned: forceSubmitted, enrollmentsFailed: enrollmentsMarkedFailed };
 }
 
 /**
