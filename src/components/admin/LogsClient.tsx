@@ -121,7 +121,7 @@ export function LogsClient({ logs }: LogsClientProps) {
   const toFilterStatus = (raw: string): string => {
     const s = raw.toUpperCase();
     if (["SUCCESS", "COMPLETED", "OK"].includes(s)) return "SUCCESS";
-    if (["FAILED", "REJECTED", "ERROR", "CHEATING"].includes(s)) return "FAILED";
+    if (["FAILED", "REJECTED", "ERROR"].includes(s)) return "FAILED";
     if (["RUNNING", "IN_PROGRESS"].includes(s)) return "RUNNING";
     if (s === "PENDING") return "PENDING";
     return "UNKNOWN";

@@ -249,11 +249,6 @@ export function CatalogClient({
                     label: "Ditolak",
                     icon: Clock,
                     className: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"
-                  },
-                  CHEATING: {
-                    label: "Pelanggaran",
-                    icon: Clock,
-                    className: "bg-[#fee2e2] text-[#7f1d1d] border-[#fca5a5]"
                   }
                 };
 

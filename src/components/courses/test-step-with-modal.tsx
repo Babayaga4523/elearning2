@@ -15,7 +15,7 @@ interface TestStepWithModalProps {
   locked: boolean;
   done: boolean;
   lockReason?: string;
-  testStatus?: "LULUS" | "GAGAL" | "KECURANGAN" | null;
+  testStatus?: "LULUS" | "GAGAL" | null;
   bestScore?: number | null;
   testInfo: {
     duration: number;
@@ -103,13 +103,6 @@ export function TestStepWithModal({
       return (
         <Badge className="text-xs bg-red-100 text-red-700 border-0">
           Tidak Lulus
-        </Badge>
-      );
-    }
-    if (testStatus === "KECURANGAN") {
-      return (
-        <Badge className="text-xs bg-red-900 text-red-100 border-0">
-          Kecurangan
         </Badge>
       );
     }

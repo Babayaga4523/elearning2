@@ -288,9 +288,9 @@ export const TestForm = ({
             </div>
           </ConfigCard>
 
-          {/* Keamanan */}
+          {/* Pengacakan */}
           <ConfigCard accentColor="amber">
-            <CardHeading icon={<Shuffle className="h-4 w-4 text-[#E8A020]" />} label="Kecurangan & keamanan" />
+            <CardHeading icon={<Shuffle className="h-4 w-4 text-[#E8A020]" />} label="Pengacakan & keamanan" />
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <FormField
                 control={form.control}

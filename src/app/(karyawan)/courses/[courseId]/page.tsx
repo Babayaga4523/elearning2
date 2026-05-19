@@ -22,7 +22,7 @@ import { TestStepWithModal } from "@/components/courses/test-step-with-modal";
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type UserProgress = { isCompleted: boolean };
-type TestAttempt = { id: string, passed: boolean, isCheated?: boolean, score: number | null };
+type TestAttempt = { id: string, passed: boolean, score: number | null };
 
 type ModuleWithProgress = {
   id: string;
@@ -156,26 +156,22 @@ export default async function StudentCourseDetailPage({
 
   // Calculate best scores for pre-test and post-test (highest score from all attempts)
   const preBestScore = preTest?.attempts.length
-    ? Math.max(...preTest.attempts.filter(a => !a.isCheated && a.score !== null).map(a => a.score!))
+    ? Math.max(...preTest.attempts.filter(a => a.score !== null).map(a => a.score!))
     : null;
 
   const postBestScore = postTest?.attempts.length
-    ? Math.max(...postTest.attempts.filter(a => !a.isCheated && a.score !== null).map(a => a.score!))
+    ? Math.max(...postTest.attempts.filter(a => a.score !== null).map(a => a.score!))
     : null;
 
   // Get latest attempt for status display
   const latestPreAttempt = preTest?.attempts[0];
   const preStatus = latestPreAttempt
-    ? latestPreAttempt.isCheated
-      ? "KECURANGAN" as const
-      : latestPreAttempt.passed ? "LULUS" as const : "GAGAL" as const
+    ? latestPreAttempt.passed ? "LULUS" as const : "GAGAL" as const
     : null;
 
   const latestPostAttempt = postTest?.attempts[0];
   const postStatus = latestPostAttempt
-    ? latestPostAttempt.isCheated
-      ? "KECURANGAN" as const
-      : latestPostAttempt.passed ? "LULUS" as const : "GAGAL" as const
+    ? latestPostAttempt.passed ? "LULUS" as const : "GAGAL" as const
     : null;
 
   // Calculate remaining attempts for display
@@ -415,22 +411,18 @@ export default async function StudentCourseDetailPage({
                     <p className="text-xs text-slate-600 mb-1">Pre-Test</p>
                     <p className={cn(
                       "text-sm font-semibold",
-                      preStatus === "KECURANGAN" ? "text-red-600" :
                       preTest?.attempts.length ? "text-green-600" : "text-slate-400"
                     )}>
-                      {preStatus === "KECURANGAN" ? "Curang" : 
-                       preTest?.attempts.length ? "Selesai" : "Belum"}
+                      {preTest?.attempts.length ? "Selesai" : "Belum"}
                     </p>
                   </div>
                   <div>
                     <p className="text-xs text-slate-600 mb-1">Post-Test</p>
                     <p className={cn(
                       "text-sm font-semibold",
-                      postStatus === "KECURANGAN" ? "text-red-600" :
                       postTest?.attempts.length ? "text-green-600" : "text-slate-400"
                     )}>
-                      {postStatus === "KECURANGAN" ? "Curang" :
-                       postTest?.attempts.length ? "Selesai" : "Belum"}
+                      {postTest?.attempts.length ? "Selesai" : "Belum"}
                     </p>
                   </div>
                 </div>
@@ -476,16 +468,6 @@ export default async function StudentCourseDetailPage({
                       <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto mb-2" />
                       <p className="text-sm font-semibold text-green-900">
                         Kursus Selesai
-                      </p>
-                    </div>
-                  ) : enrollment?.status === "CHEATING" ? (
-                    <div className="p-4 rounded-lg bg-red-900 border border-red-800 text-center">
-                      <AlertCircle className="h-5 w-5 text-red-200 mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-red-100">
-                        Kursus Diblokir
-                      </p>
-                      <p className="text-xs text-red-200 mt-1">
-                        Terdeteksi kecurangan
                       </p>
                     </div>
                   ) : nextModuleId ? (
@@ -554,7 +536,7 @@ function LearningStep({
   meta?: string;
   number?: number;
   lockReason?: string;
-  testStatus?: "LULUS" | "GAGAL" | "KECURANGAN" | null;
+  testStatus?: "LULUS" | "GAGAL" | null;
   testInfo?: {
     duration: number;
     passingScore: number;
@@ -613,11 +595,6 @@ function LearningStep({
               {testStatus === "GAGAL" && (
                 <Badge className="text-xs bg-red-100 text-red-700 border-0">
                   Gagal
-                </Badge>
-              )}
-              {testStatus === "KECURANGAN" && (
-                <Badge className="text-xs bg-red-900 text-red-100 border-0">
-                  Kecurangan
                 </Badge>
               )}
             </div>

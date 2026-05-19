@@ -53,11 +53,7 @@ export const CourseCard = ({ course }: CourseCardProps) => {
 
           <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
              <div className="flex flex-col gap-1">
-                {course.status === "CHEATING" ? (
-                  <Badge className="bg-rose-600 text-white border-none font-bold text-[8px] py-0.5 shadow-sm animate-pulse">
-                    KECURANGAN
-                  </Badge>
-                ) : course.status === "FAILED" ? (
+                {course.status === "FAILED" ? (
                   <Badge className="bg-rose-500 text-white border-none font-bold text-[8px] py-0.5 shadow-sm">
                     GAGAL
                   </Badge>
@@ -123,7 +119,7 @@ export const CourseCard = ({ course }: CourseCardProps) => {
 
              <Button variant="ghost" className="w-full justify-between h-9 px-0 hover:bg-transparent group-hover:text-blue-600 font-bold text-slate-400 transition-all">
                <span className="text-[10px] uppercase tracking-widest">
-                 {course.status === "CHEATING" ? "DIBLOKIR" : course.status === "FAILED" ? "HASIL GAGAL" : course.status === "COMPLETED" || course.progress === 100 ? "Review" : "Lanjutkan"}
+                 {course.status === "FAILED" ? "HASIL GAGAL" : course.status === "COMPLETED" || course.progress === 100 ? "Review" : "Lanjutkan"}
                </span>
                <div className="h-7 w-7 bg-slate-50 group-hover:bg-blue-600 group-hover:text-white rounded-lg flex items-center justify-center transition-all duration-300">
                   <ChevronRight className="h-4 w-4" />

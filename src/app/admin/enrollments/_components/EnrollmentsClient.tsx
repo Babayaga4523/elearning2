@@ -531,7 +531,6 @@ export function EnrollmentsClient({
                       <SelectItem value="COMPLETED" className="text-xs font-semibold">✅ Selesai</SelectItem>
                       <SelectItem value="FAILED" className="text-xs font-semibold">❌ Gagal</SelectItem>
                       <SelectItem value="REJECTED" className="text-xs font-semibold">⛔ Ditolak</SelectItem>
-                      <SelectItem value="CHEATING" className="text-xs font-semibold">⚠️ Kecurangan</SelectItem>
                   </SelectContent>
                </Select>
 
@@ -642,14 +641,8 @@ export function EnrollmentsClient({
                               <EnrollmentHistoryTooltip data={row}>
                                  <div className="flex flex-col items-center gap-1">
                                     <StatusBadge status={row.status as any} />
-                                    {/* Cheating Indicator */}
-                                    {(row as any).hasCheatedPostTest && (
-                                       <Badge className="bg-red-100 text-red-700 border-red-200 text-[8px] font-bold">
-                                          ⚠️ Curang di Perc. {(row as any).cheatedAtAttempt}
-                                       </Badge>
-                                    )}
                                     {/* Attempt Counter for FAILED status */}
-                                    {row.status === "FAILED" && !(row as any).hasCheatedPostTest && (
+                                    {row.status === "FAILED" && (
                                        <span className="text-[9px] text-slate-400">
                                           {(row as any).postTestAttempts ?? 0} / {(row as any).maxPostTestAttempts ?? 3} Perc.
                                        </span>

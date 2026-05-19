@@ -150,7 +150,7 @@ export default async function DashboardPage() {
   }
 
   // Define active statuses for courses that need action
-  // EnrollmentStatus: IN_PROGRESS | COMPLETED | FAILED | PENDING | REJECTED | CHEATING
+  // EnrollmentStatus: IN_PROGRESS | COMPLETED | FAILED | PENDING | REJECTED
   const activeStatuses = ["IN_PROGRESS", "FAILED"]; // Kursus yang masih aktif atau bisa retake
 
   // 4. Logic: Urgent Deadlines
@@ -160,7 +160,7 @@ export default async function DashboardPage() {
 
   const urgentAlerts = enrollments
     .filter(en => {
-      // Deadline reminder untuk IN_PROGRESS, FAILED, CHEATING
+      // Deadline reminder untuk IN_PROGRESS, FAILED
       if (!activeStatuses.includes(en.status) || !en.deadline) return false;
       const deadlineDate = new Date(en.deadline);
       // Include today, expired, and up to 3 days in the future

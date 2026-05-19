@@ -17,7 +17,6 @@ import {
   Clock,
   CheckCircle2,
   AlertTriangle,
-  Eye,
   EyeOff,
   Shuffle,
   RotateCcw,
@@ -133,18 +132,6 @@ export function TestRulesModal({
               <CompactRule
                 icon={<Clock className="h-3 w-3" />}
                 text={`Waktu ${testInfo.duration} menit, timer otomatis`}
-              />
-              
-              <CompactRule
-                icon={<Eye className="h-3 w-3" />}
-                text="Jangan keluar tab atau minimize window"
-                variant="warning"
-              />
-
-              <CompactRule
-                icon={<AlertTriangle className="h-3 w-3" />}
-                text="Maks 3 pelanggaran, lebih = kecurangan"
-                variant="danger"
               />
 
               {testInfo.maxAttempts > 0 && (
