@@ -29,7 +29,8 @@ export default async function ModulePlayerPage({
   if (!session?.user?.id) return redirect("/");
 
   const userId = session.user.id;
-  const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
+  const isAdmin = (session.user.roles?.includes("ADMIN") || session.user.roles?.includes("SUPER_ADMIN"))
+    && (session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN");
 
   const course = await db.course.findUnique({
     where: { 
@@ -200,7 +201,7 @@ export default async function ModulePlayerPage({
                       {moduleData.title}
                     </h1>
                     <p className="text-sm text-slate-600 leading-relaxed">
-                      {("description" in moduleData && moduleData.description) || "Tidak ada deskripsi tambahan untuk modul ini."}
+                      {moduleData.description ?? "Tidak ada deskripsi tambahan untuk modul ini."}
                     </p>
                   </div>
 

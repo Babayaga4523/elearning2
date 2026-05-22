@@ -35,12 +35,12 @@ export async function GET(
           },
         },
         include: {
-          course: { 
-            select: { 
+          course: {
+            select: {
               deadlineDate: true,
               lockAfterDeadline: true,
               gracePeriodDays: true
-            } 
+            }
           }
         }
       });
@@ -49,29 +49,29 @@ export async function GET(
         return new NextResponse("Akses ditolak: Anda tidak terdaftar di kursus ini", { status: 403 });
       }
 
-      // Security: Check enrollment status (CRITICAL FIX)
-      const validStatuses = ["IN_PROGRESS", "COMPLETED"];
+      // Allow FAILED status for grace period retry
+      const validStatuses = ["IN_PROGRESS", "FAILED", "COMPLETED"];
       if (!validStatuses.includes(enrollment.status)) {
         return new NextResponse(`Akses ditolak: Status enrollment ${enrollment.status}`, { status: 403 });
       }
 
-      // Security: Check deadline with grace period (CRITICAL FIX)
+      // Security: Check deadline with grace period
       const effectiveDeadline = enrollment.deadline || enrollment.course.deadlineDate;
-      
+
       if (effectiveDeadline && enrollment.course.lockAfterDeadline) {
         const now = new Date();
         let finalDeadline = new Date(effectiveDeadline);
-        
-        // Add grace period if configured
+
         if (enrollment.course.gracePeriodDays) {
           finalDeadline = new Date(finalDeadline.getTime() + enrollment.course.gracePeriodDays * 24 * 60 * 60 * 1000);
         }
-        
+
         if (now > finalDeadline) {
           return new NextResponse("Akses ditolak: Deadline kursus telah lewat", { status: 403 });
         }
       }
     }
+    // Admin bypasses all enrollment/status/deadline checks
 
     // 4. Baca file dari disk
     const fileBuffer = await readFileFromDisk(moduleData.url);

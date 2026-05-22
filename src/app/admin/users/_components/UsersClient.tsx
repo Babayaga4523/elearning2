@@ -52,7 +52,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PageHeader } from "@/components/admin/ui/page-header";
-import { StatusBadge } from "@/components/admin/ui/status-badge";
 import { EmptyState } from "@/components/admin/ui/empty-state";
 
 const ITEMS_PER_PAGE = 15;
@@ -236,14 +235,13 @@ export function UsersClient({ users, stats }: UsersClientProps) {
               <TableHead className="text-[10px] font-black uppercase tracking-wider text-slate-400">Unit Kerja</TableHead>
               <TableHead className="text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Enrolled</TableHead>
               <TableHead className="text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Lulus</TableHead>
-              <TableHead className="text-center text-[10px] font-black uppercase tracking-wider text-slate-400">Status</TableHead>
               <TableHead className="text-center text-[10px] font-black uppercase tracking-wider text-slate-400 pr-4">Aksi</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {paginatedUsers.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={6}>
                    <EmptyState 
                     title="Karyawan Tidak Ditemukan"
                     description="Gunakan kata kunci pencarian yang berbeda untuk menemukan profil karyawan."
@@ -253,7 +251,6 @@ export function UsersClient({ users, stats }: UsersClientProps) {
               </TableRow>
             ) : (
               paginatedUsers.map((user) => {
-                const isActive = user.inProgressEnrollments > 0;
                 return (
                   <TableRow key={user.id} className="group transition-all hover:bg-slate-50/50 cursor-pointer h-16" onClick={() => setDetailUser(user)}>
                     <TableCell>
@@ -293,15 +290,6 @@ export function UsersClient({ users, stats }: UsersClientProps) {
                     </TableCell>
                     <TableCell className="text-center text-xs font-bold text-slate-900">{user.totalEnrollments}</TableCell>
                     <TableCell className="text-center text-xs font-bold text-emerald-600">{user.completedEnrollments}</TableCell>
-                    <TableCell className="text-center">
-                       {user.totalEnrollments === 0 ? (
-                         <StatusBadge status="PENDING" />
-                       ) : isActive ? (
-                         <StatusBadge status="IN_PROGRESS" />
-                       ) : (
-                         <StatusBadge status="COMPLETED" />
-                       )}
-                    </TableCell>
                     <TableCell className="text-center" onClick={(e) => e.stopPropagation()}>
                        <div className="flex items-center justify-center gap-1">
                           <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md bg-slate-50 hover:bg-indigo-100 hover:text-indigo-600 text-slate-500" onClick={() => router.push(`/admin/users/${user.id}`)}>

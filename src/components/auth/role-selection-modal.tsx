@@ -59,12 +59,10 @@ export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalPr
       // Redirect based on role
       const redirectPath = role === "ADMIN" || role === "SUPER_ADMIN" ? "/admin" : "/dashboard"
       
-      // Use router.push for client-side navigation
-      router.push(redirectPath)
-      router.refresh() // Force refresh to get new session data
-      
       toast.success(`Berhasil masuk sebagai ${getRoleLabel(role)}`)
-      onClose()
+      
+      // Use window.location.href to ensure a full page reload with the new session cookie
+      window.location.href = redirectPath
     } catch (error) {
       console.error("Error setting role:", error)
       toast.error(error instanceof Error ? error.message : "Gagal mengatur role")

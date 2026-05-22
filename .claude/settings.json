@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /b \"C:\\\\Users\\\\yoga.utama\\\\Desktop\\\\elearning 2\\\\src\\\\app\\\\api\\\\profile\" 2>nul || echo \"Directory not found\")"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\yoga.utama\\Desktop\\elearning 2"
+    ]
+  }
+}

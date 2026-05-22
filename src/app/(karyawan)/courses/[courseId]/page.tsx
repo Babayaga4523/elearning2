@@ -87,7 +87,8 @@ export default async function StudentCourseDetailPage({
   if (!session?.user?.id) redirect("/");
 
   const userId = session.user.id;
-  const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
+  const isAdmin = (session.user.roles?.includes("ADMIN") || session.user.roles?.includes("SUPER_ADMIN"))
+    && (session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN");
 
   const course = (await db.course.findUnique({
     where: {

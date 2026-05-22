@@ -5,7 +5,7 @@ import { ProfileClient } from "./_components/ProfileClient";
 
 export default async function ProfilePage() {
   const session = await auth();
-  
+
   if (!session?.user?.id) {
     return redirect("/");
   }
@@ -59,5 +59,35 @@ export default async function ProfilePage() {
     failed: enrollmentStats.find(s => s.status === "FAILED")?._count.status ?? 0,
   };
 
-  return <ProfileClient user={user} stats={stats} />;
+  // Get user's enrolled courses for the progress modal list
+  const enrolledCourses = await db.enrollment.findMany({
+    where: {
+      userId: session.user.id,
+      status: { notIn: ["REJECTED", "PENDING"] }
+    },
+    select: {
+      id: true,
+      courseId: true,
+      status: true,
+      createdAt: true,
+      course: {
+        select: {
+          title: true,
+          category: {
+            select: { name: true }
+          }
+        }
+      },
+      _count: {
+        select: {
+          testAttempts: {
+            where: { status: "SUBMITTED" }
+          }
+        }
+      }
+    },
+    orderBy: { createdAt: "desc" }
+  });
+
+  return <ProfileClient user={user} stats={stats} enrolledCourses={enrolledCourses} />;
 }

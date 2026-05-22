@@ -13,6 +13,7 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
   }
 
   const userId = session.user.id;
+  const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
 
   const m = await db.module.findUnique({
     where: { id: moduleId },
@@ -27,19 +28,24 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
     throw new Error("Module not found");
   }
 
-  const enrollment = await db.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId: m.courseId } },
-  });
+  // Admin can mark modules complete in preview mode without enrollment
+  let enrollment: { id: string; status: string } | null = null;
 
-  if (!enrollment) {
-    throw new Error("Not enrolled");
-  }
-  if (!["IN_PROGRESS", "FAILED", "COMPLETED"].includes(enrollment.status)) {
-    throw new Error("ENROLLMENT_NOT_ACTIVE");
-  }
+  if (!isAdmin) {
+    enrollment = await db.enrollment.findUnique({
+      where: { userId_courseId: { userId, courseId: m.courseId } },
+    });
 
-  if (m.course.deadlineDate && m.course.deadlineDate.getTime() < Date.now()) {
-    throw new Error("DEADLINE_PASSED");
+    if (!enrollment) {
+      throw new Error("Not enrolled");
+    }
+    if (!["IN_PROGRESS", "FAILED", "COMPLETED"].includes(enrollment.status)) {
+      throw new Error("ENROLLMENT_NOT_ACTIVE");
+    }
+
+    if (m.course.deadlineDate && m.course.deadlineDate.getTime() < Date.now()) {
+      throw new Error("DEADLINE_PASSED");
+    }
   }
 
   const progress = await db.userProgress.upsert({
@@ -59,37 +65,38 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
     },
   });
 
-  // Auto-complete enrollment jika semua modul selesai DAN Post-Test lulus (jika ada)
-  if (isCompleted) {
+  // Auto-complete enrollment if all modules done AND Post-Test passed (if exists)
+  // Skip for admins in preview mode (no enrollment to complete)
+  if (isCompleted && enrollment) {
     const courseModules = await db.module.findMany({
       where: { courseId: m.courseId, isPublished: true },
       select: { id: true }
     });
-    
+
     const completedModules = await db.userProgress.findMany({
-      where: { 
-        userId, 
+      where: {
+        userId,
         isCompleted: true,
         moduleId: { in: courseModules.map(cm => cm.id) }
       },
       select: { moduleId: true }
     });
-    
+
     // Check if all modules are completed
     const allModulesCompleted = completedModules.length >= courseModules.length;
-    
+
     if (allModulesCompleted && enrollment.status !== "COMPLETED") {
       // IMPORTANT: Check if Post-Test exists and if user has passed it
       const postTest = await db.test.findFirst({
-        where: { 
+        where: {
           courseId: m.courseId,
           type: "POST"
         },
         select: { id: true }
       });
-      
+
       let canComplete = true;
-      
+
       // If Post-Test exists, check if user has passed it
       if (postTest) {
         const passedPostTest = await db.testAttempt.findFirst({
@@ -99,11 +106,11 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
             passed: true
           }
         });
-        
+
         // User must pass Post-Test to complete the course
         canComplete = !!passedPostTest;
       }
-      
+
       // Only mark as COMPLETED if all modules done AND Post-Test passed (if exists)
       if (canComplete) {
         // Use transaction to prevent race condition
@@ -113,22 +120,22 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
             where: { id: enrollment.id },
             select: { status: true }
           });
-          
+
           // Only update if still not COMPLETED (prevents duplicate notifications)
           if (currentEnrollment && currentEnrollment.status !== "COMPLETED") {
             await tx.enrollment.update({
               where: { id: enrollment.id },
-              data: { 
+              data: {
                 status: "COMPLETED"
               }
             });
-            
+
             // Get course title for notification
             const course = await tx.course.findUnique({
               where: { id: m.courseId },
               select: { title: true }
             });
-            
+
             // Create notification
             await tx.notification.create({
               data: {
