@@ -23,12 +23,6 @@ interface RoleSelectionModalProps {
 }
 
 export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalProps) {
-  const [loading, setLoading] = useState(false)
-  const [selectedRole, setSelectedRole] = useState<string | null>(null)
-  const router = useRouter()
-  const { update } = useSession()
-
-  console.log("[ROLE MODAL] Rendered with:", { open, userName: user.name, roles: user.roles })
 
   const handleSelectRole = async (role: string) => {
     setLoading(true)

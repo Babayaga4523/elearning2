@@ -446,7 +446,7 @@ function LoginPageContent() {
           © 2026 PT BNI FINANCE. ALL RIGHTS RESERVED.
         </div>
       </div>
-      </div>
+    </div>
     </>
   );
 }
