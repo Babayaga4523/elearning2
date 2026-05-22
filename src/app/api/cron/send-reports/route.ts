@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 import { runDepartmentalReports, runDeadlineMonitoring, runProactiveReminders } from "@/lib/scheduler";
 
 /**
@@ -18,17 +19,17 @@ export async function GET(req: Request) {
   }
 
   try {
-    console.log("[CRON] Starting all scheduler jobs manually...");
+    log.info("Combined scheduler jobs started", { context: "cron" });
 
     // Run sequentially to avoid overwhelming the system
     const proactiveResults = await runProactiveReminders();
-    console.log("[CRON] Proactive reminders completed:", proactiveResults);
+    log.info("Proactive reminders completed", { context: "cron", result: proactiveResults });
 
     const reportResults = await runDepartmentalReports();
-    console.log("[CRON] Departmental reports completed:", reportResults);
+    log.info("Departmental reports completed", { context: "cron", result: reportResults });
 
     const deadlineResults = await runDeadlineMonitoring();
-    console.log("[CRON] Deadline monitoring completed:", deadlineResults);
+    log.info("Deadline monitoring completed", { context: "cron", result: deadlineResults });
 
     return NextResponse.json({
       success: true,
@@ -40,7 +41,7 @@ export async function GET(req: Request) {
       },
     });
   } catch (err: any) {
-    console.error("[CRON] Combined scheduler jobs failed:", err);
+    log.error("Combined scheduler jobs failed", { context: "cron", error: err });
     return NextResponse.json(
       { success: false, error: err.message },
       { status: 500 }

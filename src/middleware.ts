@@ -85,7 +85,6 @@ export default auth((req: any) => {
 
         if (!hasAccess) {
           // Redirect to admin dashboard with error
-          console.log(`[MIDDLEWARE] Access denied: ${nextUrl.pathname} requires ${requiredPermissions.join("|")}, user has: ${permissions.join(", ")}`);
           return Response.redirect(new URL("/admin?error=unauthorized", nextUrl));
         }
         break; // Found matching route, stop checking

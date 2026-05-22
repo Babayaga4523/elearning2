@@ -20,14 +20,18 @@ interface VideoAnalytics {
   totalVideos: number;
   averageCompletionRate: number;
   totalWatchTime: number;
+  totalUsers: number;
+  usersWhoStarted: number;
   videos: Array<{
     moduleId: string;
     moduleName: string;
+    courseId: string;
     totalViews: number;
     averageWatchTime: number;
     completionRate: number;
     usersCompleted: number;
     usersInProgress: number;
+    usersNotStarted: number;
   }>;
 }
 
@@ -35,14 +39,18 @@ interface PDFAnalytics {
   totalPDFs: number;
   averageCompletionRate: number;
   totalReadTime: number;
+  totalUsers: number;
+  usersWhoStarted: number;
   pdfs: Array<{
     moduleId: string;
     moduleName: string;
+    courseId: string;
     totalReads: number;
     averagePagesRead: number;
     completionRate: number;
     usersCompleted: number;
     usersInProgress: number;
+    usersNotStarted: number;
   }>;
 }
 
@@ -140,26 +148,30 @@ export function ProgressAnalyticsClient() {
 
       if (type === "video" && videoAnalytics) {
         const sheet = workbook.addWorksheet("Video Analytics");
-        
+
         // Headers
         sheet.columns = [
           { header: "Module Name", key: "moduleName", width: 30 },
+          { header: "Course ID", key: "courseId", width: 20 },
           { header: "Total Views", key: "totalViews", width: 15 },
           { header: "Avg Watch Time (min)", key: "avgWatchTime", width: 20 },
           { header: "Completion Rate (%)", key: "completionRate", width: 20 },
           { header: "Users Completed", key: "usersCompleted", width: 18 },
           { header: "Users In Progress", key: "usersInProgress", width: 18 },
+          { header: "Not Started", key: "usersNotStarted", width: 15 },
         ];
 
         // Data
         videoAnalytics.videos.forEach((video) => {
           sheet.addRow({
             moduleName: video.moduleName,
+            courseId: video.courseId,
             totalViews: video.totalViews,
             avgWatchTime: (video.averageWatchTime / 60).toFixed(2),
             completionRate: video.completionRate.toFixed(2),
             usersCompleted: video.usersCompleted,
             usersInProgress: video.usersInProgress,
+            usersNotStarted: video.usersNotStarted,
           });
         });
 
@@ -172,24 +184,28 @@ export function ProgressAnalyticsClient() {
         };
       } else if (type === "pdf" && pdfAnalytics) {
         const sheet = workbook.addWorksheet("PDF Analytics");
-        
+
         sheet.columns = [
           { header: "Module Name", key: "moduleName", width: 30 },
+          { header: "Course ID", key: "courseId", width: 20 },
           { header: "Total Reads", key: "totalReads", width: 15 },
           { header: "Avg Pages Read", key: "avgPagesRead", width: 18 },
           { header: "Completion Rate (%)", key: "completionRate", width: 20 },
           { header: "Users Completed", key: "usersCompleted", width: 18 },
           { header: "Users In Progress", key: "usersInProgress", width: 18 },
+          { header: "Not Started", key: "usersNotStarted", width: 15 },
         ];
 
         pdfAnalytics.pdfs.forEach((pdf) => {
           sheet.addRow({
             moduleName: pdf.moduleName,
+            courseId: pdf.courseId,
             totalReads: pdf.totalReads,
             avgPagesRead: pdf.averagePagesRead.toFixed(2),
             completionRate: pdf.completionRate.toFixed(2),
             usersCompleted: pdf.usersCompleted,
             usersInProgress: pdf.usersInProgress,
+            usersNotStarted: pdf.usersNotStarted,
           });
         });
 
@@ -345,7 +361,7 @@ export function ProgressAnalyticsClient() {
           <CardContent>
             <div className="text-2xl font-bold">{videoAnalytics?.totalVideos || 0}</div>
             <p className="text-xs text-gray-600 mt-1">
-              Avg: {videoAnalytics?.averageCompletionRate.toFixed(1) || 0}% completion
+              {videoAnalytics?.totalUsers || 0} users, Avg: {videoAnalytics?.averageCompletionRate?.toFixed(1) || 0}%
             </p>
           </CardContent>
         </Card>
@@ -358,7 +374,7 @@ export function ProgressAnalyticsClient() {
           <CardContent>
             <div className="text-2xl font-bold">{pdfAnalytics?.totalPDFs || 0}</div>
             <p className="text-xs text-gray-600 mt-1">
-              Avg: {pdfAnalytics?.averageCompletionRate.toFixed(1) || 0}% completion
+              {pdfAnalytics?.totalUsers || 0} users, Avg: {pdfAnalytics?.averageCompletionRate?.toFixed(1) || 0}%
             </p>
           </CardContent>
         </Card>
@@ -372,7 +388,7 @@ export function ProgressAnalyticsClient() {
             <div className="text-2xl font-bold">
               {formatTime(videoAnalytics?.totalWatchTime || 0)}
             </div>
-            <p className="text-xs text-gray-600 mt-1">Across all videos</p>
+            <p className="text-xs text-gray-600 mt-1">{videoAnalytics?.usersWhoStarted || 0} users started</p>
           </CardContent>
         </Card>
 
@@ -424,12 +440,16 @@ export function ProgressAnalyticsClient() {
                       <th className="text-right p-3">Completion</th>
                       <th className="text-right p-3">Completed</th>
                       <th className="text-right p-3">In Progress</th>
+                      <th className="text-right p-3">Not Started</th>
                     </tr>
                   </thead>
                   <tbody>
                     {videoAnalytics?.videos.map((video) => (
                       <tr key={video.moduleId} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{video.moduleName}</td>
+                        <td className="p-3">
+                          <div className="font-medium">{video.moduleName}</div>
+                          <div className="text-xs text-gray-500">{video.courseId}</div>
+                        </td>
                         <td className="text-right p-3">{video.totalViews}</td>
                         <td className="text-right p-3">
                           {formatTime(video.averageWatchTime)}
@@ -447,8 +467,9 @@ export function ProgressAnalyticsClient() {
                             {video.completionRate.toFixed(1)}%
                           </span>
                         </td>
-                        <td className="text-right p-3">{video.usersCompleted}</td>
-                        <td className="text-right p-3">{video.usersInProgress}</td>
+                        <td className="text-right p-3 text-green-600 font-medium">{video.usersCompleted}</td>
+                        <td className="text-right p-3 text-yellow-600">{video.usersInProgress}</td>
+                        <td className="text-right p-3 text-gray-500">{video.usersNotStarted}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -486,12 +507,16 @@ export function ProgressAnalyticsClient() {
                       <th className="text-right p-3">Completion</th>
                       <th className="text-right p-3">Completed</th>
                       <th className="text-right p-3">In Progress</th>
+                      <th className="text-right p-3">Not Started</th>
                     </tr>
                   </thead>
                   <tbody>
                     {pdfAnalytics?.pdfs.map((pdf) => (
                       <tr key={pdf.moduleId} className="border-b hover:bg-gray-50">
-                        <td className="p-3">{pdf.moduleName}</td>
+                        <td className="p-3">
+                          <div className="font-medium">{pdf.moduleName}</div>
+                          <div className="text-xs text-gray-500">{pdf.courseId}</div>
+                        </td>
                         <td className="text-right p-3">{pdf.totalReads}</td>
                         <td className="text-right p-3">
                           {pdf.averagePagesRead.toFixed(1)}
@@ -509,8 +534,9 @@ export function ProgressAnalyticsClient() {
                             {pdf.completionRate.toFixed(1)}%
                           </span>
                         </td>
-                        <td className="text-right p-3">{pdf.usersCompleted}</td>
-                        <td className="text-right p-3">{pdf.usersInProgress}</td>
+                        <td className="text-right p-3 text-green-600 font-medium">{pdf.usersCompleted}</td>
+                        <td className="text-right p-3 text-yellow-600">{pdf.usersInProgress}</td>
+                        <td className="text-right p-3 text-gray-500">{pdf.usersNotStarted}</td>
                       </tr>
                     ))}
                   </tbody>

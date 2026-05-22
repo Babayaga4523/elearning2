@@ -4,6 +4,8 @@
  * Admin-only endpoint for PDF progress analytics
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { PDFProgressService } from "@/lib/services/pdf-progress.service";
@@ -80,12 +82,6 @@ export async function GET(request: NextRequest) {
       startDate,
       endDate,
       department,
-    });
-
-    log.info("PDF analytics retrieved", {
-      context: "api",
-      adminId: session?.user?.id,
-      filters: { courseId, moduleId, department },
     });
 
     return NextResponse.json({

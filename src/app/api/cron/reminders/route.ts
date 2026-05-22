@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 import { runProactiveReminders } from "@/lib/scheduler";
 
 /**
@@ -15,17 +16,17 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("[CRON] Starting proactive reminders job...");
+    log.info("Proactive reminders cron job started", { context: "cron" });
     const result = await runProactiveReminders();
-    
-    console.log("[CRON] Proactive reminders completed:", result);
+
+    log.info("Proactive reminders cron job completed", { context: "cron", result });
     return NextResponse.json({ 
       success: true, 
       result,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error("[CRON] Proactive reminders failed:", error);
+    log.error("Proactive reminders cron job failed", { context: "cron", error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

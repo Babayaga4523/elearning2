@@ -10,52 +10,42 @@ import type { Session } from "next-auth";
 
 /**
  * Check if user has admin access based on activeRole
- * 
+ *
  * @returns Session if authorized, or error object if not
  */
 export async function requireAdmin() {
   const session = await auth();
-  
+
   // Check if user is logged in
   if (!session?.user) {
-    console.log("[AUTH_HELPER] No session found");
-    return { 
-      success: false as const, 
-      error: "Unauthorized - Please login" 
+    return {
+      success: false as const,
+      error: "Unauthorized - Please login"
     };
   }
 
   // Get user's roles and activeRole
   const activeRole = session.user.activeRole;
   const roles = session.user.roles || [];
-  
-  console.log("[AUTH_HELPER] Authorization check:", {
-    email: session.user.email,
-    activeRole,
-    roles,
-  });
 
   // User must have ADMIN or SUPER_ADMIN in their roles array
   const hasAdminAccess = roles.includes("ADMIN") || roles.includes("SUPER_ADMIN");
-  
+
   if (!hasAdminAccess) {
-    console.log("[AUTH_HELPER] Access denied - User does not have admin role in roles array");
-    return { 
-      success: false as const, 
-      error: "Unauthorized - Admin access required" 
+    return {
+      success: false as const,
+      error: "Unauthorized - Admin access required"
     };
   }
 
   // User must have selected admin role as active
   if (activeRole !== "ADMIN" && activeRole !== "SUPER_ADMIN") {
-    console.log("[AUTH_HELPER] Access denied - User must select admin role as active. Current activeRole:", activeRole);
-    return { 
-      success: false as const, 
-      error: "Unauthorized - Please select admin role" 
+    return {
+      success: false as const,
+      error: "Unauthorized - Please select admin role"
     };
   }
 
-  console.log("[AUTH_HELPER] Access granted for user:", session.user.email);
   return session;
 }
 

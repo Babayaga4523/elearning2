@@ -67,8 +67,6 @@ export async function POST(
       remainingAttempts: result.remainingAttempts,
     });
   } catch (error: any) {
-    console.error("[TEST_SUBMIT_ERROR]", error);
-    
     // Handle known error messages from submitTest action
     if (error.message === "TEST_ALREADY_PASSED") {
       return new NextResponse("You have already passed this test.", { status: 403 });

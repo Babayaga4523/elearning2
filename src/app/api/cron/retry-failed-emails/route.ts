@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { log } from "@/lib/logger";
 import { sendEmailWithAttachment } from "@/lib/email";
 
 /**
@@ -18,7 +19,7 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("[CRON] Starting retry failed emails job...");
+    log.info("Retry failed emails cron job started", { context: "cron" });
     const start = Date.now();
 
     // Get pending retries (max 3 attempts per email)
@@ -171,7 +172,11 @@ export async function GET(req: Request) {
         // Small delay to avoid overwhelming SMTP
         await new Promise(resolve => setTimeout(resolve, 500));
       } catch (err: any) {
-        console.error(`Retry failed for ${retry.id}:`, err.message);
+        log.error(`Retry failed for ${retry.id}`, {
+          context: "cron",
+          retryId: retry.id,
+          error: err
+        });
         
         // Update metadata with attempt count
         const metadata = retry.metadata as any;
@@ -188,7 +193,11 @@ export async function GET(req: Request) {
             }
           }
         }).catch(updateErr => {
-          console.error(`Failed to update retry metadata:`, updateErr);
+          log.error(`Failed to update retry metadata for ${retry.id}`, {
+            context: "cron",
+            retryId: retry.id,
+            error: updateErr
+          });
         });
 
         failedCount++;
@@ -211,7 +220,8 @@ export async function GET(req: Request) {
       }
     });
 
-    console.log("[CRON] Retry failed emails completed:", {
+    log.info("Retry failed emails cron job completed", {
+      context: "cron",
       processed: pendingRetries.length,
       succeeded: successCount,
       failed: failedCount,
@@ -229,7 +239,7 @@ export async function GET(req: Request) {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error("[CRON] Retry failed emails error:", error);
+    log.error("Retry failed emails cron job failed", { context: "cron", error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

@@ -29,16 +29,12 @@
 
 **✅ SESUAI - Implementasi Aktual:**
 ```typescript
-// ✅ Caching: src/lib/cache.ts
-class LRUCache<T> {
-  private cache: Map<string, CacheEntry<T>>;
-  private maxSize: number;
-  // In-memory LRU cache implemented
-}
+// ✅ No in-memory caching (removed to avoid dead code)
+// Direct PostgreSQL queries via Prisma - sufficient for current scale
 
-const courseCache = new LRUCache<any>(50);
-const userCache = new LRUCache<any>(100);
-const enrollmentCache = new LRUCache<any>(200);
+// PostgreSQL connection pooling handles concurrent requests
+// Connection limit: 10, Pool timeout: 20s
+DATABASE_URL="postgresql://...?connection_limit=10&pool_timeout=20"
 ```
 
 ```yaml

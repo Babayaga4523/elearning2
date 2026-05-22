@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { log } from "@/lib/logger";
 import { isAdmin } from "@/lib/auth-helpers";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth();

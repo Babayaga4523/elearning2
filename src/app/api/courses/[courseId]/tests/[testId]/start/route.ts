@@ -23,6 +23,10 @@ export async function POST(
     const testId = params.testId;
     const courseId = params.courseId;
 
+    // Check if user is admin (for preview/practice mode)
+    const isAdminUser = session.user.activeRole === "ADMIN" ||
+                        session.user.activeRole === "SUPER_ADMIN";
+
     // Get enrollment for this course
     const enrollment = await db.enrollment.findUnique({
       where: {
@@ -33,7 +37,8 @@ export async function POST(
       }
     });
 
-    if (!enrollment) {
+    // Allow admin to bypass enrollment check for test preview
+    if (!enrollment && !isAdminUser) {
       return new NextResponse("Not enrolled in this course", { status: 403 });
     }
 
@@ -50,8 +55,8 @@ export async function POST(
       return new NextResponse("Test not found for this course", { status: 404 });
     }
 
-    // Check if user has exceeded max attempts
-    if (test.maxAttempts > 0) {
+    // Check if user has exceeded max attempts (admin bypass for preview)
+    if (test.maxAttempts > 0 && !isAdminUser) {
       const attemptCount = await db.testAttempt.count({
         where: {
           testId,
@@ -61,11 +66,11 @@ export async function POST(
 
       if (attemptCount >= test.maxAttempts) {
         return new NextResponse(
-          JSON.stringify({ 
+          JSON.stringify({
             error: "MAX_ATTEMPTS_REACHED",
             message: `Anda sudah mencapai batas maksimal ${test.maxAttempts} percobaan untuk ${test.type === "PRE" ? "Pre-Test" : "Post-Test"} ini.`
-          }), 
-          { 
+          }),
+          {
             status: 403,
             headers: { "Content-Type": "application/json" }
           }
@@ -73,19 +78,18 @@ export async function POST(
       }
     }
 
-    // CRITICAL FIX: Create session with enrollmentId
+    // CRITICAL FIX: Create session with enrollmentId (handle admin bypass)
     const testSession = await db.testSession.create({
       data: {
         testId,
         userId,
-        enrollmentId: enrollment.id, // FIXED: Add enrollmentId
+        enrollmentId: enrollment?.id ?? null,
         startedAt: new Date(),
       },
     });
 
     return NextResponse.json({ sessionId: testSession.id });
   } catch (error: any) {
-    console.error("[TEST_START_ERROR]", error);
     return new NextResponse("Internal Error", { status: 500 });
   }
 }

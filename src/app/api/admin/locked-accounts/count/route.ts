@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { windowStart, EMAIL_MAX_ATTEMPTS, IP_MAX_ATTEMPTS } from "@/lib/rate-limiter";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET() {
   try {
     const result = await requireAdmin();

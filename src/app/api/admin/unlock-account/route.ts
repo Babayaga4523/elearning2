@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { log } from "@/lib/logger";
 
 /**
  * Admin endpoint to manually unlock a locked account
@@ -24,8 +25,10 @@ export async function POST(req: NextRequest) {
       select: { roles: true, activeRole: true }
     });
 
-    const isAdmin = user?.roles?.includes("ADMIN") || 
-                    user?.roles?.includes("SUPER_ADMIN") ||
+    // Security: Safe null check for roles array
+    const roles = user?.roles ?? [];
+    const isAdmin = roles.includes("ADMIN") ||
+                    roles.includes("SUPER_ADMIN") ||
                     user?.activeRole === "ADMIN" ||
                     user?.activeRole === "SUPER_ADMIN";
 
@@ -57,7 +60,7 @@ export async function POST(req: NextRequest) {
       attemptsRemoved: result.count,
     });
   } catch (error) {
-    console.error("[UNLOCK_ACCOUNT] Error:", error);
+    log.error("[UNLOCK_ACCOUNT] Error", { context: "api", error });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -2,6 +2,7 @@
 
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
+import { log } from "@/lib/logger";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { revalidatePath } from "next/cache";
 
@@ -57,20 +58,39 @@ export async function updateCourse(id: string, values: any) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
+  // Validate input - only allow specific fields to be updated
+  const allowedFields = [
+    'title', 'description', 'categoryId', 'deadlineDate',
+    'deadlineDuration', 'lockAfterDeadline', 'gracePeriodDays',
+    'isPublished', 'isVisible'
+  ];
+  const sanitizedValues: Record<string, unknown> = {};
+
+  for (const key of allowedFields) {
+    if (key in values) {
+      sanitizedValues[key] = values[key];
+    }
+  }
+
+  // Parse deadlineDate string to Date if provided
+  if (sanitizedValues.deadlineDate && typeof sanitizedValues.deadlineDate === 'string') {
+    sanitizedValues.deadlineDate = new Date(sanitizedValues.deadlineDate as string);
+  }
+
   const course = await db.course.update({
     where: { id },
-    data: { ...values },
+    data: sanitizedValues,
   });
 
   // Jika deadlineDate diubah secara global, perbarui semua enrollment yang IN_PROGRESS
-  if (values.deadlineDate !== undefined) {
+  if (sanitizedValues.deadlineDate !== undefined) {
     await db.enrollment.updateMany({
-      where: { 
+      where: {
         courseId: id,
         status: "IN_PROGRESS"
       },
       data: {
-        deadline: values.deadlineDate
+        deadline: sanitizedValues.deadlineDate
       }
     });
   }
@@ -81,7 +101,7 @@ export async function updateCourse(id: string, values: any) {
   revalidatePath("/courses", "layout");          // Katalog karyawan (layout)
   revalidatePath(`/courses/${id}`);              // Detail kursus karyawan
   revalidatePath("/dashboard");                  // Dashboard karyawan
-  
+
   return course;
 }
 
@@ -231,7 +251,7 @@ export async function enroll(courseId: string) {
         });
       }
     } catch (notifErr) {
-      console.error("[ENROLL] Failed to notify admins:", notifErr);
+      log.error("[ENROLL] Failed to notify admins", { context: "enrollment", error: notifErr });
       // Don't throw - enrollment already created
     }
 
@@ -286,7 +306,7 @@ export async function enroll(courseId: string) {
           });
         }
       } catch (notifErr) {
-        console.error("[ENROLL] Failed to notify admins:", notifErr);
+        log.error("[ENROLL] Failed to notify admins", { context: "enrollment", error: notifErr });
         // Don't throw - enrollment already updated
       }
 

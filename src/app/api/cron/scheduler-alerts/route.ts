@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 import { checkAndSendAlerts, checkRetryQueueHealth } from "@/lib/scheduler-alerts";
 
 /**
@@ -42,7 +43,7 @@ async function handleRequest(req: NextRequest) {
       },
     });
   } catch (error: any) {
-    console.error("Scheduler alerts cron failed:", error);
+    log.error("Scheduler alerts cron job failed", { context: "cron", error });
     return NextResponse.json(
       { error: error.message },
       { status: 500 }

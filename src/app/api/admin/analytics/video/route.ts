@@ -4,6 +4,8 @@
  * Admin-only endpoint for video progress analytics
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { VideoProgressService } from "@/lib/services/video-progress.service";
@@ -80,12 +82,6 @@ export async function GET(request: NextRequest) {
       startDate,
       endDate,
       department,
-    });
-
-    log.info("Video analytics retrieved", {
-      context: "api",
-      adminId: session?.user?.id,
-      filters: { courseId, moduleId, department },
     });
 
     return NextResponse.json({

@@ -15,8 +15,6 @@
     "deploy:migrate": "prisma migrate deploy && npm run seed:permissions",
     "backup:db": "bash scripts/backup-database.sh",
     "restore:db": "bash scripts/restore-database.sh",
-    "cache:clear": "node -e \"require('./src/lib/cache').cache.clearAll()\"",
-    "cache:stats": "node -e \"console.log(require('./src/lib/cache').cache.getStats())\"",
     "migrate:multi-role": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/migrate-users-to-multi-role.ts",
     "update:karyawan": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/update-karyawan-multi-role.ts",
     "check:roles": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/check-user-roles.ts"

@@ -2,6 +2,8 @@
 // GET:  Fetch all permissions with current ADMIN role assignments
 // PUT:  Update ADMIN role permissions (Super Admin only)
 
+export const dynamic = 'force-dynamic';
+
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";

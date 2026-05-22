@@ -44,10 +44,6 @@ npm run seed:ips          # Seed IPS course data
 npm run backup:db         # Backup PostgreSQL (scripts/backup-database.sh)
 npm run restore:db        # Restore from backup (scripts/restore-database.sh)
 
-# Cache
-npm run cache:clear       # Clear in-memory cache
-npm run cache:stats       # Show cache hit/miss statistics
-
 # Multi-role migration
 npm run migrate:multi-role    # Migrate users to new multi-role system
 npm run update:karyawan       # Update all KARYAWAN users to multi-role
@@ -155,7 +151,6 @@ src/
 │   ├── email.ts                 # Nodemailer wrapper (TLS on port 587)
 │   ├── excel-template.ts        # Excel workbook factory (BNI brand styles)
 │   ├── excel-import.ts          # Excel parsing for questions/users/enrollments import
-│   ├── cache.ts                 # In-memory TTL cache (LRU, stats API)
 │   ├── logger.ts                # Winston logger (file + console transport)
 │   ├── sharepoint.ts            # SharePoint embed URL builder
 │   ├── analytics.ts            # Analytics query helpers

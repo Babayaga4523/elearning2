@@ -250,7 +250,7 @@ export class PDFProgressService {
     try {
       const { courseId, moduleId, startDate, endDate, department } = filters;
 
-      // Build where clause
+      // Build where clause for PDF progress
       const where: any = {};
 
       if (moduleId) {
@@ -309,24 +309,32 @@ export class PDFProgressService {
 
       // Group by module
       const moduleStats = new Map<string, any>();
+      const uniqueUsers = new Set<string>();
+      const usersWhoStarted = new Set<string>();
 
       for (const record of progressRecords) {
-        const moduleId = record.moduleId;
+        const modId = record.moduleId;
+        uniqueUsers.add(record.userId);
+        if (record.completionRate > 0) {
+          usersWhoStarted.add(record.userId);
+        }
 
-        if (!moduleStats.has(moduleId)) {
-          moduleStats.set(moduleId, {
-            moduleId,
+        if (!moduleStats.has(modId)) {
+          moduleStats.set(modId, {
+            moduleId: modId,
             moduleName: record.module.title,
+            courseId: record.module.courseId,
             totalReads: 0,
             totalReadTime: 0,
             totalPagesRead: 0,
             completionRates: [],
             usersCompleted: 0,
             usersInProgress: 0,
+            usersNotStarted: 0,
           });
         }
 
-        const stats = moduleStats.get(moduleId);
+        const stats = moduleStats.get(modId);
         stats.totalReads += record.readCount;
         stats.totalReadTime += record.totalReadTime;
 
@@ -344,23 +352,31 @@ export class PDFProgressService {
       }
 
       // Calculate averages and format output
-      const pdfs = Array.from(moduleStats.values()).map((stats) => ({
-        moduleId: stats.moduleId,
-        moduleName: stats.moduleName,
-        totalReads: stats.totalReads,
-        averagePagesRead: stats.totalPagesRead / stats.totalReads || 0,
-        completionRate:
-          stats.completionRates.reduce((a: number, b: number) => a + b, 0) /
-            stats.completionRates.length || 0,
-        usersCompleted: stats.usersCompleted,
-        usersInProgress: stats.usersInProgress,
-        usersNotStarted: 0, // Would need enrollment data to calculate
-      }));
+      const pdfs = Array.from(moduleStats.values()).map((stats) => {
+        const totalUsers = stats.usersCompleted + stats.usersInProgress + stats.usersNotStarted;
+        const averageCompletionRate = stats.completionRates.length > 0
+          ? stats.completionRates.reduce((a: number, b: number) => a + b, 0) / stats.completionRates.length
+          : 0;
+
+        return {
+          moduleId: stats.moduleId,
+          moduleName: stats.moduleName,
+          courseId: stats.courseId,
+          totalReads: stats.totalReads,
+          averagePagesRead: stats.totalReads > 0 ? Math.round(stats.totalPagesRead / stats.totalReads) : 0,
+          completionRate: Math.round(averageCompletionRate * 10) / 10,
+          usersCompleted: stats.usersCompleted,
+          usersInProgress: stats.usersInProgress,
+          usersNotStarted: totalUsers > 0 ? Math.max(0, totalUsers - stats.usersCompleted - stats.usersInProgress) : 0,
+        };
+      });
 
       return {
         totalPDFs,
-        averageCompletionRate,
+        averageCompletionRate: Math.round(averageCompletionRate * 10) / 10,
         totalReadTime,
+        totalUsers: uniqueUsers.size,
+        usersWhoStarted: usersWhoStarted.size,
         pdfs,
       };
     } catch (error) {

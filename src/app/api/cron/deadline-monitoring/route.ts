@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 import { runDeadlineMonitoring, cleanupOrphanedTestSessions } from "@/lib/scheduler";
 
 /**
@@ -15,13 +16,17 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("[CRON] Starting deadline monitoring job...");
+    log.info("Deadline monitoring cron job started", { context: "cron" });
     const result = await runDeadlineMonitoring();
-    
-    console.log("[CRON] Starting orphaned test session cleanup...");
+
+    log.info("Orphaned test session cleanup started", { context: "cron" });
     const cleanupResult = await cleanupOrphanedTestSessions();
-    
-    console.log("[CRON] Deadline monitoring completed:", result, "Cleanup:", cleanupResult);
+
+    log.info("Deadline monitoring cron job completed", {
+      context: "cron",
+      result,
+      cleanup: cleanupResult
+    });
     return NextResponse.json({ 
       success: true, 
       result,
@@ -29,7 +34,7 @@ export async function GET(req: Request) {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error("[CRON] Deadline monitoring failed:", error);
+    log.error("Deadline monitoring cron job failed", { context: "cron", error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

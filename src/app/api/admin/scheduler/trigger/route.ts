@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { 
-  runProactiveReminders, 
-  runDeadlineMonitoring, 
-  runAutoEnrollment, 
+import { log } from "@/lib/logger";
+import {
+  runProactiveReminders,
+  runDeadlineMonitoring,
+  runAutoEnrollment,
   runDepartmentalReports,
   markExpiredEnrollmentsAsFailed,
 } from "@/lib/scheduler";
@@ -16,9 +17,10 @@ export async function POST(req: NextRequest) {
     const session = await auth();
 
     if (!isAdmin(session)) {
-      console.error("[SCHEDULER_TRIGGER] Unauthorized access attempt", {
+      log.error("[SCHEDULER_TRIGGER] Unauthorized access attempt", {
         email: session?.user?.email,
         activeRole: session?.user?.activeRole,
+        context: "api"
       });
       return new NextResponse("Unauthorized - Admin access required", { status: 401 });
     }
@@ -63,7 +65,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    console.error("Failed to trigger job:", error);
+    log.error("Failed to trigger scheduler job", { context: "api", error });
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

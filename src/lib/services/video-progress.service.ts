@@ -220,7 +220,7 @@ export class VideoProgressService {
     try {
       const { courseId, moduleId, startDate, endDate, department } = filters;
 
-      // Build where clause
+      // Build where clause for video progress
       const where: any = {};
 
       if (moduleId) {
@@ -279,23 +279,31 @@ export class VideoProgressService {
 
       // Group by module
       const moduleStats = new Map<string, any>();
+      const uniqueUsers = new Set<string>();
+      const usersWhoStarted = new Set<string>();
 
       for (const record of progressRecords) {
-        const moduleId = record.moduleId;
+        const modId = record.moduleId;
+        uniqueUsers.add(record.userId);
+        if (record.completionRate > 0) {
+          usersWhoStarted.add(record.userId);
+        }
 
-        if (!moduleStats.has(moduleId)) {
-          moduleStats.set(moduleId, {
-            moduleId,
+        if (!moduleStats.has(modId)) {
+          moduleStats.set(modId, {
+            moduleId: modId,
             moduleName: record.module.title,
+            courseId: record.module.courseId,
             totalViews: 0,
             totalWatchTime: 0,
             completionRates: [],
             usersCompleted: 0,
             usersInProgress: 0,
+            usersNotStarted: 0,
           });
         }
 
-        const stats = moduleStats.get(moduleId);
+        const stats = moduleStats.get(modId);
         stats.totalViews += record.watchCount;
         stats.totalWatchTime += record.totalWatchTime;
         stats.completionRates.push(record.completionRate);
@@ -308,23 +316,31 @@ export class VideoProgressService {
       }
 
       // Calculate averages and format output
-      const videos = Array.from(moduleStats.values()).map((stats) => ({
-        moduleId: stats.moduleId,
-        moduleName: stats.moduleName,
-        totalViews: stats.totalViews,
-        averageWatchTime: stats.totalWatchTime / stats.totalViews || 0,
-        completionRate:
-          stats.completionRates.reduce((a: number, b: number) => a + b, 0) /
-            stats.completionRates.length || 0,
-        usersCompleted: stats.usersCompleted,
-        usersInProgress: stats.usersInProgress,
-        usersNotStarted: 0, // Would need enrollment data to calculate
-      }));
+      const videos = Array.from(moduleStats.values()).map((stats) => {
+        const totalUsers = stats.usersCompleted + stats.usersInProgress + stats.usersNotStarted;
+        const averageCompletionRate = stats.completionRates.length > 0
+          ? stats.completionRates.reduce((a: number, b: number) => a + b, 0) / stats.completionRates.length
+          : 0;
+
+        return {
+          moduleId: stats.moduleId,
+          moduleName: stats.moduleName,
+          courseId: stats.courseId,
+          totalViews: stats.totalViews,
+          averageWatchTime: stats.totalViews > 0 ? stats.totalWatchTime / stats.totalViews : 0,
+          completionRate: Math.round(averageCompletionRate * 10) / 10,
+          usersCompleted: stats.usersCompleted,
+          usersInProgress: stats.usersInProgress,
+          usersNotStarted: totalUsers > 0 ? Math.max(0, totalUsers - stats.usersCompleted - stats.usersInProgress) : 0,
+        };
+      });
 
       return {
         totalVideos,
-        averageCompletionRate,
+        averageCompletionRate: Math.round(averageCompletionRate * 10) / 10,
         totalWatchTime,
+        totalUsers: uniqueUsers.size,
+        usersWhoStarted: usersWhoStarted.size,
         videos,
       };
     } catch (error) {

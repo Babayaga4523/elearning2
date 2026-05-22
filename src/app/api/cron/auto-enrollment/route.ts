@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 import { runAutoEnrollment } from "@/lib/scheduler";
 
 /**
@@ -15,17 +16,17 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("[CRON] Starting auto enrollment job...");
+    log.info("Auto enrollment cron job started", { context: "cron" });
     const result = await runAutoEnrollment();
-    
-    console.log("[CRON] Auto enrollment completed:", result);
+
+    log.info("Auto enrollment cron job completed", { context: "cron", result });
     return NextResponse.json({ 
       success: true, 
       result,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error("[CRON] Auto enrollment failed:", error);
+    log.error("Auto enrollment cron job failed", { context: "cron", error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { env } from "@/lib/env";
+import { log } from "@/lib/logger";
 
 const transporter = nodemailer.createTransport({
   host: env.SMTP_HOST,
@@ -34,7 +35,11 @@ export async function sendEmailWithAttachment({
   html: string;
   attachments?: EmailAttachment[];
 }) {
-  console.log(`[EMAIL] Mengirim email ke: ${to}, subject: ${subject}`);
+  log.info("Sending email", {
+    to: Array.isArray(to) ? to.join(", ") : to,
+    subject,
+    context: "email"
+  });
 
   // Convert Blob to Buffer if needed (for Edge/Serverless compatibility)
   const processedAttachments = await Promise.all(

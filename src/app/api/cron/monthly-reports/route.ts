@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 import { runDepartmentalReports } from "@/lib/scheduler";
 
 /**
@@ -15,17 +16,17 @@ export async function GET(req: Request) {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    console.log("[CRON] Starting monthly reports job...");
+    log.info("Monthly reports cron job started", { context: "cron" });
     const result = await runDepartmentalReports();
-    
-    console.log("[CRON] Monthly reports completed:", result);
+
+    log.info("Monthly reports cron job completed", { context: "cron", result });
     return NextResponse.json({ 
       success: true, 
       result,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    console.error("[CRON] Monthly reports failed:", error);
+    log.error("Monthly reports cron job failed", { context: "cron", error });
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 }

@@ -8,6 +8,8 @@
  * - Added input validation for daysThreshold and progressThreshold
  */
 
+export const dynamic = 'force-dynamic';
+
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
@@ -246,13 +248,6 @@ export async function GET(request: NextRequest) {
 
     // Sort by days since enrollment (longest waiting first)
     strugglingUsers.sort((a, b) => b.daysSinceEnrollment - a.daysSinceEnrollment);
-
-    log.info("Struggling users analytics retrieved", {
-      context: "api",
-      adminId: session?.user?.id,
-      count: strugglingUsers.length,
-      filters: { courseId, department, daysThreshold, progressThreshold },
-    });
 
     return NextResponse.json({
       success: true,

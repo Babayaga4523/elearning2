@@ -24,41 +24,34 @@ const authOptions: any = {
 
         const validatedFields = LoginSchema.safeParse(credentials);
 
-        if (validatedFields.success) {
-          const { email, password } = validatedFields.data;
-          
-          console.log("[AUTH] Attempting login for:", email);
+      if (validatedFields.success) {
+        const { email, password } = validatedFields.data;
 
-          const user = await db.user.findUnique({
-            where: { email }
-          });
-          
-          if (!user) {
-            console.log("[AUTH] User not found:", email);
-            return null;
-          }
+        const user = await db.user.findUnique({
+          where: { email }
+        });
 
-          if (!user.password) {
-            console.log("[AUTH] User has no password set:", email);
-            return null;
-          }
-
-          const passwordsMatch = await bcrypt.compare(
-            password,
-            user.password,
-          );
-
-          if (passwordsMatch) {
-            console.log("[AUTH] Login successful:", email);
-            return user;
-          } else {
-            console.log("[AUTH] Password mismatch for:", email);
-            return null;
-          }
-        } else {
-          console.log("[AUTH] Invalid fields:", validatedFields.error.flatten());
+        if (!user) {
           return null;
         }
+
+        if (!user.password) {
+          return null;
+        }
+
+        const passwordsMatch = await bcrypt.compare(
+          password,
+          user.password,
+        );
+
+        if (passwordsMatch) {
+          return user;
+        } else {
+          return null;
+        }
+      } else {
+        return null;
+      }
       },
     }),
     MicrosoftEntraID({
@@ -75,7 +68,6 @@ const authOptions: any = {
 
         // 1. Defense in Depth: Domain Validation
         if (!email.endsWith(`@${allowedDomain}`)) {
-          console.log("[AUTH] Domain validation failed for:", email);
           return false;
         }
 
@@ -98,7 +90,6 @@ const authOptions: any = {
               password: null, // SSO user has no local password
             }
           });
-          console.log("[AUTH] New Microsoft user created:", email);
         } else {
           // Update existing user's last login info
           await db.user.update({
@@ -110,7 +101,6 @@ const authOptions: any = {
               lastLoginMethod: "MICROSOFT",
             }
           });
-          console.log("[AUTH] Existing user logged in via Microsoft:", email);
         }
       } else if (account?.provider === "credentials") {
         // Manual login - update last login info
@@ -122,7 +112,6 @@ const authOptions: any = {
             lastLoginMethod: "MANUAL",
           }
         });
-        console.log("[AUTH] User logged in via credentials:", email);
       }
       return true;
     },

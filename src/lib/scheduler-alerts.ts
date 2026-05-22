@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { log } from "@/lib/logger";
 import { sendEmailWithAttachment } from "@/lib/email";
 
 /**
@@ -110,7 +111,7 @@ export async function checkAndSendAlerts() {
 async function sendAlert(jobName: string, failedLogs: any[]) {
   const adminEmail = process.env.ADMIN_EMAIL;
   if (!adminEmail) {
-    console.error("ADMIN_EMAIL not configured, cannot send alert");
+    log.error("Cannot send scheduler alert: ADMIN_EMAIL not configured", { context: "scheduler-alerts" });
     return;
   }
 
@@ -227,6 +228,6 @@ export async function checkRetryQueueHealth() {
       });
     }
   } catch (error: any) {
-    console.error("Failed to check retry queue health:", error);
+    log.error("Failed to check retry queue health", { context: "scheduler-alerts", error });
   }
 }

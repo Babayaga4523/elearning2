@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { log } from "@/lib/logger";
 import { notifyCourseEnrollment } from "@/lib/notifications";
 import { sendEmailWithAttachment } from "@/lib/email";
 import { batchCreateEnrollments } from "@/lib/enrollment";
@@ -77,13 +78,16 @@ export async function runAutoEnrollment() {
             userIds,
             courseId: rule.courseId,
             courseTitle: rule.course.title,
-          }).catch((err) => console.error("Notification Error:", err));
+          }).catch((err) => log.error("Notification error in auto-enrollment", {
+            context: "scheduler",
+            error: err
+          }));
 
           results.totalEnrolled += count;
         }
       } catch (err: any) {
         const msg = `Error processing rule ${rule.id}: ${err.message}`;
-        console.error(msg);
+        log.error(msg, { context: "scheduler", ruleId: rule.id, error: err });
         results.errors.push(msg);
       }
     }
@@ -179,7 +183,11 @@ export async function runProactiveReminders() {
             });
             notificationCreated = true;
           } catch (notifErr: any) {
-            console.error(`Failed to create system notification for ${e.user.email}:`, notifErr.message);
+            log.error(`Failed to create system notification for ${e.user.email}`, {
+              context: "scheduler",
+              userEmail: e.user.email,
+              error: notifErr
+            });
           }
 
           // 2. Send Email
@@ -210,7 +218,11 @@ export async function runProactiveReminders() {
             });
             emailSent = true;
           } catch (emailErr: any) {
-            console.error(`Email delivery failed for ${e.user.email}: ${emailErr.message}`);
+            log.error(`Email delivery failed for ${e.user.email}`, {
+              context: "scheduler",
+              userEmail: e.user.email,
+              error: emailErr
+            });
             
             // CRITICAL FIX #3: Log failed email to retry queue
             await db.schedulerLog.create({
@@ -230,7 +242,11 @@ export async function runProactiveReminders() {
                 }
               }
             }).catch(logErr => {
-              console.error(`Failed to log retry queue:`, logErr);
+              log.error("Failed to log retry queue", {
+                context: "scheduler",
+                enrollmentId: e.id,
+                error: logErr
+              });
             });
           }
 
@@ -243,10 +259,17 @@ export async function runProactiveReminders() {
             results[config.resultsKey]++;
           } else {
             // Both failed - log critical error
-            console.error(`CRITICAL: Both email and notification failed for enrollment ${e.id}`);
+            log.error(`CRITICAL: Both email and notification failed for enrollment ${e.id}`, {
+              context: "scheduler",
+              enrollmentId: e.id
+            });
           }
         } catch (err: any) {
-          console.error(`Critical error processing reminder for ${e.user.email}:`, err.message);
+          log.error(`Critical error processing reminder for ${e.user.email}`, {
+            context: "scheduler",
+            userEmail: e.user.email,
+            error: err
+          });
         }
       }));
         
@@ -322,9 +345,10 @@ export async function markExpiredEnrollmentsAsFailed(): Promise<{
     skipDuplicates: true,
   });
 
-  console.log(
-    `[DEADLINE] Marked ${expiredEnrollments.length} expired enrollments as FAILED.`
-  );
+  log.info(`Marked ${expiredEnrollments.length} expired enrollments as FAILED`, {
+    context: "scheduler",
+    count: expiredEnrollments.length
+  });
 
   return { marked: expiredEnrollments.length, enrollmentIds };
 }
@@ -400,12 +424,11 @@ async function generateDeadlineReport(enrollments: any[]) {
 
 export async function runDeadlineMonitoring() {
   const start = Date.now();
-  
+
   // ── STEP 1: Tandai semua enrollment yang expired sebagai FAILED ──────────
   // Ini adalah langkah utama: ubah status IN_PROGRESS → FAILED untuk semua
   // enrollment yang sudah melewati deadline.
   const failedResult = await markExpiredEnrollmentsAsFailed();
-  console.log(`[DEADLINE] Marked ${failedResult.marked} enrollments as FAILED.`);
 
   // CRITICAL FIX #1: Get today at midnight in WIB timezone
   const nowWIB = toZonedTime(new Date(), TIMEZONE);
@@ -480,7 +503,10 @@ export async function runDeadlineMonitoring() {
       const recipient = deptConfig?.headEmail || process.env.ADMIN_EMAIL;
 
       if (!recipient) {
-        console.error(`Skipping ${key}: No headEmail or ADMIN_EMAIL defined.`);
+        log.error(`Skipping deadline report: No headEmail or ADMIN_EMAIL defined`, {
+          context: "scheduler",
+          department
+        });
         failedRecipients.push(key);
         continue;
       }
@@ -520,7 +546,11 @@ export async function runDeadlineMonitoring() {
       // Sequential delay to avoid overwhelming SMTP
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (err: any) {
-      console.error(`Failed to send report for ${key}:`, err.message);
+      log.error(`Failed to send deadline report for ${key}`, {
+        context: "scheduler",
+        key,
+        error: err
+      });
       failedRecipients.push(key);
       
       // Rollback reportedAt for failed sends so they can be retried
@@ -529,7 +559,11 @@ export async function runDeadlineMonitoring() {
         where: { id: { in: enrollmentIds } },
         data: { reportedAt: null }, // Reset so it can be retried
       }).catch(rollbackErr => {
-        console.error(`Failed to rollback reportedAt for ${key}:`, rollbackErr);
+        log.error(`Failed to rollback reportedAt for ${key}`, {
+          context: "scheduler",
+          key,
+          error: rollbackErr
+        });
       });
     }
   }
@@ -676,7 +710,11 @@ export async function cleanupOrphanedTestSessions() {
 
         forceSubmitted++;
       } catch (err) {
-        console.error("Failed to cleanup session", session.id, err);
+        log.error(`Failed to cleanup orphaned test session ${session.id}`, {
+          context: "scheduler",
+          sessionId: session.id,
+          error: err
+        });
       }
     }
   }
@@ -952,7 +990,7 @@ export async function runDepartmentalReports() {
       await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (err: any) {
       const msg = `Error sending report for ${config.departmentName}: ${err.message}`;
-      console.error(msg);
+      log.error(msg, { context: "scheduler", department: config.departmentName, error: err });
       results.errors.push(msg);
       results.failedRecipients.push(config.departmentName);
     }
