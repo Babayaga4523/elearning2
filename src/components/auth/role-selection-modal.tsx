@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { User, Shield, Loader2, LogOut, ChevronRight } from "lucide-react"
-import { signOut, useSession } from "next-auth/react"
+import { signOut } from "next-auth/react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
@@ -23,10 +22,12 @@ interface RoleSelectionModalProps {
 }
 
 export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalProps) {
+  const [loading, setLoading] = useState(false);
+  const [selectedRole, setSelectedRole] = useState<string | null>(null);
 
   const handleSelectRole = async (role: string) => {
-    setLoading(true)
-    setSelectedRole(role)
+    setLoading(true);
+    setSelectedRole(role);
 
     try {
       // Update active role di database
@@ -34,34 +35,28 @@ export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalPr
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role }),
-      })
+      });
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || "Failed to set role")
+        const error = await response.json();
+        throw new Error(error.error || "Failed to set role");
       }
 
-      // Force session refresh with updated role
-      await update({
-        activeRole: role,
-        roles: user.roles,
-      })
-
-      // Small delay to ensure session is updated
-      await new Promise(resolve => setTimeout(resolve, 100))
+      // Small delay to ensure server-side update completes
+      await new Promise(resolve => setTimeout(resolve, 100));
 
       // Redirect based on role
-      const redirectPath = role === "ADMIN" || role === "SUPER_ADMIN" ? "/admin" : "/dashboard"
-      
-      toast.success(`Berhasil masuk sebagai ${getRoleLabel(role)}`)
-      
+      const redirectPath = role === "ADMIN" || role === "SUPER_ADMIN" ? "/admin" : "/dashboard";
+
+      toast.success(`Berhasil masuk sebagai ${getRoleLabel(role)}`);
+
       // Use window.location.href to ensure a full page reload with the new session cookie
-      window.location.href = redirectPath
+      window.location.href = redirectPath;
     } catch (error) {
-      console.error("Error setting role:", error)
-      toast.error(error instanceof Error ? error.message : "Gagal mengatur role")
-      setLoading(false)
-      setSelectedRole(null)
+      console.error("Error setting role:", error);
+      toast.error(error instanceof Error ? error.message : "Gagal mengatur role");
+      setLoading(false);
+      setSelectedRole(null);
     }
   }
 
