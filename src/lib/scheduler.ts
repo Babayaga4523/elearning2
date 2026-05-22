@@ -754,10 +754,79 @@ export async function generateDepartmentExcel(departmentName: string) {
       user: { department: departmentName },
     },
     include: {
-      user: { select: { name: true, nip: true, email: true } },
-      course: { select: { id: true, title: true } },
+      user: { select: { name: true, nip: true, email: true, department: true, lokasi: true } },
+      course: {
+        select: {
+          id: true,
+          title: true,
+          category: { select: { name: true } },
+          modules: { select: { id: true } },
+        },
+      },
     },
   });
+
+  // Pre-calculate progress for each enrollment
+  const enrollmentProgressMap = new Map<string, number>();
+
+  if (enrollments.length > 0) {
+    // Collect unique user-course-module combinations
+    const enrollmentIds = enrollments.map((e) => e.id);
+    const userIds = [...new Set(enrollments.map((e) => e.userId))];
+    const courseIds = [...new Set(enrollments.map((e) => e.courseId))];
+
+    // Query video progress for users enrolled in these courses
+    const videoProgress = await db.videoProgress.findMany({
+      where: {
+        userId: { in: userIds },
+        module: { courseId: { in: courseIds } },
+        completed: true,
+      },
+      select: { userId: true, moduleId: true },
+    });
+
+    // Query pdf progress for users enrolled in these courses
+    const pdfProgress = await db.pDFProgress.findMany({
+      where: {
+        userId: { in: userIds },
+        module: { courseId: { in: courseIds } },
+        completed: true,
+      },
+      select: { userId: true, moduleId: true },
+    });
+
+    // Build a set of completed modules per enrollment
+    const completedModulesMap = new Map<string, Set<string>>();
+    videoProgress.forEach((vp) => {
+      // Find which enrollment this belongs to
+      enrollments.forEach((e) => {
+        if (e.userId === vp.userId && e.course.modules.some((m) => m.id === vp.moduleId)) {
+          if (!completedModulesMap.has(e.id)) completedModulesMap.set(e.id, new Set());
+          completedModulesMap.get(e.id)!.add(vp.moduleId);
+        }
+      });
+    });
+    pdfProgress.forEach((pp) => {
+      enrollments.forEach((e) => {
+        if (e.userId === pp.userId && e.course.modules.some((m) => m.id === pp.moduleId)) {
+          if (!completedModulesMap.has(e.id)) completedModulesMap.set(e.id, new Set());
+          completedModulesMap.get(e.id)!.add(pp.moduleId);
+        }
+      });
+    });
+
+    // Calculate progress percentage for each enrollment
+    enrollments.forEach((e) => {
+      const totalModules = e.course.modules.length;
+      if (totalModules === 0) {
+        enrollmentProgressMap.set(e.id, e.status === 'COMPLETED' ? 100 : 0);
+        return;
+      }
+      const completedModules = completedModulesMap.get(e.id)?.size ?? 0;
+      const progress = Math.round((completedModules / totalModules) * 100);
+      enrollmentProgressMap.set(e.id, progress);
+    });
+  }
 
   // ═══════════════════════════════════════════════════════════════════════════
   // SHEET 1: RINGKASAN DEPARTEMEN
@@ -883,31 +952,35 @@ export async function generateDepartmentExcel(departmentName: string) {
     courseSheet.columns = [
       { header: 'No', key: 'no', width: 6 },
       { header: 'NIP', key: 'nip', width: 16 },
-      { header: 'Nama Karyawan', key: 'name', width: 32 },
-      { header: 'Email', key: 'email', width: 32 },
-      { header: 'Status', key: 'status', width: 16 },
+      { header: 'Nama Karyawan', key: 'name', width: 28 },
+      { header: 'Departemen', key: 'dept', width: 20 },
+      { header: 'Lokasi', key: 'lokasi', width: 16 },
+      { header: 'Email', key: 'email', width: 30 },
+      { header: 'Status', key: 'status', width: 14 },
       { header: 'Progress (%)', key: 'progress', width: 14 },
       { header: 'Deadline', key: 'deadline', width: 16 },
       { header: 'Tanggal Selesai', key: 'completedAt', width: 18 },
     ];
 
     // Title
-    styleTitle(courseSheet, 1, stats.courseTitle, 8);
-    
+    styleTitle(courseSheet, 1, stats.courseTitle, 10);
+
     // Subtitle
-    styleSubtitle(courseSheet, 2, 8, `${courseEnrollments.length} Peserta`);
+    styleSubtitle(courseSheet, 2, 10, `${courseEnrollments.length} Peserta`);
 
     // Header row
     styleHeaderRow(courseSheet, 3);
 
     // Data rows
     courseEnrollments.forEach((e, idx) => {
-      const progressValue = e.status === 'COMPLETED' ? 100 : 0;
-      
+      const progressValue = enrollmentProgressMap.get(e.id) ?? 0;
+
       const row = courseSheet.addRow({
         no: idx + 1,
         nip: e.user.nip || '-',
         name: e.user.name,
+        dept: e.user.department || '-',
+        lokasi: e.user.lokasi || '-',
         email: e.user.email,
         status: '', // Will be styled separately
         progress: progressValue,
@@ -920,6 +993,8 @@ export async function generateDepartmentExcel(departmentName: string) {
       // Center align
       row.getCell('no').alignment = { horizontal: 'center', vertical: 'middle' };
       row.getCell('nip').alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell('dept').alignment = { horizontal: 'center', vertical: 'middle' };
+      row.getCell('lokasi').alignment = { horizontal: 'center', vertical: 'middle' };
       row.getCell('progress').alignment = { horizontal: 'center', vertical: 'middle' };
       row.getCell('deadline').alignment = { horizontal: 'center', vertical: 'middle' };
       row.getCell('completedAt').alignment = { horizontal: 'center', vertical: 'middle' };
@@ -942,7 +1017,7 @@ export async function generateDepartmentExcel(departmentName: string) {
     });
 
     // Finalize course sheet
-    finalizeSheet(courseSheet, 8, 3);
+    finalizeSheet(courseSheet, 10, 3);
   }
 
   return workbook;

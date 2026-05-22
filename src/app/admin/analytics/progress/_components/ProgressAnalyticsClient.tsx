@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Download, RefreshCw, Video, FileText, AlertTriangle, TrendingUp } from "lucide-react";
 import { toast } from "sonner";
-import * as XLSX from "exceljs";
+import ExcelJS from "exceljs";
 import { saveAs } from "file-saver";
 
 interface VideoAnalytics {
@@ -142,7 +142,7 @@ export function ProgressAnalyticsClient() {
     try {
       setIsExporting(true);
 
-      const workbook = new XLSX.Workbook();
+      const workbook = new ExcelJS.Workbook();
       workbook.creator = "E-Learning Admin";
       workbook.created = new Date();
 
@@ -238,7 +238,7 @@ export function ProgressAnalyticsClient() {
             daysEnrolled: user.daysSinceEnrollment,
             completion: user.completionRate.toFixed(2),
             stuckModule: user.stuckModule?.moduleName || "N/A",
-            moduleProgress: user.stuckModule?.progress.toFixed(2) || "0",
+            moduleProgress: user.stuckModule?.progress?.toFixed(2) ?? "0",
           });
         });
 
@@ -595,7 +595,16 @@ export function ProgressAnalyticsClient() {
                           </div>
                         </td>
                         <td className="text-right p-3">
-                          <span className="text-sm">{user.daysSinceEnrollment}</span>
+                          <div className="flex flex-col items-end">
+                            <span className="text-sm">{user.daysSinceEnrollment} hari</span>
+                            <span className="text-xs text-gray-500">
+                              {new Date(user.enrolledDate).toLocaleDateString("id-ID", {
+                                day: "numeric",
+                                month: "short",
+                                year: "numeric",
+                              })}
+                            </span>
+                          </div>
                         </td>
                         <td className="text-right p-3">
                           <span className="px-2 py-1 rounded text-sm bg-red-100 text-red-700">

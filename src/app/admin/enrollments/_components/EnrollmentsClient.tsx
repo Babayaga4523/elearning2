@@ -630,7 +630,7 @@ export function EnrollmentsClient({
                                 </div>
                                 <div className="h-6 w-px bg-slate-100" />
                                 <div className="text-center">
-                                  <p className={cn("text-[11px] font-bold", row.postPassed ? "text-emerald-600" : "text-rose-600")}>
+                                  <p className={cn("text-[11px] font-bold", row.postPassed === true ? "text-emerald-600" : row.postPassed === false ? "text-rose-600" : "text-slate-600")}>
                                     {row.postScore != null ? Number(row.postScore).toFixed(0) : "—"}
                                   </p>
                                   <p className="text-[8px] font-bold text-slate-300 uppercase">Post</p>

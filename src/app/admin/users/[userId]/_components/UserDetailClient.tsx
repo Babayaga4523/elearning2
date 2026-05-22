@@ -112,13 +112,11 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
         { header: "Modul Selesai", key: "doneModules", width: 14 },
         { header: "Total Modul", key: "totalModules", width: 13 },
         { header: "Nilai Pre-Test", key: "preScore", width: 16 },
-        { header: "Lulus Pre-Test", key: "prePassed", width: 16 },
         { header: "Nilai Post-Test", key: "postScore", width: 16 },
-        { header: "Lulus Post-Test", key: "postPassed", width: 16 },
       ];
 
-      styleTitle(s2, 1, `Riwayat Kursus — ${user.name}`, 10);
-      styleSubtitle(s2, 2, 10);
+      styleTitle(s2, 1, `Riwayat Kursus — ${user.name}`, 8);
+      styleSubtitle(s2, 2, 8);
       styleHeaderRow(s2, 3);
 
       enrollments.forEach((e, i) => {
@@ -130,17 +128,13 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
           doneModules: e.completedModules,
           totalModules: e.totalModules,
           preScore: e.preScore ?? "—",
-          prePassed: null,
           postScore: e.postScore ?? "—",
-          postPassed: null,
         });
         applyDataRow(row, i);
         applyStatusCell(row.getCell("status"), e.status);
-        applyPassedCell(row.getCell("prePassed"), e.preTestPassed);
-        applyPassedCell(row.getCell("postPassed"), e.postTestPassed);
         centerCols(row, ["enrolledAt", "progress", "doneModules", "totalModules", "preScore", "postScore"]);
       });
-      finalizeSheet(s2, 10);
+      finalizeSheet(s2, 8);
 
       // ── Sheet 3: Log Percobaan Test ─────────────────────────────────────
       const s3 = wb.addWorksheet("Log Percobaan Test");

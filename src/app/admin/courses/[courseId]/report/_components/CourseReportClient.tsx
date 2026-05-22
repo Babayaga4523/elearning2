@@ -144,8 +144,8 @@ export function CourseReportClient({
       sheet.getRow(2).height = 20;
 
       // ─── 4. Header Gold (Row 3) ─────────────────────────────────
-      const preTitle = reportRows[0]?.preTestTitle ?? "PRE-TEST";
-      const postTitle = reportRows[0]?.postTestTitle ?? "POST-TEST";
+      const preTitle = course?.tests?.find((t: any) => t.type === "PRE")?.title ?? "PRE-TEST";
+      const postTitle = course?.tests?.find((t: any) => t.type === "POST")?.title ?? "POST-TEST";
 
       const headerValues = [
         "NIP", "NAMA KARYAWAN", "EMAIL", "DEPARTEMEN", "LOKASI", 
@@ -301,7 +301,7 @@ export function CourseReportClient({
       name: "Rata-rata",
       "Pre-Test": avgPre,
       "Post-Test": avgPost,
-      "Passing Score": reportRows[0]?.prePassing ?? 70,
+      "Passing Score": course?.tests?.find((t: any) => t.type === "POST")?.passingScore ?? course?.tests?.find((t: any) => t.type === "PRE")?.passingScore ?? 70,
     },
   ];
 
