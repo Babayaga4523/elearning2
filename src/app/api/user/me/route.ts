@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/lib/db"
+import { log } from "@/lib/logger"
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,7 @@ export async function GET() {
 
     return NextResponse.json(user)
   } catch (error) {
-    console.error("Error fetching user data:", error)
+    log.error("[USER_ME]", { context: "api", error: String(error) })
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

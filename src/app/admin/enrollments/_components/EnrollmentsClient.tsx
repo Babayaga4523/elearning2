@@ -382,9 +382,9 @@ export function EnrollmentsClient({
           status:     e.status,
           enrolledAt: new Date(e.enrolledAt).toLocaleDateString("id-ID"),
           deadline:   e.courseDeadline ? new Date(e.courseDeadline).toLocaleDateString("id-ID") : "-",
-          preScore:   e.preScore != null ? Number(e.preScore).toFixed(0) : "-",
-          postScore:  e.postScore != null ? Number(e.postScore).toFixed(0) : "-",
-          postPassed: e.postPassed === null ? "-" : e.postPassed ? "LULUS" : "TIDAK LULUS",
+          preScore:   e.preScore !== null && e.preScore !== undefined ? Number(e.preScore).toFixed(0) : "-",
+          postScore:  e.postScore !== null && e.postScore !== undefined ? Number(e.postScore).toFixed(0) : "-",
+          postPassed: e.postPassed === null || e.postPassed === undefined ? "-" : e.postPassed ? "LULUS" : "TIDAK LULUS",
         });
 
         applyDataRow(row, idx);

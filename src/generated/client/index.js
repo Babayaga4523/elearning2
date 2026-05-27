@@ -454,7 +454,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "C:\\Users\\Yoga Krisna\\OneDrive\\Desktop\\elearning2\\src\\generated\\client",
+      "value": "C:\\Users\\yoga.utama\\Desktop\\elearning 2\\src\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -472,7 +472,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "C:\\Users\\Yoga Krisna\\OneDrive\\Desktop\\elearning2\\prisma\\schema.prisma",
+    "sourceFilePath": "C:\\Users\\yoga.utama\\Desktop\\elearning 2\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {
@@ -486,6 +486,7 @@ const config = {
     "db"
   ],
   "activeProvider": "postgresql",
+  "postinstall": false,
   "inlineDatasources": {
     "db": {
       "url": {

@@ -11,7 +11,6 @@ import { CourseProgressModal } from "./CourseProgressModal";
 interface EnrollmentRow {
   id: string;
   courseId: string;
-  courseTitle: string;
   status: string;
   enrolledAt: string;
   moduleProgress: number;
@@ -24,8 +23,34 @@ interface EnrollmentRow {
   testAttempts: any[];
 }
 
-interface LearningHistoryTableProps {
-  enrollments: EnrollmentRow[];
+// Re-export EnrollmentWithProgress as EnrollmentRow for type compatibility
+export interface LearningHistoryTableProps {
+  enrollments: {
+    id: string;
+    courseId: string;
+    status: string;
+    createdAt: Date | string;
+    enrolledAt?: Date | string;
+    moduleProgress: number;
+    completedModules: number;
+    totalModules: number;
+    preScore: number | null;
+    preTestPassed: boolean | null;
+    postScore: number | null;
+    postTestPassed: boolean | null;
+    course: { title: string };
+    modules?: any[];
+    testAttempts?: any[];
+  }[];
+}
+
+// Helper to get course data from EnrollmentWithProgress
+function getCourseTitle(e: LearningHistoryTableProps["enrollments"][number]): string {
+  return e.course?.title ?? "Kursus Tidak Diketahui";
+}
+
+function getEnrolledAt(e: LearningHistoryTableProps["enrollments"][number]): Date {
+  return new Date(e.enrolledAt ?? e.createdAt);
 }
 
 const surface = {
@@ -43,11 +68,11 @@ const surface = {
 
 export function LearningHistoryTable({ enrollments }: LearningHistoryTableProps) {
   const [search, setSearch] = useState("");
-  const [selectedEnrollment, setSelectedEnrollment] = useState<EnrollmentRow | null>(null);
+  const [selectedEnrollment, setSelectedEnrollment] = useState<LearningHistoryTableProps["enrollments"][number] | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filtered = enrollments.filter((e) =>
-    e.courseTitle.toLowerCase().includes(search.toLowerCase())
+    getCourseTitle(e).toLowerCase().includes(search.toLowerCase())
   );
 
   return (
@@ -141,12 +166,12 @@ export function LearningHistoryTable({ enrollments }: LearningHistoryTableProps)
                     <td className="px-5 py-4">
                       <div className="flex flex-col">
                         <span className="text-sm font-bold text-slate-800 transition-colors group-hover:text-[#0F1C3F]">
-                          {e.courseTitle}
+                          {getCourseTitle(e)}
                         </span>
                         <span className="mt-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-wide text-slate-400">
                           <Calendar className="h-3 w-3" />
                           Daftar:{" "}
-                          {new Date(e.enrolledAt).toLocaleDateString("id-ID", {
+                          {getEnrolledAt(e).toLocaleDateString("id-ID", {
                             day: "numeric",
                             month: "short",
                             year: "numeric",
@@ -184,7 +209,7 @@ export function LearningHistoryTable({ enrollments }: LearningHistoryTableProps)
                           />
                         </div>
                         <span className="text-center text-[10px] font-bold text-slate-500">
-                          {e.completedModulesCount}/{e.totalModulesCount} ({e.moduleProgress}%)
+                          {e.completedModules}/{e.totalModules} ({e.moduleProgress}%)
                         </span>
                       </div>
                     </td>
@@ -201,7 +226,7 @@ export function LearningHistoryTable({ enrollments }: LearningHistoryTableProps)
                           <span
                             className={cn(
                               "text-base font-black leading-none",
-                              e.postPassed ? "text-emerald-600" : "text-rose-600"
+                              e.postTestPassed ? "text-emerald-600" : "text-rose-600"
                             )}
                           >
                             {e.postScore}
@@ -209,10 +234,10 @@ export function LearningHistoryTable({ enrollments }: LearningHistoryTableProps)
                           <span
                             className={cn(
                               "mt-1 text-[9px] font-black uppercase",
-                              e.postPassed ? "text-emerald-500" : "text-rose-500"
+                              e.postTestPassed ? "text-emerald-500" : "text-rose-500"
                             )}
                           >
-                            {e.postPassed ? "Lulus" : "Tidak lulus"}
+                            {e.postTestPassed ? "Lulus" : "Tidak lulus"}
                           </span>
                         </div>
                       ) : (

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { isAdmin } from "@/lib/auth-helpers";
+import { log } from "@/lib/logger";
 
 /**
  * Placeholder API route for course reports.
@@ -13,10 +14,11 @@ export async function GET(
 ) {
   const session = await auth();
   if (!isAdmin(session)) {
-    console.error("[COURSE_REPORTS] Unauthorized access attempt", {
+    log.error("[COURSE_REPORTS] Unauthorized access attempt", {
       email: session?.user?.email,
       activeRole: session?.user?.activeRole,
       courseId: params.courseId,
+      context: "api",
     });
     return new NextResponse("Unauthorized - Admin access required", { status: 401 });
   }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { isAdmin } from "@/lib/auth-helpers";
+import { log } from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -10,9 +11,10 @@ export async function GET(req: NextRequest) {
     const session = await auth();
 
     if (!isAdmin(session)) {
-      console.error("[SCHEDULER_STATS] Unauthorized access attempt", {
+      log.error("[SCHEDULER_STATS] Unauthorized access attempt", {
         email: session?.user?.email,
         activeRole: session?.user?.activeRole,
+        context: "api",
       });
       return new NextResponse("Unauthorized - Admin access required", { status: 401 });
     }
@@ -72,7 +74,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(statsArray);
   } catch (error) {
-    console.error("Failed to fetch scheduler stats:", error);
+    log.error("[SCHEDULER_STATS] Failed to fetch scheduler stats", { context: "api", error: String(error) });
     return new NextResponse("Internal Server Error", { status: 500 });
   }
 }

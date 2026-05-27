@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth-helpers";
 import { windowStart, EMAIL_MAX_ATTEMPTS, IP_MAX_ATTEMPTS } from "@/lib/rate-limiter";
+import { log } from "@/lib/logger";
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export async function GET() {
       ips: lockedIpsCount,
     });
   } catch (error) {
-    console.error("[LOCKED_ACCOUNTS_COUNT]", error);
+    log.error("[LOCKED_ACCOUNTS_COUNT]", { context: "api", error: String(error) });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

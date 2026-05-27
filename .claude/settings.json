@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(dir /b \"C:\\\\Users\\\\yoga.utama\\\\Desktop\\\\elearning 2\\\\src\\\\app\\\\api\\\\profile\" 2>nul || echo \"Directory not found\")"
+      "Bash(dir /b \"C:\\\\Users\\\\yoga.utama\\\\Desktop\\\\elearning 2\\\\src\\\\app\\\\api\\\\profile\" 2>nul || echo \"Directory not found\")",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ],
     "additionalDirectories": [
       "C:\\Users\\yoga.utama\\Desktop\\elearning 2"

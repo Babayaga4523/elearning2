@@ -7,6 +7,7 @@ export const dynamic = 'force-dynamic';
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 
 export async function GET() {
   try {
@@ -52,7 +53,7 @@ export async function GET() {
       role: "ADMIN",
     });
   } catch (error) {
-    console.error("[ROLE_PERMISSIONS_GET]", error);
+    log.error("[ROLE_PERMISSIONS_GET]", { context: "api", error: String(error) });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
@@ -129,7 +130,7 @@ export async function PUT(req: Request) {
       assignedCount: permissionIds.length,
     });
   } catch (error) {
-    console.error("[ROLE_PERMISSIONS_PUT]", error);
+    log.error("[ROLE_PERMISSIONS_PUT]", { context: "api", error: String(error) });
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

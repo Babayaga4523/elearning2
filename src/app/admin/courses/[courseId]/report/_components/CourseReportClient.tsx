@@ -125,7 +125,8 @@ export function CourseReportClient({
       // ─── 3. Judul Navy (Row 1) ──────────────────────────────────
       sheet.mergeCells("A1:N1");
       const titleCell = sheet.getCell("A1");
-      titleCell.value = `LAPORAN HASIL PELATIHAN: ${course.title.toUpperCase()}`;
+      const courseTitle = course?.title ?? "Kursus Tidak Diketahui";
+      titleCell.value = `LAPORAN HASIL PELATIHAN: ${courseTitle.toUpperCase()}`;
       titleCell.font = { bold: true, size: 14, color: { argb: "FFFFFFFF" } };
       titleCell.fill = {
         type: "pattern",
@@ -256,7 +257,7 @@ export function CourseReportClient({
       toast.dismiss(toastId);
       toast.success("Laporan berhasil diunduh.");
     } catch (error) {
-      console.error("Export Error:", error);
+      console.error("[COURSE_REPORT_EXPORT]", error);
       toast.error("Gagal mengekspor laporan. Silakan coba lagi.");
     }
   }, [reportRows, course.title, course.tests.length]);

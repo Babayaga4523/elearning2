@@ -3,7 +3,6 @@ import { log } from "@/lib/logger";
 import { notifyCourseEnrollment } from "@/lib/notifications";
 import { sendEmailWithAttachment } from "@/lib/email";
 import { batchCreateEnrollments } from "@/lib/enrollment";
-import ExcelJS from "exceljs";
 import { toZonedTime } from "date-fns-tz";
 import { 
   createWorkbook, 
@@ -435,6 +434,10 @@ export async function runDeadlineMonitoring() {
   const todayWIB = new Date(nowWIB);
   todayWIB.setHours(0, 0, 0, 0);
 
+  // PRE-FETCH: Get all department configs to avoid N+1 queries in loop
+  const allDeptConfigs = await db.departmentConfig.findMany();
+  const deptConfigMap = new Map(allDeptConfigs.map(c => [c.departmentName, c]));
+
   // CRITICAL FIX #2: Use transaction with atomic update to prevent race condition
   // This ensures only ONE scheduler instance processes each enrollment
   const expiredEnrollments = await db.$transaction(async (tx) => {
@@ -495,9 +498,8 @@ export async function runDeadlineMonitoring() {
       const [_, department] = key.split("__");
       const courseTitle = enrollments[0].course.title;
 
-      const deptConfig = await db.departmentConfig.findUnique({
-        where: { departmentName: department },
-      });
+      // Use pre-fetched config map instead of N+1 query
+      const deptConfig = deptConfigMap.get(department);
 
       const excelBuffer = await generateDeadlineReport(enrollments);
       const recipient = deptConfig?.headEmail || process.env.ADMIN_EMAIL;
@@ -771,7 +773,6 @@ export async function generateDepartmentExcel(departmentName: string) {
 
   if (enrollments.length > 0) {
     // Collect unique user-course-module combinations
-    const enrollmentIds = enrollments.map((e) => e.id);
     const userIds = [...new Set(enrollments.map((e) => e.userId))];
     const courseIds = [...new Set(enrollments.map((e) => e.courseId))];
 
@@ -795,24 +796,30 @@ export async function generateDepartmentExcel(departmentName: string) {
       select: { userId: true, moduleId: true },
     });
 
-    // Build a set of completed modules per enrollment
-    const completedModulesMap = new Map<string, Set<string>>();
-    videoProgress.forEach((vp) => {
-      // Find which enrollment this belongs to
-      enrollments.forEach((e) => {
-        if (e.userId === vp.userId && e.course.modules.some((m) => m.id === vp.moduleId)) {
-          if (!completedModulesMap.has(e.id)) completedModulesMap.set(e.id, new Set());
-          completedModulesMap.get(e.id)!.add(vp.moduleId);
-        }
+    // Build enrollment lookup map: (userId, moduleId) -> enrollmentId
+    const enrollmentLookup = new Map<string, string>();
+    enrollments.forEach((e) => {
+      e.course.modules.forEach((m) => {
+        const key = `${e.userId}:${m.id}`;
+        enrollmentLookup.set(key, e.id);
       });
     });
+
+    // Build a set of completed modules per enrollment (single pass)
+    const completedModulesMap = new Map<string, Set<string>>();
+    videoProgress.forEach((vp) => {
+      const enrollmentId = enrollmentLookup.get(`${vp.userId}:${vp.moduleId}`);
+      if (enrollmentId) {
+        if (!completedModulesMap.has(enrollmentId)) completedModulesMap.set(enrollmentId, new Set());
+        completedModulesMap.get(enrollmentId)!.add(vp.moduleId);
+      }
+    });
     pdfProgress.forEach((pp) => {
-      enrollments.forEach((e) => {
-        if (e.userId === pp.userId && e.course.modules.some((m) => m.id === pp.moduleId)) {
-          if (!completedModulesMap.has(e.id)) completedModulesMap.set(e.id, new Set());
-          completedModulesMap.get(e.id)!.add(pp.moduleId);
-        }
-      });
+      const enrollmentId = enrollmentLookup.get(`${pp.userId}:${pp.moduleId}`);
+      if (enrollmentId) {
+        if (!completedModulesMap.has(enrollmentId)) completedModulesMap.set(enrollmentId, new Set());
+        completedModulesMap.get(enrollmentId)!.add(pp.moduleId);
+      }
     });
 
     // Calculate progress percentage for each enrollment

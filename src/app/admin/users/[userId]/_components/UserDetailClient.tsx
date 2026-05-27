@@ -38,17 +38,61 @@ import {
   downloadExcel,
 } from "@/lib/excel-template";
 
+interface UserProfile {
+  id: string;
+  name: string | null;
+  email: string;
+  department: string | null;
+  nip: string | null;
+  lokasi: string | null;
+  createdAt: Date | string;
+}
+
+interface EnrollmentWithProgress {
+  id: string;
+  courseId: string;
+  status: string;
+  createdAt: Date | string;
+  enrolledAt?: Date | string; // alias for createdAt (API may return either)
+  updatedAt?: Date | string;
+  moduleProgress: number;
+  completedModules: number;
+  totalModules: number;
+  preScore: number | null;
+  preTestPassed: boolean | null;
+  postScore: number | null;
+  postTestPassed: boolean | null;
+  course: { title: string; category?: { name: string } | null };
+  testAttempts?: Array<{
+    id: string;
+    test?: { type: string; passingScore: number };
+    score: number | null;
+    passed: boolean | null;
+    attemptNumber: number;
+    startedAt: Date | string;
+    completedAt?: Date | string;
+    createdAt?: Date | string;
+    answers?: Array<{
+      question?: { text: string; options?: Array<{ isCorrect: boolean; text: string }> };
+      selectedOption?: { text: string };
+      isCorrect: boolean | null;
+    }>;
+  }>;
+}
+
+interface UserSummary {
+  totalEnrollments: number;
+  completed: number;
+  failed: number;
+  inProgress: number;
+  avgPostScore: number;
+  complianceRate: number;
+}
+
 interface UserDetailClientProps {
-  user: any;
-  enrollments: any[];
-  summary: {
-    totalEnrollments: number;
-    completed: number;
-    failed: number;
-    inProgress: number;
-    avgPostScore: number;
-    complianceRate: number;
-  };
+  user: UserProfile;
+  enrollments: EnrollmentWithProgress[];
+  summary: UserSummary;
 }
 
 export function UserDetailClient({ user, enrollments, summary }: UserDetailClientProps) {
@@ -120,10 +164,11 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
       styleHeaderRow(s2, 3);
 
       enrollments.forEach((e, i) => {
+        const enrolledAt = e.enrolledAt ?? e.createdAt;
         const row = s2.addRow({
           title: e.course.title,
           status: e.status,
-          enrolledAt: new Date(e.enrolledAt).toLocaleDateString("id-ID"),
+          enrolledAt: new Date(enrolledAt).toLocaleDateString("id-ID"),
           progress: e.moduleProgress,
           doneModules: e.completedModules,
           totalModules: e.totalModules,
@@ -154,7 +199,7 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
       styleHeaderRow(s3, 3);
 
       const allAttempts = enrollments.flatMap((e) =>
-        e.testAttempts.map((a: any, idx: number) => {
+        (e.testAttempts ?? []).map((a: { id: string; test?: { type: string; passingScore: number }; score: number | null; passed: boolean | null; attemptNumber: number; startedAt: Date | string; completedAt?: Date | string; createdAt?: Date | string }, idx: number) => {
           const duration =
             a.completedAt && a.startedAt
               ? Math.round(
@@ -169,7 +214,7 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
             kkm: a.test?.passingScore || 70,
             passed: a.passed,
             duration: duration ?? "—",
-            date: new Date(a.createdAt).toLocaleString("id-ID"),
+            date: new Date(a.createdAt ?? Date.now()).toLocaleString("id-ID"),
           };
         })
       );
@@ -201,15 +246,15 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
       styleHeaderRow(s4, 3);
 
       const allAnswers = enrollments.flatMap((e) =>
-        e.testAttempts.flatMap((a: any, attemptIdx: number) =>
-          (a.answers ?? []).map((ans: any, qIdx: number) => ({
+        (e.testAttempts ?? []).flatMap((a: { test?: { type: string }; attemptNumber: number; answers?: Array<{ question?: { text: string; options?: Array<{ isCorrect: boolean; text: string }> }; selectedOption?: { text: string }; isCorrect: boolean | null }> }, attemptIdx: number) =>
+          (a.answers ?? []).map((ans, qIdx: number) => ({
             course: e.course.title,
             type: a.test?.type === "PRE" ? "Pre-Test" : "Post-Test",
             attempt: a.attemptNumber || (attemptIdx + 1),
             no: qIdx + 1,
             question: ans.question?.text ?? "—",
             selected: ans.selectedOption?.text ?? "Tidak dijawab",
-            correctAns: ans.question?.options?.find((o: any) => o.isCorrect)?.text ?? "—",
+            correctAns: ans.question?.options?.find((o) => o.isCorrect)?.text ?? "—",
             isCorrect: ans.isCorrect,
           }))
         )
@@ -228,7 +273,7 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
         allAnswers.forEach((a, i) => {
           const row = s4.addRow(a);
           applyDataRow(row, i);
-          applyCorrectCell(row.getCell("result"), a.isCorrect);
+          applyCorrectCell(row.getCell("result"), a.isCorrect ?? false);
           centerCols(row, ["type", "attempt", "no"]);
           row.getCell("question").alignment = { vertical: "middle", wrapText: true };
           row.height = a.question.length > 80 ? 32 : 19;
@@ -240,7 +285,7 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
       await downloadExcel(wb, fileName);
       toast.success("Rekap audit berhasil diunduh.");
     } catch (error) {
-      console.error(error);
+      console.error("[USER_DETAIL_EXPORT]", error);
       toast.error("Gagal mengekspor data Excel.");
     } finally {
       setIsExporting(false);

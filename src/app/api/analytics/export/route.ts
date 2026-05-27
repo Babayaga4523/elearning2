@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import ExcelJS from "exceljs";
 import { isAdmin } from "@/lib/auth-helpers";
+import { log } from "@/lib/logger";
 import {
   BRAND,
   createWorkbook,
@@ -30,9 +30,10 @@ export async function GET() {
   const session = await auth();
 
   if (!isAdmin(session)) {
-    console.error("[ANALYTICS_EXPORT] Unauthorized access attempt", {
+    log.error("[ANALYTICS_EXPORT] Unauthorized access attempt", {
       email: session?.user?.email,
       activeRole: session?.user?.activeRole,
+      context: "api",
     });
     return new NextResponse("Unauthorized - Admin access required", { status: 401 });
   }

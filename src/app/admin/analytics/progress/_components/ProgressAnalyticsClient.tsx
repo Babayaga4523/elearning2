@@ -5,7 +5,7 @@
  * Interactive dashboard for video and PDF progress analytics
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,7 @@ export function ProgressAnalyticsClient() {
   const [strugglingUsers, setStrugglingUsers] = useState<StrugglingUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Filters
   const [courseFilter, setCourseFilter] = useState("");
@@ -87,10 +88,10 @@ export function ProgressAnalyticsClient() {
   const [dateRangeStart, setDateRangeStart] = useState("");
   const [dateRangeEnd, setDateRangeEnd] = useState("");
 
-  // Load analytics data
-  const loadAnalytics = async () => {
+  const loadAnalytics = useCallback(async () => {
     try {
       setIsLoading(true);
+      setError(null); // Reset error state
 
       // Build query params
       const params = new URLSearchParams();
@@ -101,16 +102,28 @@ export function ProgressAnalyticsClient() {
 
       // Fetch video analytics
       const videoRes = await fetch(`/api/admin/analytics/video?${params}`);
+      if (!videoRes.ok) {
+        const errText = await videoRes.text();
+        throw new Error(`Video analytics failed (${videoRes.status}): ${errText}`);
+      }
       const videoData = await videoRes.json();
       if (videoData.success) {
         setVideoAnalytics(videoData.data);
+      } else {
+        throw new Error(videoData.error ?? "Failed to load video analytics");
       }
 
       // Fetch PDF analytics
       const pdfRes = await fetch(`/api/admin/analytics/pdf?${params}`);
+      if (!pdfRes.ok) {
+        const errText = await pdfRes.text();
+        throw new Error(`PDF analytics failed (${pdfRes.status}): ${errText}`);
+      }
       const pdfData = await pdfRes.json();
       if (pdfData.success) {
         setPDFAnalytics(pdfData.data);
+      } else {
+        throw new Error(pdfData.error ?? "Failed to load PDF analytics");
       }
 
       // Fetch struggling users
@@ -121,21 +134,32 @@ export function ProgressAnalyticsClient() {
       strugglingParams.append("progress", "50");
 
       const strugglingRes = await fetch(`/api/admin/analytics/struggling-users?${strugglingParams}`);
+      if (!strugglingRes.ok) {
+        const errText = await strugglingRes.text();
+        throw new Error(`Struggling users failed (${strugglingRes.status}): ${errText}`);
+      }
       const strugglingData = await strugglingRes.json();
       if (strugglingData.success) {
         setStrugglingUsers(strugglingData.data.users);
+      } else {
+        throw new Error(strugglingData.error ?? "Failed to load struggling users");
       }
     } catch (error) {
       console.error("Failed to load analytics:", error);
-      toast.error("Gagal memuat analytics");
+      const errorMessage = error instanceof Error ? error.message : "Gagal memuat analytics";
+      toast.error(errorMessage);
+      setError(errorMessage);
+      setVideoAnalytics(null);
+      setPDFAnalytics(null);
+      setStrugglingUsers([]);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [courseFilter, departmentFilter, dateRangeStart, dateRangeEnd]);
 
   useEffect(() => {
     loadAnalytics();
-  }, []);
+  }, [loadAnalytics]);
 
   // Export to Excel
   const exportToExcel = async (type: "video" | "pdf" | "struggling") => {
@@ -283,6 +307,19 @@ export function ProgressAnalyticsClient() {
           <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
           <p className="text-gray-600">Memuat analytics...</p>
         </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center h-96 gap-4">
+        <AlertTriangle className="h-8 w-8 text-red-500" />
+        <p className="text-red-600 font-medium">{error}</p>
+        <Button onClick={() => { setError(null); loadAnalytics(); }}>
+          <RefreshCw className="h-4 w-4 mr-2" />
+          Coba Lagi
+        </Button>
       </div>
     );
   }
@@ -598,11 +635,11 @@ export function ProgressAnalyticsClient() {
                           <div className="flex flex-col items-end">
                             <span className="text-sm">{user.daysSinceEnrollment} hari</span>
                             <span className="text-xs text-gray-500">
-                              {new Date(user.enrolledDate).toLocaleDateString("id-ID", {
+                              {user.enrolledDate ? new Date(user.enrolledDate).toLocaleDateString("id-ID", {
                                 day: "numeric",
                                 month: "short",
                                 year: "numeric",
-                              })}
+                              }) : "-"}
                             </span>
                           </div>
                         </td>
