@@ -324,46 +324,45 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
   return (
     <div className="w-full space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-4">
           <Link href="/admin/users">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
-              <ArrowLeft className="h-4 w-4" />
+            <Button variant="ghost" size="icon" className="h-10 w-10 rounded-lg hover:bg-[#F8F9FB] hover:text-[#0F1C3F] text-[#475467]">
+              <ArrowLeft className="h-5 w-5" />
             </Button>
           </Link>
           <div>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Profil Karyawan</p>
-            <h1 className="text-base font-bold text-[#0F1C3F]">{user.name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#101828] tracking-tight font-lexend">{user.name}</h1>
+            <p className="text-[13px] sm:text-sm text-[#475467] font-medium leading-relaxed">Profil dan rekam jejak Karyawan.</p>
           </div>
         </div>
         <Button
           onClick={handleExportExcel}
           disabled={isExporting}
-          size="sm"
-          className="h-8 gap-1.5 bg-[#0F1C3F] hover:bg-[#1A3060] text-white text-xs"
+          className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white gap-2 h-10 px-5 rounded-lg shadow-sm font-bold transition-all active:scale-95 font-sans"
         >
-          {isExporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-          Export
+          {isExporting ? <Loader2 className="h-4 w-4 animate-spin text-white" /> : <Download className="h-4 w-4 text-white" />}
+          Export Data
         </Button>
       </div>
 
       {/* Stats Bar */}
-      <div className="grid grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pb-2">
         {statCards.map((stat) => (
-          <Card key={stat.label} className="border-none shadow-sm">
-            <CardContent className="p-3 flex items-center gap-3">
-              <div className={cn(
-                "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
-                stat.variant === "success" && "bg-emerald-100 text-emerald-600",
-                stat.variant === "warning" && "bg-amber-100 text-amber-600",
-                stat.variant === "info" && "bg-blue-100 text-blue-600",
-                stat.variant === "default" && "bg-slate-100 text-slate-600"
-              )}>
-                <stat.icon className="h-4 w-4" />
+          <Card key={stat.label} className="group overflow-hidden border border-[#E4E7EC] bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 rounded-xl font-sans">
+            <CardContent className="p-4 md:p-5">
+              <div className="flex items-start justify-between">
+                <div className="rounded-lg bg-[#F8F9FB] border border-[#E4E7EC] p-2 transition-colors group-hover:bg-[#0F1C3F] group-hover:text-white">
+                  <stat.icon className="h-4 w-4 text-[#475467] group-hover:text-white transition-colors" />
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-lg font-bold text-[#0F1C3F] leading-none">{stat.value}</p>
-                <p className="text-[10px] text-slate-500 truncate">{stat.label}</p>
+              <div className="mt-4">
+                <p className="text-2xl font-bold text-[#101828] font-lexend tracking-tight">
+                  {stat.value}
+                </p>
+                <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  {stat.label}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -373,60 +372,75 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
       {/* Main Content */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         {/* Profile */}
-        <Card className="border-none shadow-md h-fit">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3 mb-4">
-              <Avatar className="h-12 w-12 border-2 border-[#E8A020]">
-                <AvatarFallback className="bg-[#0F1C3F] text-white text-sm font-bold">
+        <Card className="border border-[#E4E7EC] bg-white shadow-sm rounded-xl h-fit font-sans">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-4 mb-6">
+              <Avatar className="h-14 w-14 border-2 border-[#E4E7EC] shadow-sm">
+                <AvatarFallback className="bg-[#F8F9FB] text-[#0F1C3F] text-lg font-bold font-lexend">
                   {user.name?.charAt(0)?.toUpperCase() ?? "?"}
                 </AvatarFallback>
               </Avatar>
               <div className="min-w-0">
-                <h2 className="text-sm font-bold text-slate-900 truncate">{user.name}</h2>
-                <p className="text-xs text-slate-500 truncate">{user.email}</p>
+                <h2 className="text-lg font-bold text-[#101828] font-lexend truncate">{user.name}</h2>
+                <p className="text-[13px] text-[#475467] font-medium truncate mt-0.5">{user.email}</p>
               </div>
             </div>
 
-            <div className="space-y-2.5">
-              <div className="flex items-center gap-2 text-xs">
-                <Contact className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="text-slate-500">NIP:</span>
-                <span className="font-medium text-slate-700">{user.nip || "—"}</span>
+            <div className="space-y-4">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  <Contact className="h-3.5 w-3.5" />
+                  NIP Karyawan
+                </div>
+                <div className="font-bold text-[#101828] text-sm pl-5">{user.nip || "—"}</div>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <Building2 className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="text-slate-500">Dept:</span>
-                <span className="font-medium text-slate-700">{user.department || "—"}</span>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  <Building2 className="h-3.5 w-3.5" />
+                  Departemen
+                </div>
+                <div className="font-bold text-[#101828] text-sm pl-5">{user.department || "—"}</div>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="text-slate-500">Lokasi:</span>
-                <span className="font-medium text-slate-700">{user.lokasi || "—"}</span>
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  <MapPin className="h-3.5 w-3.5" />
+                  Lokasi / Kantor
+                </div>
+                <div className="font-bold text-[#101828] text-sm pl-5">{user.lokasi || "—"}</div>
               </div>
-              <div className="flex items-center gap-2 text-xs">
-                <Calendar className="h-3.5 w-3.5 text-slate-400 shrink-0" />
-                <span className="text-slate-500">Terdaftar:</span>
-                <span className="font-medium text-slate-700">
+
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">
+                  <Calendar className="h-3.5 w-3.5" />
+                  Terdaftar Sejak
+                </div>
+                <div className="font-bold text-[#101828] text-sm pl-5">
                   {new Date(user.createdAt).toLocaleDateString("id-ID", { day: 'numeric', month: 'short', year: 'numeric' })}
-                </span>
+                </div>
               </div>
             </div>
 
-            <Separator className="my-3" />
+            <Separator className="my-5 border-[#E4E7EC]" />
 
             <div className={cn(
-              "flex items-center gap-2 p-2.5 rounded-lg",
-              complianceOk ? "bg-emerald-50" : "bg-amber-50"
+              "flex items-center gap-3 p-4 rounded-xl border",
+              complianceOk ? "bg-[#ECFDF3] border-[#A6F4C5]" : "bg-[#FFFAEB] border-[#FEC84B]"
             )}>
               <div className={cn(
-                "h-6 w-6 rounded-full flex items-center justify-center text-white text-xs",
-                complianceOk ? "bg-emerald-500" : "bg-amber-500"
+                "h-8 w-8 rounded-lg flex items-center justify-center text-white shrink-0 shadow-sm",
+                complianceOk ? "bg-[#12B76A]" : "bg-[#F79009]"
               )}>
-                <CheckCircle className="h-3.5 w-3.5" />
+                <CheckCircle className="h-4 w-4" />
               </div>
-              <div>
-                <p className="text-[10px] text-slate-500 uppercase">Compliance</p>
-                <p className="text-sm font-bold text-slate-900">{summary.complianceRate.toFixed(0)}%</p>
+              <div className="flex-1 min-w-0">
+                <p className={cn("text-[11px] font-bold uppercase tracking-wider", complianceOk ? "text-[#027A48]" : "text-[#B54708]")}>
+                  Tingkat Kepatuhan (Compliance)
+                </p>
+                <p className={cn("text-xl font-bold font-lexend mt-0.5", complianceOk ? "text-[#027A48]" : "text-[#B54708]")}>
+                  {summary.complianceRate.toFixed(0)}%
+                </p>
               </div>
             </div>
           </CardContent>

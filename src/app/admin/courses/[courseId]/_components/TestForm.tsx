@@ -6,7 +6,7 @@ import { useForm, useFieldArray } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { ConfirmDialog } from "@/components/ConfirmDialog";
+import Link from "next/link";
 import {
   Form,
   FormControl,
@@ -14,15 +14,25 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-  FormDescription,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { upsertTest } from "../actions";
-import { ArrowLeft, Plus, Trash, Hash, Shuffle, CheckCircle2, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  Plus,
+  Trash,
+  Hash,
+  Shuffle,
+  CheckCircle2,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ConfirmDraftDialog } from "@/components/admin/ConfirmDraftDialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 const OPTION_LABELS = ["A", "B", "C", "D", "E", "F"];
 
@@ -36,9 +46,10 @@ const questionSchema = z.object({
       })
     )
     .min(2, "Minimal 2 opsi")
-    .refine((opts) => opts.filter((o) => o.isCorrect).length === 1, {
-      message: "Setiap soal harus memiliki tepat 1 jawaban benar",
-    }),
+    .refine(
+      (opts) => opts.filter((o) => o.isCorrect).length === 1,
+      { message: "Setiap soal harus memiliki tepat 1 jawaban benar" }
+    ),
 });
 
 const formSchema = z.object({
@@ -51,25 +62,25 @@ const formSchema = z.object({
   questions: z.array(questionSchema).min(1, "Minimal harus ada 1 soal"),
 });
 
-interface TestFormProps {
+type TestFormProps = {
   courseId: string;
   initialData?: any;
   type: "PRE_TEST" | "POST_TEST";
   isCoursePublished?: boolean;
-}
+};
 
-export const TestForm = ({
+export function TestForm({
   courseId,
   initialData,
   type,
   isCoursePublished,
-}: TestFormProps) => {
+}: TestFormProps) {
   const router = useRouter();
   const [showDraftConfirm, setShowDraftConfirm] = useState(false);
-  const [pendingValues, setPendingValues] =
-    useState<z.infer<typeof formSchema> | null>(null);
+  const [pendingValues, setPendingValues] = useState<z.infer<typeof formSchema> | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [expandedQuestions, setExpandedQuestions] = useState<Record<number, boolean>>({});
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -186,6 +197,15 @@ export const TestForm = ({
     }
   };
 
+  const toggleQuestion = (index: number) => {
+    setExpandedQuestions((prev) => ({ ...prev, [index]: !prev[index] }));
+  };
+
+  const inputCls =
+    "h-10 w-full rounded-xl border-[#E4E7EC] bg-white text-sm text-[#101828] placeholder:text-[#98A2B3] focus:border-[#0F1C3F] focus:ring-2 focus:ring-[#0F1C3F]/10 focus:outline-none transition-all";
+  const labelCls = "text-sm font-medium text-[#344054]";
+  const hintCls = "text-xs text-[#98A2B3] mt-1";
+
   return (
     <>
       <ConfirmDraftDialog
@@ -203,107 +223,100 @@ export const TestForm = ({
         onConfirm={handleConfirmExit}
       />
 
-      <div className="w-full min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-100 bg-slate-50/50 px-3 py-2.5 md:px-4">
-          <button
-            type="button"
-            onClick={() => onNavigateWithCheck(`/admin/courses/${courseId}`)}
-            className="group inline-flex items-center gap-2 rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-          >
-            <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-            Kembali ke detail kursus
-          </button>
-        </div>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
 
-        <Form {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit)}
-            className="space-y-5 px-3 py-5 md:space-y-6 md:px-4 md:py-6"
-          >
-          <section className="space-y-4">
-          <SectionHeader step={1} title="Langkah 1: Pengaturan tes" badge="Umum & keamanan" />
-
-          <ConfigCard accentColor="navy">
-            <CardHeading icon={<Hash className="h-4 w-4 text-[#0F1C3F]" />} label="Aturan penilaian" />
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-4">
-              <FormField
-                control={form.control}
-                name="duration"
-                render={({ field }) => (
-                  <FormItem>
-                    <FieldLabel>Durasi pengerjaan</FieldLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        placeholder="60"
-                        disabled={isSubmitting}
-                        className={inputCls}
-                      />
-                    </FormControl>
-                    <FormDescription className={hintCls}>Dalam satuan menit</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="passingScore"
-                render={({ field }) => (
-                  <FormItem>
-                    <FieldLabel>Passing score (%)</FieldLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        placeholder="70"
-                        disabled={isSubmitting}
-                        className={inputCls}
-                      />
-                    </FormControl>
-                    <FormDescription className={hintCls}>Nilai minimum 0–100</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="maxAttempts"
-                render={({ field }) => (
-                  <FormItem>
-                    <FieldLabel>Batas percobaan</FieldLabel>
-                    <FormControl>
-                      <Input
-                        {...field}
-                        type="number"
-                        disabled={isSubmitting}
-                        className={inputCls}
-                      />
-                    </FormControl>
-                    <FormDescription className={hintCls}>0 = tidak terbatas</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+          {/* Section 1: Pengaturan Tes */}
+          <div className="rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 bg-[#F8F9FB] border-b border-[#E4E7EC]">
+              <div className="h-9 w-9 rounded-xl bg-[#0F1C3F] flex items-center justify-center">
+                <Hash size={16} className="text-[#E8A020]" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-[#0F1C3F] font-['Lexend_Deca']">
+                  Pengaturan Tes
+                </h2>
+                <p className="text-[11px] text-[#98A2B3] mt-0.5">
+                  Durasi, skor minimum, dan batas percobaan
+                </p>
+              </div>
             </div>
-          </ConfigCard>
+            <div className="p-5">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="duration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelCls}>Durasi (menit)</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" placeholder="60" disabled={isSubmitting} className={inputCls} />
+                      </FormControl>
+                      <p className={hintCls}>Waktu pengerjaan tes</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="passingScore"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelCls}>Passing Score (%)</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" placeholder="70" disabled={isSubmitting} className={inputCls} />
+                      </FormControl>
+                      <p className={hintCls}>Nilai minimum untuk lulus (0–100)</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="maxAttempts"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className={labelCls}>Batas Percobaan</FormLabel>
+                      <FormControl>
+                        <Input {...field} type="number" placeholder="0 = tidak terbatas" disabled={isSubmitting} className={inputCls} />
+                      </FormControl>
+                      <p className={hintCls}>0 = unlimited</p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+          </div>
 
-          {/* Pengacakan */}
-          <ConfigCard accentColor="amber">
-            <CardHeading icon={<Shuffle className="h-4 w-4 text-[#E8A020]" />} label="Pengacakan & keamanan" />
-            <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {/* Section 2: Keamanan & Pengacakan */}
+          <div className="rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 bg-[#F8F9FB] border-b border-[#E4E7EC]">
+              <div className="h-9 w-9 rounded-xl bg-[#FEF3DC] flex items-center justify-center">
+                <Shuffle size={16} className="text-[#E8A020]" />
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-[#0F1C3F] font-['Lexend_Deca']">
+                  Keamanan &amp; Pengacakan
+                </h2>
+                <p className="text-[11px] text-[#98A2B3] mt-0.5">
+                  Acak urutan soal dan pilihan jawaban
+                </p>
+              </div>
+            </div>
+            <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="randomizeQuestions"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-                    <div className="min-w-0 pr-2">
-                      <FormLabel className="text-sm font-medium text-slate-900 cursor-pointer">
-                        Acak urutan soal
+                  <FormItem className="flex items-center justify-between gap-3 rounded-xl border border-[#E4E7EC] p-4 bg-[#F8F9FB]">
+                    <div>
+                      <FormLabel className="text-sm font-medium text-[#101828] cursor-pointer">
+                        Acak Urutan Soal
                       </FormLabel>
-                      <FormDescription className={hintCls}>
-                        Urutan butir berbeda tiap peserta
-                      </FormDescription>
+                      <p className="text-xs text-[#98A2B3] mt-0.5">
+                        Urutan soal berbeda untuk setiap peserta
+                      </p>
                     </div>
                     <FormControl>
                       <Switch
@@ -320,14 +333,14 @@ export const TestForm = ({
                 control={form.control}
                 name="randomizeOptions"
                 render={({ field }) => (
-                  <FormItem className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50/80 p-3">
-                    <div className="min-w-0 pr-2">
-                      <FormLabel className="text-sm font-medium text-slate-900 cursor-pointer">
-                        Acak pilihan jawaban
+                  <FormItem className="flex items-center justify-between gap-3 rounded-xl border border-[#E4E7EC] p-4 bg-[#F8F9FB]">
+                    <div>
+                      <FormLabel className="text-sm font-medium text-[#101828] cursor-pointer">
+                        Acak Pilihan Jawaban
                       </FormLabel>
-                      <FormDescription className={hintCls}>
-                        Posisi opsi A/B/C/D diacak per soal
-                      </FormDescription>
+                      <p className="text-xs text-[#98A2B3] mt-0.5">
+                        Posisi opsi A/B/C/D berbeda per soal
+                      </p>
                     </div>
                     <FormControl>
                       <Switch
@@ -341,174 +354,122 @@ export const TestForm = ({
                 )}
               />
             </div>
-          </ConfigCard>
-          </section>
-
-          <section className="space-y-4 border-t border-slate-100 pt-6 md:pt-8">
-            <SectionHeader
-              step={2}
-              title="Langkah 2: Daftar pertanyaan"
-              badge={`${fields.length} soal`}
-              badgeVariant="amber"
-            />
-
-          <div className="space-y-3">
-            {fields.map((field, index) => (
-              <QuestionCard
-                key={field.id}
-                index={index}
-                form={form}
-                isSubmitting={isSubmitting}
-                canDelete={fields.length > 1}
-                onRemove={() => remove(index)}
-              />
-            ))}
-
-            {/* Add question button */}
-            <button
-              type="button"
-              disabled={isSubmitting}
-              onClick={() =>
-                append({
-                  text: "",
-                  options: [
-                    { text: "", isCorrect: true },
-                    { text: "", isCorrect: false },
-                    { text: "", isCorrect: false },
-                    { text: "", isCorrect: false },
-                  ],
-                })
-              }
-              className="group flex w-full items-center justify-center gap-3 rounded-lg border border-dashed border-slate-300 bg-slate-50/50 py-3.5 text-slate-500 transition-colors hover:border-slate-400 hover:bg-slate-100 hover:text-slate-800"
-            >
-              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-white">
-                <Plus className="h-4 w-4" />
-              </div>
-              <div className="text-left">
-                <p className="text-sm font-medium">Tambah pertanyaan</p>
-                <p className="text-xs text-slate-500">Tambah satu butir soal di akhir daftar</p>
-              </div>
-            </button>
           </div>
-          </section>
 
-          <div className="sticky bottom-2 z-20 mt-6 flex flex-col gap-3 rounded-lg border border-slate-700 bg-[#0F1C3F] p-3 shadow-md sm:bottom-3 sm:flex-row sm:items-center sm:justify-between sm:p-4 md:mt-8 border-l-4 border-l-[#E8A020]">
-            <div className="min-w-0 text-sm text-slate-200">
-              <span className="font-medium text-white">{fields.length} pertanyaan</span>
-              <span className="text-slate-400"> · </span>
-              <span className="text-slate-300">Pastikan satu kunci benar per soal</span>
+          {/* Section 3: Daftar Pertanyaan */}
+          <div className="rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-4 bg-[#F8F9FB] border-b border-[#E4E7EC]">
+              <div className="flex items-center gap-3">
+                <div className="h-9 w-9 rounded-xl bg-[#E8EDF7] flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-[#0F1C3F]">Q</span>
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-[#0F1C3F] font-['Lexend_Deca']">
+                    Daftar Pertanyaan
+                  </h2>
+                  <p className="text-[11px] text-[#98A2B3] mt-0.5">
+                    {fields.length} soal · Pastikan 1 kunci benar per soal
+                  </p>
+                </div>
+              </div>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-[#FEF3DC] text-[#C4861A] border border-[#F5C05A]">
+                {fields.length} soal
+              </span>
             </div>
-            <div className="flex w-full shrink-0 flex-col gap-2 sm:w-auto sm:flex-row sm:justify-end sm:gap-2">
-              <Button
-                variant="ghost"
+
+            <div className="p-5 space-y-4">
+
+              {/* Question cards */}
+              {fields.map((field, index) => (
+                <QuestionCard
+                  key={field.id}
+                  index={index}
+                  form={form}
+                  isSubmitting={isSubmitting}
+                  canDelete={fields.length > 1}
+                  onRemove={() => remove(index)}
+                  isExpanded={expandedQuestions[index] !== false}
+                  onToggle={() => toggleQuestion(index)}
+                />
+              ))}
+
+              {/* Add question button */}
+              <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={() => onNavigateWithCheck("back")}
-                className="h-9 rounded-md px-3 text-sm text-slate-300 hover:bg-white/10 hover:text-white"
+                onClick={() =>
+                  append({
+                    text: "",
+                    options: [
+                      { text: "", isCorrect: true },
+                      { text: "", isCorrect: false },
+                      { text: "", isCorrect: false },
+                      { text: "", isCorrect: false },
+                    ],
+                  })
+                }
+                className="flex w-full items-center gap-3 rounded-xl border-2 border-dashed border-[#E4E7EC] bg-[#F8F9FB] p-4 text-[#475467] transition-all hover:border-[#0F1C3F]/30 hover:bg-white hover:text-[#0F1C3F] group"
               >
-                Batalkan
-              </Button>
-              <Button
-                type="submit"
-                disabled={isSubmitting}
-                className="flex h-9 items-center justify-center gap-1.5 rounded-md bg-[#E8A020] px-4 text-sm font-medium text-[#0F1C3F] hover:bg-[#d4921c]"
-              >
-                {isSubmitting ? (
-                  "Menyimpan…"
-                ) : (
-                  <>
-                    Simpan
-                    <Sparkles className="h-3.5 w-3.5 opacity-90" />
-                  </>
-                )}
-              </Button>
+                <div className="h-10 w-10 rounded-xl border border-[#E4E7EC] bg-white flex items-center justify-center shrink-0">
+                  <Plus size={18} />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold">Tambah Pertanyaan</p>
+                  <p className="text-xs text-[#98A2B3] mt-0.5">Tambah satu butir soal di akhir daftar</p>
+                </div>
+              </button>
+
+              {/* Sticky Footer */}
+              <div className="sticky bottom-0 z-10 flex items-center justify-between gap-3 rounded-xl border border-[#E4E7EC] bg-white p-4 shadow-lg">
+                <Link
+                  href={`/admin/courses/${courseId}?step=2`}
+                  onClick={(e) => {
+                    if (isDirty) {
+                      e.preventDefault();
+                      onNavigateWithCheck(`/admin/courses/${courseId}?step=2`);
+                    }
+                  }}
+                  className="flex items-center gap-2 h-10 px-4 rounded-xl border border-[#E4E7EC] bg-white text-sm font-semibold text-[#475467] hover:border-[#0F1C3F]/30 hover:bg-[#F8F9FB] transition-all"
+                >
+                  <ArrowLeft size={14} />
+                  Kembali
+                </Link>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-[#98A2B3]">
+                    {fields.length} soal · 1 kunci/soal
+                  </span>
+                  <Button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="h-10 px-5 rounded-xl bg-[#E8A020] hover:bg-[#C4861A] text-white font-semibold text-sm shadow-sm transition-all active:scale-[0.97] flex items-center gap-2"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                        Menyimpan…
+                      </>
+                    ) : (
+                      <>
+                        Simpan Tes
+                        <Sparkles size={14} />
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+
             </div>
           </div>
+
         </form>
       </Form>
-    </div>
     </>
   );
-};
+}
 
 /* ─────────────────────────────────────────────
-   Sub-components
+   QuestionCard sub-component
 ───────────────────────────────────────────── */
-
-function SectionHeader({
-  step,
-  title,
-  badge,
-  badgeVariant = "ghost",
-}: {
-  step: number;
-  title: string;
-  badge: string;
-  badgeVariant?: "ghost" | "amber";
-}) {
-  return (
-    <div className="flex flex-col gap-2 rounded-lg bg-[#0F1C3F] px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:py-2">
-      <div className="flex min-w-0 items-center gap-2">
-        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded bg-[#E8A020] text-xs font-semibold text-[#0F1C3F]">
-          {step}
-        </div>
-        <span className="text-sm font-medium text-white">{title}</span>
-      </div>
-      <span
-        className={cn(
-          "w-fit shrink-0 rounded px-2 py-0.5 text-xs font-medium sm:ml-auto",
-          badgeVariant === "amber"
-            ? "bg-[#E8A020] text-[#0F1C3F]"
-            : "bg-white/15 text-white/80"
-        )}
-      >
-        {badge}
-      </span>
-    </div>
-  );
-}
-
-function ConfigCard({
-  children,
-  accentColor,
-}: {
-  children: React.ReactNode;
-  accentColor: "navy" | "amber";
-}) {
-  return (
-    <div
-      className={cn(
-        "space-y-3 rounded-lg border border-slate-200 bg-white p-4",
-        accentColor === "navy" ? "border-l-[3px] border-l-[#0F1C3F]" : "border-l-[3px] border-l-[#E8A020]"
-      )}
-    >
-      {children}
-    </div>
-  );
-}
-
-function CardHeading({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <div className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 bg-slate-50">
-        {icon}
-      </div>
-      <span className="text-sm font-semibold text-slate-900">{label}</span>
-    </div>
-  );
-}
-
-function FieldLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <FormLabel className="text-sm font-medium text-slate-700">{children}</FormLabel>
-  );
-}
 
 function QuestionCard({
   index,
@@ -516,17 +477,19 @@ function QuestionCard({
   isSubmitting,
   canDelete,
   onRemove,
+  isExpanded,
+  onToggle,
 }: {
   index: number;
   form: any;
   isSubmitting: boolean;
   canDelete: boolean;
   onRemove: () => void;
+  isExpanded: boolean;
+  onToggle: () => void;
 }) {
-  const options = form.watch(`questions.${index}.options`) as {
-    text: string;
-    isCorrect: boolean;
-  }[];
+  const options = form.watch(`questions.${index}.options`) as { text: string; isCorrect: boolean }[];
+  const hasCorrectAnswer = options?.some((o) => o.isCorrect);
 
   const setCorrect = (optIndex: number) => {
     const updated = options.map((opt, i) => ({ ...opt, isCorrect: i === optIndex }));
@@ -547,27 +510,47 @@ function QuestionCard({
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
-      <div className="h-0.5 bg-[#0F1C3F]" />
+    <div
+      className={cn(
+        "rounded-xl border overflow-hidden transition-all",
+        hasCorrectAnswer
+          ? "border-[#E4E7EC] bg-white shadow-sm"
+          : "border-red-200 bg-red-50/30"
+      )}
+    >
+      {/* Top accent stripe */}
+      <div className={cn("h-1 w-full", hasCorrectAnswer ? "bg-[#0F1C3F]" : "bg-red-400")} />
 
-      <div className="space-y-3 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="flex h-6 w-6 items-center justify-center rounded bg-[#0F1C3F] text-xs font-semibold text-[#E8A020]">
+      <div className="p-4 space-y-3">
+        {/* Card header row */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#0F1C3F] text-xs font-bold text-[#E8A020]">
               {index + 1}
             </div>
-            <span className="text-xs text-slate-500">Pertanyaan</span>
+            <span className="text-xs font-semibold text-[#98A2B3]">Pertanyaan</span>
           </div>
-          <button
-            type="button"
-            disabled={isSubmitting || !canDelete}
-            onClick={onRemove}
-            className="flex h-8 w-8 items-center justify-center rounded-md border border-slate-200 text-slate-400 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <Trash className="h-4 w-4" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={onToggle}
+              className="flex items-center gap-1 h-7 px-2.5 rounded-lg text-[10px] font-semibold text-[#475467] bg-[#F1F3F7] hover:bg-[#E4E7EC] transition-colors"
+            >
+              {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+              {isExpanded ? "Sembunyikan" : "Edit"}
+            </button>
+            <button
+              type="button"
+              disabled={isSubmitting || !canDelete}
+              onClick={onRemove}
+              className="flex h-7 w-7 items-center justify-center rounded-lg border border-[#E4E7EC] text-[#98A2B3] hover:border-red-300 hover:bg-red-50 hover:text-red-500 transition-all disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <Trash size={12} />
+            </button>
+          </div>
         </div>
 
+        {/* Question text — always visible */}
         <FormField
           control={form.control}
           name={`questions.${index}.text`}
@@ -577,8 +560,11 @@ function QuestionCard({
                 <textarea
                   {...field}
                   disabled={isSubmitting}
-                  placeholder="Tulis pertanyaan (min. 10 karakter)"
-                  className="min-h-[4.5rem] w-full resize-y rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 placeholder:text-slate-400 focus-visible:border-[#0F1C3F] focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0F1C3F]/20"
+                  placeholder="Tulis pertanyaan di sini… (min. 10 karakter)"
+                  className={cn(
+                    "min-h-[3.5rem] w-full resize-y rounded-xl border bg-white px-4 py-3 text-sm text-[#101828] placeholder:text-[#98A2B3] focus:border-[#0F1C3F] focus:ring-2 focus:ring-[#0F1C3F]/10 focus:outline-none transition-all",
+                    !hasCorrectAnswer ? "border-red-300" : "border-[#E4E7EC]"
+                  )}
                 />
               </FormControl>
               <FormMessage />
@@ -586,79 +572,81 @@ function QuestionCard({
           )}
         />
 
-        <div className="grid grid-cols-1 gap-2 md:grid-cols-2 md:gap-2">
-          {options.map((opt, optIndex) => (
-            <div key={optIndex} className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => setCorrect(optIndex)}
-                title={opt.isCorrect ? "Jawaban benar" : "Set sebagai kunci"}
-                className={cn(
-                  "flex h-9 w-9 shrink-0 items-center justify-center rounded-md border text-sm font-medium transition-colors",
-                  opt.isCorrect
-                    ? "border-[#E8A020] bg-[#0F1C3F] text-[#E8A020]"
-                    : "border-slate-200 bg-white text-slate-600 hover:border-slate-300"
-                )}
-              >
-                {opt.isCorrect ? (
-                  <CheckCircle2 className="h-4 w-4" aria-hidden />
-                ) : (
-                  OPTION_LABELS[optIndex]
-                )}
-              </button>
-
-              <div className="group/opt relative flex-1">
-                <FormField
-                  control={form.control}
-                  name={`questions.${index}.options.${optIndex}.text`}
-                  render={({ field }) => (
-                    <FormItem className="flex-1">
-                      <FormControl>
-                        <Input
-                          {...field}
-                          disabled={isSubmitting}
-                          placeholder={`Opsi ${OPTION_LABELS[optIndex]}`}
-                          className={cn(
-                            "h-9 rounded-md border pr-8 text-sm",
-                            opt.isCorrect
-                              ? "border-slate-300 bg-slate-50 focus-visible:ring-[#0F1C3F]/15"
-                              : "border-slate-200 bg-white"
-                          )}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                {options.length > 2 && (
+        {/* Options — collapsible */}
+        {isExpanded && (
+          <div className="space-y-2 pt-1">
+            <p className="text-[10px] font-semibold uppercase tracking-widest text-[#98A2B3]">
+              Pilihan Jawaban
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+              {options.map((opt, optIndex) => (
+                <div key={optIndex} className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => removeOption(optIndex)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-300 opacity-0 transition-opacity hover:text-rose-500 group-hover/opt:opacity-100"
+                    disabled={isSubmitting}
+                    onClick={() => setCorrect(optIndex)}
+                    className={cn(
+                      "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 text-sm font-bold transition-all",
+                      opt.isCorrect
+                        ? "border-[#E8A020] bg-[#0F1C3F] text-[#E8A020] shadow-sm"
+                        : "border-[#E4E7EC] bg-white text-[#98A2B3] hover:border-[#0F1C3F]/40"
+                    )}
                   >
-                    <Trash className="h-3.5 w-3.5" />
+                    {opt.isCorrect ? (
+                      <CheckCircle2 size={14} />
+                    ) : (
+                      OPTION_LABELS[optIndex]
+                    )}
                   </button>
-                )}
-              </div>
-            </div>
-          ))}
+                  <div className="group/opt relative flex-1">
+                    <FormField
+                      control={form.control}
+                      name={`questions.${index}.options.${optIndex}.text`}
+                      render={({ field }) => (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input
+                              {...field}
+                              disabled={isSubmitting}
+                              placeholder={`Opsi ${OPTION_LABELS[optIndex]}`}
+                              className={cn(
+                                "h-9 rounded-xl border text-sm transition-all",
+                                opt.isCorrect
+                                  ? "border-[#E8A020] bg-[#FEF3DC] focus:ring-[#E8A020]/20"
+                                  : "border-[#E4E7EC] bg-white"
+                              )}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    {options.length > 2 && (
+                      <button
+                        type="button"
+                        onClick={() => removeOption(optIndex)}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 text-[#98A2B3] opacity-0 transition-all hover:text-red-500 group-hover/opt:opacity-100"
+                      >
+                        <Trash size={11} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
 
-          {options.length < 6 && (
-            <button
-              type="button"
-              onClick={addOption}
-              className="flex h-9 items-center justify-center gap-1 rounded-md border border-dashed border-slate-300 text-xs font-medium text-slate-500 transition-colors hover:border-slate-400 hover:bg-slate-50 hover:text-slate-800"
-            >
-              <Plus className="h-3.5 w-3.5" /> Tambah opsi
-            </button>
-          )}
-        </div>
+              {options.length < 6 && (
+                <button
+                  type="button"
+                  onClick={addOption}
+                  className="flex h-9 items-center gap-1.5 rounded-xl border border-dashed border-[#E4E7EC] px-3 text-xs font-medium text-[#98A2B3] hover:border-[#0F1C3F]/40 hover:text-[#475467] transition-all"
+                >
+                  <Plus size={12} />
+                  Tambah opsi
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-
-/* ── Shared style constants ── */
-const inputCls =
-  "h-9 rounded-md border-slate-200 bg-white text-sm focus-visible:border-[#0F1C3F] focus-visible:ring-1 focus-visible:ring-[#0F1C3F]/20";
-const hintCls = "text-xs text-slate-500";

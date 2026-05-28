@@ -307,29 +307,29 @@ export function CourseReportClient({
   ];
 
   return (
-    <div className="w-full min-w-0 space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 md:space-y-8 md:pb-10">
+    <div className="w-full min-w-0 space-y-6 pb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 md:space-y-8 md:pb-10 font-['DM_Sans']">
       {/* ── Header ── */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-6">
         <div className="space-y-2">
           <Link
             href="/admin/courses"
-            className="flex items-center text-xs font-black text-slate-400 hover:text-primary transition group uppercase tracking-widest"
+            className="flex items-center text-[11px] font-bold text-[#475467] hover:text-[#0F1C3F] transition group uppercase tracking-widest"
           >
             <ArrowLeft className="h-3 w-3 mr-2 group-hover:-translate-x-1 transition-transform" />
             Kembali ke Katalog
           </Link>
           <div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">{course.title}</h1>
-            <div className="flex flex-wrap items-center gap-2 mt-1.5">
-              <Badge variant="outline" className="text-xs font-semibold text-slate-500">
+            <h1 className="text-2xl font-bold text-[#101828] font-['Lexend_Deca'] tracking-tight">{course.title}</h1>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <Badge variant="outline" className="text-xs font-semibold text-[#475467] border-[#E4E7EC] bg-[#F8F9FB]">
                 {course.category?.name ?? "Tanpa Kategori"}
               </Badge>
               {course.isPublished ? (
-                <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 text-xs">Published</Badge>
+                <Badge className="bg-[#ECFDF3] text-[#027A48] hover:bg-[#D1FADF] text-xs font-semibold border-none">Published</Badge>
               ) : (
-                <Badge className="bg-amber-100 text-amber-700 hover:bg-amber-100 text-xs">Draft</Badge>
+                <Badge className="bg-[#FFFAEB] text-[#B54708] hover:bg-[#FEF0C7] text-xs font-semibold border-none">Draft</Badge>
               )}
-              <span className="text-xs text-slate-400 font-medium">
+              <span className="text-xs text-[#98A2B3] font-medium ml-1">
                 {course.modules.length} modul · {course.tests.length} tes
               </span>
             </div>
@@ -337,7 +337,7 @@ export function CourseReportClient({
         </div>
         <Button
           onClick={handleExport}
-          className="gap-2 font-black bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-200 shrink-0"
+          className="gap-2 font-bold bg-[#0F1C3F] hover:bg-[#1A2D5A] shadow-sm text-white rounded-lg h-10 px-5 shrink-0 transition-all active:scale-95"
         >
           <Download className="h-4 w-4" />
           Export Excel (CSV)
@@ -347,15 +347,15 @@ export function CourseReportClient({
       {/* ── Summary Stats ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {summaryCards.map((s) => (
-          <Card key={s.label} className={cn("border shadow-sm bg-white", s.border)}>
-            <CardContent className="p-4">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-[10px] font-black uppercase tracking-wider text-slate-400">{s.label}</p>
-                <div className={cn("p-1.5 rounded-lg", s.bg)}>
-                  <s.icon className={cn("h-3.5 w-3.5", s.color)} />
+          <Card key={s.label} className="border border-[#E4E7EC] shadow-sm bg-white rounded-xl">
+            <CardContent className="p-5">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">{s.label}</p>
+                <div className={cn("p-2 rounded-lg flex items-center justify-center", s.bg)}>
+                  <s.icon className={cn("h-4 w-4", s.color)} />
                 </div>
               </div>
-              <p className={cn("text-2xl font-black tracking-tighter", s.color)}>{s.value}</p>
+              <p className="text-2xl font-bold text-[#101828] font-['Lexend_Deca']">{s.value}</p>
             </CardContent>
           </Card>
         ))}
@@ -373,11 +373,11 @@ export function CourseReportClient({
       />
 
       {/* ── Data Table ── */}
-      <Card className="border-slate-200 shadow-sm bg-white overflow-hidden">
-        <CardHeader className="border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <Card className="border border-[#E4E7EC] shadow-sm bg-white overflow-hidden rounded-xl">
+        <CardHeader className="border-b border-[#E4E7EC] flex flex-col md:flex-row md:items-center justify-between gap-4 p-5">
           <div>
-            <CardTitle className="text-base font-black text-slate-800">Detail Nilai Per Peserta</CardTitle>
-            <p className="text-xs text-slate-400 font-medium mt-0.5">{totalEnrolled} peserta terdaftar</p>
+            <CardTitle className="text-base font-bold text-[#101828] font-['Lexend_Deca']">Detail Nilai Per Peserta</CardTitle>
+            <p className="text-xs text-[#475467] mt-1">{totalEnrolled} peserta terdaftar</p>
           </div>
           <input
             id="report-search"
@@ -386,80 +386,80 @@ export function CourseReportClient({
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama, email, departemen..."
-            className="h-9 w-full md:w-64 border border-slate-200 rounded-lg px-3 text-sm font-medium placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            className="h-10 w-full md:w-72 border border-[#E4E7EC] rounded-lg px-3 text-sm font-medium bg-[#F8F9FB] placeholder:text-[#98A2B3] focus:outline-none focus:ring-1 focus:ring-[#0F1C3F] focus:bg-white transition-colors"
           />
         </CardHeader>
 
         {filtered.length === 0 ? (
-          <div className="p-16 text-center text-slate-300 italic text-sm">Tidak ada peserta ditemukan.</div>
+          <div className="p-16 text-center text-[#98A2B3] italic text-sm">Tidak ada peserta ditemukan.</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-slate-50 border-b border-slate-100">
-                  <th className="text-left px-4 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Peserta</th>
-                  <th className="text-left px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Dept.</th>
-                  <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Progress Modul</th>
-                  <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Pre-Test</th>
-                  <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Post-Test</th>
-                  <th className="text-center px-3 py-2.5 font-black text-[10px] text-slate-400 uppercase tracking-widest">Status</th>
+                <tr className="bg-[#F8F9FB] border-b border-[#E4E7EC]">
+                  <th className="text-left px-5 py-3 font-bold text-[11px] text-[#475467] uppercase tracking-wider font-['Lexend_Deca']">Peserta</th>
+                  <th className="text-left px-4 py-3 font-bold text-[11px] text-[#475467] uppercase tracking-wider font-['Lexend_Deca']">Departemen</th>
+                  <th className="text-center px-4 py-3 font-bold text-[11px] text-[#475467] uppercase tracking-wider font-['Lexend_Deca']">Progress Modul</th>
+                  <th className="text-center px-4 py-3 font-bold text-[11px] text-[#475467] uppercase tracking-wider font-['Lexend_Deca']">Pre-Test</th>
+                  <th className="text-center px-4 py-3 font-bold text-[11px] text-[#475467] uppercase tracking-wider font-['Lexend_Deca']">Post-Test</th>
+                  <th className="text-center px-5 py-3 font-bold text-[11px] text-[#475467] uppercase tracking-wider font-['Lexend_Deca']">Status</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-50">
+              <tbody className="divide-y divide-[#E4E7EC] bg-white">
                 {filtered.map((row) => (
-                  <tr key={row.userId} className="hover:bg-slate-50/60 transition-colors group">
+                  <tr key={row.userId} className="hover:bg-[#F8F9FB] transition-colors group">
                     {/* Name */}
                     <td className="px-5 py-4">
                       <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-slate-100 flex items-center justify-center font-black text-slate-500 group-hover:bg-primary/10 group-hover:text-primary transition-colors shrink-0 text-sm">
+                        <div className="h-9 w-9 rounded-full bg-[#E1E5ED] flex items-center justify-center font-bold text-[#475467] group-hover:bg-[#0F1C3F] group-hover:text-white transition-colors shrink-0 text-sm">
                           {row.name.charAt(0).toUpperCase()}
                         </div>
                         <div>
-                          <p className="font-bold text-slate-800 leading-tight">{row.name}</p>
-                          <p className="text-[11px] text-slate-400">{row.email}</p>
+                          <p className="font-bold text-[#101828] leading-tight">{row.name}</p>
+                          <p className="text-[11px] text-[#475467] mt-0.5">{row.email}</p>
                         </div>
                       </div>
                     </td>
                     {/* Dept */}
-                    <td className="px-4 py-4 text-slate-500 font-medium text-xs">{row.department}</td>
+                    <td className="px-4 py-4 text-[#475467] font-medium text-xs">{row.department}</td>
                     {/* Module progress */}
                     <td className="px-4 py-4">
-                      <div className="flex flex-col items-center gap-1">
-                        <span className="text-xs font-black text-slate-700">
+                      <div className="flex flex-col items-center gap-1.5">
+                        <span className="text-xs font-bold text-[#101828]">
                           {row.completedModules}/{row.totalModules}
                         </span>
-                        <div className="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div className="w-24 h-1.5 bg-[#E4E7EC] rounded-full overflow-hidden">
                           <div
                             className={cn(
                               "h-full rounded-full transition-all",
-                              row.moduleProgress === 100 ? "bg-emerald-500" : "bg-primary"
+                              row.moduleProgress === 100 ? "bg-[#12B76A]" : "bg-[#2E90FA]"
                             )}
                             style={{ width: `${row.moduleProgress}%` }}
                           />
                         </div>
-                        <span className="text-[10px] text-slate-400">{row.moduleProgress}%</span>
+                        <span className="text-[10px] text-[#475467] font-medium">{row.moduleProgress}%</span>
                       </div>
                     </td>
                     {/* Pre-test */}
                     <td className="px-4 py-4 text-center">
                       {row.preScore === null ? (
-                        <span className="text-slate-300 text-xs italic">—</span>
+                        <span className="text-[#98A2B3] text-xs italic">—</span>
                       ) : (
                         <div className="flex flex-col items-center gap-1">
                           <span
                             className={cn(
-                              "text-base font-black",
-                              row.preTestPassed ? "text-emerald-600" : "text-rose-500"
+                              "text-[15px] font-bold font-['Lexend_Deca']",
+                              row.preTestPassed ? "text-[#027A48]" : "text-[#B42318]"
                             )}
                           >
                             {row.preScore}
                           </span>
                           <Badge
                             className={cn(
-                              "text-[10px] font-bold border-none px-2",
+                              "text-[10px] font-bold border-none px-2 shadow-none",
                               row.preTestPassed
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-rose-100 text-rose-600"
+                                ? "bg-[#ECFDF3] text-[#027A48]"
+                                : "bg-[#FEF3F2] text-[#B42318]"
                             )}
                           >
                             {row.preTestPassed ? "Lulus" : "Tidak Lulus"}
@@ -470,23 +470,23 @@ export function CourseReportClient({
                     {/* Post-test */}
                     <td className="px-4 py-4 text-center">
                       {row.postScore === null ? (
-                        <span className="text-slate-300 text-xs italic">—</span>
+                        <span className="text-[#98A2B3] text-xs italic">—</span>
                       ) : (
                         <div className="flex flex-col items-center gap-1">
                           <span
                             className={cn(
-                              "text-base font-black",
-                              row.postTestPassed ? "text-emerald-600" : "text-rose-500"
+                              "text-[15px] font-bold font-['Lexend_Deca']",
+                              row.postTestPassed ? "text-[#027A48]" : "text-[#B42318]"
                             )}
                           >
                             {row.postScore}
                           </span>
                           <Badge
                             className={cn(
-                              "text-[10px] font-bold border-none px-2",
+                              "text-[10px] font-bold border-none px-2 shadow-none",
                               row.postTestPassed
-                                ? "bg-emerald-100 text-emerald-700"
-                                : "bg-rose-100 text-rose-600"
+                                ? "bg-[#ECFDF3] text-[#027A48]"
+                                : "bg-[#FEF3F2] text-[#B42318]"
                             )}
                           >
                             {row.postTestPassed ? "Lulus" : "Tidak Lulus"}
@@ -495,17 +495,17 @@ export function CourseReportClient({
                       )}
                     </td>
                     {/* Status Enrollment */}
-                    <td className="px-4 py-4 text-center">
+                    <td className="px-5 py-4 text-center">
                       <Badge
                         className={cn(
-                          "text-xs font-black border-none px-3 py-1",
+                          "text-[11px] font-bold border-none px-2.5 py-1 shadow-none",
                           row.status === "COMPLETED"
-                            ? "bg-emerald-100 text-emerald-700"
+                            ? "bg-[#ECFDF3] text-[#027A48]"
                             : row.status === "FAILED"
-                            ? "bg-rose-100 text-rose-600"
+                            ? "bg-[#FEF3F2] text-[#B42318]"
                             : row.status === "REJECTED"
-                            ? "bg-slate-100 text-slate-600"
-                            : "bg-blue-100 text-blue-700"
+                            ? "bg-[#F1F3F7] text-[#475467]"
+                            : "bg-[#EFF8FF] text-[#175CD3]"
                         )}
                       >
                         {row.status === "COMPLETED"

@@ -37,9 +37,9 @@ export function TestAttemptReview({ attemptId }: TestAttemptReviewProps) {
   }, [attemptId]);
 
   if (!attemptId) return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 py-12 text-slate-500">
-      <Info className="mb-2 h-8 w-8 opacity-30" />
-      <p className="text-xs font-black uppercase tracking-wider">Pilih percobaan untuk melihat detail</p>
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E4E7EC] bg-[#F8F9FB] py-12 text-[#98A2B3] font-sans">
+      <Info className="mb-2 h-8 w-8 text-[#98A2B3]" />
+      <p className="text-[13px] font-bold uppercase tracking-wider">Pilih percobaan untuk melihat detail</p>
     </div>
   );
 
@@ -52,55 +52,58 @@ export function TestAttemptReview({ attemptId }: TestAttemptReviewProps) {
   const hasAnswers = data?.answers && data.answers.length > 0;
 
   if (!hasAnswers) return (
-    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-300 bg-slate-50/60 px-6 py-12 text-center text-slate-500">
-      <HelpCircle className="mb-2 h-8 w-8 text-[#E8A020]" />
-      <p className="text-sm font-black uppercase tracking-tight text-slate-800">
-        Detail jawaban tidak tersedia
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-[#E4E7EC] bg-[#F8F9FB] px-6 py-12 text-center text-[#98A2B3] font-sans">
+      <div className="rounded-xl p-3 bg-white border border-[#E4E7EC] mb-3">
+        <HelpCircle className="h-6 w-6 text-[#E8A020]" />
+      </div>
+      <p className="text-sm font-bold tracking-tight text-[#101828] font-lexend">
+        Detail Jawaban Tidak Tersedia
       </p>
-      <p className="mt-1 text-[11px] font-medium text-slate-500">
+      <p className="mt-1 text-[13px] font-medium text-[#475467]">
         Data jawaban hanya tersedia untuk tes yang dikerjakan setelah pembaruan sistem.
       </p>
     </div>
   );
 
   return (
-    <div className="space-y-5 animate-in fade-in duration-500">
-      <div
-        className="grid grid-cols-2 gap-3 rounded-xl p-4 text-white shadow-md md:grid-cols-4 md:gap-4 md:p-5"
-        style={{
-          background: "linear-gradient(135deg, #0F1C3F 0%, #1A3060 100%)",
-          boxShadow: "0 8px 28px rgba(15,28,63,0.2)",
-        }}
-      >
-        <div className="space-y-0.5 border-white/15 px-1 md:border-r md:px-2">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/50">Nilai akhir</p>
-          <p className="text-2xl font-black text-[#E8A020]">{data.score}</p>
+    <div className="space-y-6 animate-in fade-in duration-500 font-sans">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {/* Score Card */}
+        <div className="rounded-xl border border-[#E4E7EC] bg-white p-4 shadow-sm text-center flex flex-col items-center justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#98A2B3] mb-1">Nilai Akhir</p>
+          <p className="text-3xl font-bold font-lexend text-[#0F1C3F]">{data.score}</p>
         </div>
-        <div className="space-y-0.5 border-white/15 px-1 md:border-r md:px-2">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/50">Hasil</p>
-          <p className={cn("text-base font-black uppercase", data.passed ? "text-emerald-400" : "text-rose-400")}>
+
+        {/* Result Card */}
+        <div className="rounded-xl border border-[#E4E7EC] bg-white p-4 shadow-sm text-center flex flex-col items-center justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#98A2B3] mb-1">Hasil</p>
+          <p className={cn("text-xl font-bold font-lexend uppercase", data.passed ? "text-[#027A48]" : "text-[#B42318]")}>
             {data.passed ? "Lulus" : "Gagal"}
           </p>
         </div>
-        <div className="space-y-0.5 border-white/15 px-1 md:border-r md:px-2">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/50">Benar</p>
-          <p className="text-xl font-black">
+
+        {/* Correct Card */}
+        <div className="rounded-xl border border-[#E4E7EC] bg-white p-4 shadow-sm text-center flex flex-col items-center justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#98A2B3] mb-1">Benar</p>
+          <p className="text-xl font-bold font-lexend text-[#101828]">
             {data.answers.filter((a: any) => a.isCorrect).length} / {data.answers.length}
           </p>
         </div>
-        <div className="space-y-0.5 px-1 md:px-2">
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/50">Waktu Tempuh</p>
-          <p className="text-sm font-black">
+
+        {/* Time Card */}
+        <div className="rounded-xl border border-[#E4E7EC] bg-white p-4 shadow-sm text-center flex flex-col items-center justify-center">
+          <p className="text-[11px] font-bold uppercase tracking-wider text-[#98A2B3] mb-1">Waktu Tempuh</p>
+          <p className="text-xl font-bold font-lexend text-[#101828]">
             {data.timeSpent !== undefined 
               ? `${Math.floor(data.timeSpent / 60)}m ${data.timeSpent % 60}s` 
               : data.startedAt && data.completedAt
-                ? `${Math.round((new Date(data.completedAt).getTime() - new Date(data.startedAt).getTime()) / 60000)} menit`
+                ? `${Math.round((new Date(data.completedAt).getTime() - new Date(data.startedAt).getTime()) / 60000)}m`
                 : "—"}
           </p>
         </div>
       </div>
 
-      <div className="space-y-3">
+      <div className="space-y-4">
         {data.test.questions.map((question: any, idx: number) => {
           const answer = data.answers.find((a: any) => a.questionId === question.id);
           const correctOption = question.options.find((o: any) => o.isCorrect);
@@ -108,51 +111,51 @@ export function TestAttemptReview({ attemptId }: TestAttemptReviewProps) {
           return (
             <div
               key={question.id}
-              className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md md:p-5"
+              className="rounded-xl border border-[#E4E7EC] bg-white p-4 shadow-sm transition-shadow hover:shadow-md md:p-5"
             >
-              <div className="flex items-start gap-3 md:gap-4">
-                <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#0F1C3F] text-xs font-black text-[#E8A020]">
+              <div className="flex items-start gap-4">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#F8F9FB] border border-[#E4E7EC] text-sm font-bold text-[#101828] font-lexend">
                   {idx + 1}
                 </div>
                 <div className="flex-1 space-y-4">
-                  <p className="text-sm font-black text-slate-800 leading-relaxed">
+                  <p className="text-sm font-bold text-[#101828] leading-relaxed font-lexend">
                     {question.text}
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {/* Selected Option */}
                     <div className={cn(
-                      "p-3 rounded-2xl border flex flex-col gap-1",
+                      "p-3 rounded-xl border flex flex-col gap-1.5",
                       answer?.isCorrect 
-                        ? "bg-emerald-50 border-emerald-100" 
+                        ? "bg-[#ECFDF3] border-[#A6F4C5]" 
                         : answer?.selectedOptionId 
-                          ? "bg-rose-50 border-rose-100" 
-                          : "bg-slate-50 border-slate-100"
+                          ? "bg-[#FEF3F2] border-[#FECDCA]" 
+                          : "bg-[#F8F9FB] border-[#E4E7EC]"
                     )}>
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Jawaban Karyawan</p>
+                      <p className="text-[10px] font-bold text-[#475467] uppercase tracking-wider">Jawaban Karyawan</p>
                       <div className="flex items-center justify-between">
                         <span className={cn(
                           "text-xs font-bold",
-                          answer?.isCorrect ? "text-emerald-700" : answer?.selectedOptionId ? "text-rose-700" : "text-slate-400 italic"
+                          answer?.isCorrect ? "text-[#027A48]" : answer?.selectedOptionId ? "text-[#B42318]" : "text-[#98A2B3] italic"
                         )}>
                           {answer?.selectedOption?.text ?? "Tidak menjawab"}
                         </span>
                         {answer?.isCorrect ? (
-                          <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />
+                          <CheckCircle2 className="h-4 w-4 text-[#12B76A] shrink-0" />
                         ) : answer?.selectedOptionId ? (
-                          <XCircle className="h-4 w-4 text-rose-500 shrink-0" />
+                          <XCircle className="h-4 w-4 text-[#F04438] shrink-0" />
                         ) : null}
                       </div>
                     </div>
 
                     {/* Correct Option (Always show for admin) */}
-                    <div className="flex flex-col gap-1 rounded-xl border border-slate-200 bg-[#EEF2FF]/60 p-3">
-                      <p className="text-[9px] font-black uppercase tracking-wider text-slate-500">
-                        Kunci jawaban
+                    <div className="flex flex-col gap-1.5 rounded-xl border border-[#E4E7EC] bg-[#F8F9FB] p-3">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#475467]">
+                        Kunci Jawaban
                       </p>
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0F1C3F]" />
-                        <span className="text-xs font-bold text-[#0F1C3F]">{correctOption?.text}</span>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-[#101828]">{correctOption?.text}</span>
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#12B76A]" />
                       </div>
                     </div>
                   </div>

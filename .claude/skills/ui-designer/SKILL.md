@@ -982,12 +982,17 @@ Setiap kali membuat komponen atau halaman, WAJIB include:
 - [ ] **Responsive** — minimal breakpoint `md:` dan `lg:`
 - [ ] **Hover & focus states** — semua interactive element
 - [ ] **Accessibility** — aria-label, htmlFor, alt text
+- [ ] **NO demo data** — jangan pernah buat fungsi sample data atau hardcoded values
 
 ---
 
 ## Anti-Pattern Hall of Shame — JANGAN PERNAH
 
 ```
+❌ Data demo / hardcoded sample data
+   → JANGAN pernah menulis fungsi seperti getDemoStats() atau array berisi data contoh
+   → Selalu fetch dari API endpoint yang benar ke database
+   → Empty stateitu BUKAN demo data — empty state untuk "belum ada data"
 ❌ Card tanpa hover state
 ❌ Button tanpa loading + disabled saat submit
 ❌ Table tanpa empty state
@@ -1004,4 +1009,72 @@ Setiap kali membuat komponen atau halaman, WAJIB include:
 ❌ Animasi > 300ms untuk interaksi sehari-hari
 ❌ Komponen tanpa TypeScript interface
 ❌ Inline style untuk layout (gunakan Tailwind)
+```
+
+### Aturan Data — WAJIB DIPEHATI
+
+**JANGAN PERNAH:**
+- Jangan buat fungsi helper yang mengembalikan data sample (contoh: `getDemoStats()`, `sampleUsers[]`, `mockData`)
+- Jangan tulis data hardcoded di dalam component JSX
+- Jangan gunakan placeholder number/text untuk seolah-olah ada data
+
+**HARUS:**
+- Setiap halaman/component yang menampilkan data WAJIB punya API endpoint untuk fetch data real
+- Buat API route `/api/admin/[nama-halaman]` yang query ke database PostgreSQL
+- Component menggunakan `useEffect` + `fetch()` untuk mengambil data dari API
+- Kalau API gagal → tampilkan **empty state** (nilai 0 atau pesan "Belum ada data")
+- Kalau data belum ada → kosong, bukan placeholder
+
+**Contoh BENAR:**
+```tsx
+export function AdminDashboardInner() {
+  const [stats, setStats] = useState<DashboardStats | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        const res = await fetch("/api/admin/dashboard", { cache: "no-store" })
+        if (!res.ok) throw new Error("Failed")
+        const json = await res.json()
+        if (json.success && json.data) {
+          setStats(json.data)
+        } else {
+          throw new Error("Invalid response")
+        }
+      } catch {
+        // API error → tampilkan empty state (bukan demo data!)
+        setStats({
+          totalUsers: 0,
+          activeCourses: 0,
+          // ... semuafield 0 atau []
+        })
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    fetchStats()
+  }, [])
+
+  if (isLoading || !stats) return <DashboardSkeleton />
+
+  return (
+    <div>
+      {/* Render data dari API */}
+      <StatsCard value={stats.totalUsers} />
+    </div>
+  )
+}
+```
+
+**Contoh SALAH (JANGAN IKUTI):**
+```tsx
+// ❌ SALAH - Jangan pernah buat begini
+function getDemoStats() {
+  return {
+    totalUsers: 248,
+    activeCourses: 18,
+    // ...
+  }
+}
 ```

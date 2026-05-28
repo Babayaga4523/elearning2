@@ -159,8 +159,8 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
         description="Manajemen kurikulum, materi pembelajaran, dan pemantauan peserta dilingkungan BNI Finance."
         actions={
           <Link href="/admin/courses/create">
-            <Button className="bg-[#0F1C3F] hover:bg-[#1A3060] text-white gap-2 h-11 px-6 rounded-2xl shadow-xl shadow-[#0F1C3F]/10 font-bold transition-all hover:scale-105 active:scale-95">
-              <PlusCircle className="h-4 w-4 text-[#E8A020]" />
+            <Button className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white gap-2 h-10 px-5 rounded-lg shadow-sm font-bold transition-all active:scale-95 font-['DM_Sans']">
+              <PlusCircle className="h-4 w-4 text-white" />
               Tambah Kursus
             </Button>
           </Link>
@@ -176,10 +176,10 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
       </div>
 
       {/* Modern Toolbar */}
-      <Card className="rounded-2xl border border-slate-100 bg-white/80 backdrop-blur-md shadow-sm overflow-hidden p-2">
+      <Card className="rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden p-2.5">
          <div className="flex flex-col md:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
-               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#98A2B3]" />
                <Input 
                  placeholder="Cari materi berdasarkan judul..."
                  value={search}
@@ -187,7 +187,7 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
                     setSearch(e.target.value);
                     setCurrentPage(1);
                  }}
-                 className="pl-10 h-10 rounded-xl bg-slate-50/50 border-none focus-visible:ring-[#0F1C3F]/10 placeholder:text-slate-400 font-medium"
+                 className="pl-10 h-10 rounded-lg bg-[#F8F9FB] border border-[#E4E7EC] focus-visible:ring-1 focus-visible:ring-[#0F1C3F] focus-visible:bg-white placeholder:text-[#98A2B3] font-medium transition-colors"
                />
             </div>
 
@@ -196,27 +196,27 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
                   setFilter(val);
                   setCurrentPage(1);
                }}>
-                  <SelectTrigger className="w-full md:w-[160px] h-10 rounded-xl bg-slate-50/50 border-none font-bold text-[10px] uppercase tracking-wider text-slate-500 transition-all hover:bg-slate-100/50">
+                  <SelectTrigger className="w-full md:w-[160px] h-10 rounded-lg bg-[#F8F9FB] border border-[#E4E7EC] font-bold text-[11px] uppercase tracking-wider text-[#475467] transition-all hover:bg-white hover:border-[#0F1C3F]/30">
                      <div className="flex items-center gap-2">
-                        <Filter className="h-3 w-3" />
+                        <Filter className="h-3.5 w-3.5" />
                         <SelectValue placeholder="Filter Status" />
                      </div>
                   </SelectTrigger>
-                  <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                     <SelectItem value="all" className="text-[10px] font-bold uppercase py-2">Semua Kursus</SelectItem>
-                     <SelectItem value="published" className="text-[10px] font-bold uppercase py-2">Terbit (Published)</SelectItem>
-                     <SelectItem value="draft" className="text-[10px] font-bold uppercase py-2">Draft (Editing)</SelectItem>
+                  <SelectContent className="rounded-xl border-[#E4E7EC] shadow-lg bg-white">
+                     <SelectItem value="all" className="text-[11px] font-bold uppercase py-2.5 focus:bg-[#F8F9FB] focus:text-[#0F1C3F] cursor-pointer">Semua Kursus</SelectItem>
+                     <SelectItem value="published" className="text-[11px] font-bold uppercase py-2.5 focus:bg-[#F8F9FB] focus:text-[#0F1C3F] cursor-pointer">Terbit (Published)</SelectItem>
+                     <SelectItem value="draft" className="text-[11px] font-bold uppercase py-2.5 focus:bg-[#F8F9FB] focus:text-[#0F1C3F] cursor-pointer">Draft (Editing)</SelectItem>
                   </SelectContent>
                </Select>
 
-               <div className="h-10 w-px bg-slate-100 hidden md:block" />
+               <div className="h-10 w-px bg-[#E4E7EC] hidden md:block" />
 
-               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-[100px]">
-                 <TabsList className="grid w-full grid-cols-2 h-10 bg-slate-50/50 rounded-xl p-1 border-none">
-                   <TabsTrigger value="list" className="rounded-lg h-8 data-[state=active]:bg-white data-[state=active]:text-[#0F1C3F] data-[state=active]:shadow-sm">
+               <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="w-[90px]">
+                 <TabsList className="grid w-full grid-cols-2 h-10 bg-[#F8F9FB] border border-[#E4E7EC] rounded-lg p-1">
+                   <TabsTrigger value="list" className="rounded-md h-7 data-[state=active]:bg-white data-[state=active]:text-[#0F1C3F] data-[state=active]:shadow-sm transition-all">
                       <List className="h-4 w-4" />
                    </TabsTrigger>
-                   <TabsTrigger value="grid" className="rounded-lg h-8 data-[state=active]:bg-white data-[state=active]:text-[#0F1C3F] data-[state=active]:shadow-sm">
+                   <TabsTrigger value="grid" className="rounded-md h-7 data-[state=active]:bg-white data-[state=active]:text-[#0F1C3F] data-[state=active]:shadow-sm transition-all">
                       <LayoutGrid className="h-4 w-4" />
                    </TabsTrigger>
                  </TabsList>
@@ -227,33 +227,33 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
 
       {/* Main Content Area */}
       {filteredCourses.length > 0 ? (
-         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 font-['DM_Sans']">
             {viewMode === "list" ? (
-               <Card className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-hidden">
+               <Card className="rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden">
                   <Table>
-                     <TableHeader className="bg-slate-50/50">
-                        <TableRow className="border-slate-100 hover:bg-transparent">
-                           <TableHead className="w-[400px] text-[10px] font-black uppercase tracking-wider text-slate-400 pl-6">Detail Kursus</TableHead>
-                           <TableHead className="text-[10px] font-black uppercase tracking-wider text-slate-400">Status</TableHead>
-                           <TableHead className="text-[10px] font-black uppercase tracking-wider text-slate-400">Modul</TableHead>
-                           <TableHead className="text-[10px] font-black uppercase tracking-wider text-slate-400">Peserta</TableHead>
-                           <TableHead className="text-[10px] font-black uppercase tracking-wider text-slate-400 text-right pr-6">Aksi</TableHead>
+                     <TableHeader className="bg-[#F8F9FB] border-b border-[#E4E7EC]">
+                        <TableRow className="border-none hover:bg-transparent">
+                           <TableHead className="w-[400px] text-[11px] font-bold uppercase tracking-wider text-[#475467] pl-6 py-3 font-['Lexend_Deca']">Detail Kursus</TableHead>
+                           <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#475467] py-3 font-['Lexend_Deca']">Status</TableHead>
+                           <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#475467] py-3 font-['Lexend_Deca']">Modul</TableHead>
+                           <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#475467] py-3 font-['Lexend_Deca']">Peserta</TableHead>
+                           <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#475467] text-right pr-6 py-3 font-['Lexend_Deca']">Aksi</TableHead>
                         </TableRow>
                      </TableHeader>
-                     <TableBody>
+                     <TableBody className="divide-y divide-[#E4E7EC]">
                         {paginatedCourses.map((course: any) => (
-                           <TableRow key={course.id} className="group border-slate-50 hover:bg-slate-50/40 transition-colors">
+                           <TableRow key={course.id} className="group hover:bg-[#F8F9FB] transition-colors border-none">
                               <TableCell className="pl-6 py-4">
                                  <div className="flex items-center gap-4">
                                     <div className={cn(
-                                       "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-white",
-                                       course.isPublished ? "bg-indigo-50 text-indigo-600" : "bg-slate-50 text-slate-400"
+                                       "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-[#E4E7EC]",
+                                       course.isPublished ? "bg-[#EFF8FF] text-[#175CD3]" : "bg-[#F1F3F7] text-[#475467]"
                                     )}>
-                                       <BookOpen className="h-6 w-6" />
+                                       <BookOpen className="h-5 w-5" />
                                     </div>
                                     <div className="flex flex-col min-w-0">
-                                       <span className="text-sm font-bold text-[#0F1C3F] font-lexend truncate group-hover:text-[#E8A020] transition-colors">{course.title}</span>
-                                       <span className="text-[10px] font-medium text-slate-400 mt-0.5">{course.category?.name || "Uncategorized"}</span>
+                                       <span className="text-sm font-bold text-[#101828] font-['Lexend_Deca'] truncate group-hover:text-[#0F1C3F] transition-colors">{course.title}</span>
+                                       <span className="text-[11px] font-medium text-[#475467] mt-0.5 truncate">{course.category?.name || "Uncategorized"}</span>
                                     </div>
                                  </div>
                               </TableCell>
@@ -262,15 +262,15 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
                               </TableCell>
                               <TableCell>
                                  <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className="text-[10px] font-bold bg-white text-[#0F1C3F] border-slate-100">
+                                    <Badge variant="outline" className="text-[11px] font-bold bg-[#F8F9FB] text-[#475467] border-[#E4E7EC] shadow-none">
                                        {course._count?.modules ?? 0} Modul
                                     </Badge>
                                  </div>
                               </TableCell>
                               <TableCell>
                                  <div className="flex items-center gap-2">
-                                    <Users className="h-3.5 w-3.5 text-slate-300" />
-                                    <span className="text-[11px] font-bold text-slate-500">{course._count?.enrollments ?? 0} Peserta</span>
+                                    <Users className="h-4 w-4 text-[#98A2B3]" />
+                                    <span className="text-[11px] font-bold text-[#475467]">{course._count?.enrollments ?? 0} Peserta</span>
                                  </div>
                               </TableCell>
                               <TableCell className="text-right pr-6">
@@ -284,44 +284,44 @@ export const CoursesClient = ({ courses }: CoursesClientProps) => {
             ) : (
                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                   {paginatedCourses.map((course: any) => (
-                     <Card key={course.id} className="group rounded-3xl border border-slate-100 bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-2xl hover:border-[#E8A020]/20 hover:-translate-y-1">
+                     <Card key={course.id} className="group rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-[#0F1C3F]/20 hover:-translate-y-1">
                         <div className={cn(
                            "h-32 p-6 flex flex-col justify-between relative",
-                           course.isPublished ? "bg-[#0F1C3F]" : "bg-slate-800"
+                           course.isPublished ? "bg-[#0F1C3F]" : "bg-[#475467]"
                         )}>
                            <div className="absolute inset-0 opacity-5 bg-[radial-gradient(#E8A020_1px,transparent_1px)] [background-size:20px_20px]" />
                            <div className="flex items-center justify-between relative z-10">
                               <div className="h-10 w-10 rounded-xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center">
-                                 <GraduationCap className="h-6 w-6 text-[#E8A020]" />
+                                 <GraduationCap className="h-5 w-5 text-white" />
                               </div>
                               <StatusBadge status={course.isPublished ? "PUBLISHED" : "DRAFT"} />
                            </div>
                            <div className="relative z-10">
-                              <span className="text-[10px] font-bold uppercase tracking-widest text-[#E8A020]/80">{course.category?.name || "Materi"}</span>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-white/80">{course.category?.name || "Materi"}</span>
                            </div>
                         </div>
-                        <CardContent className="p-6">
-                           <h3 className="text-base font-bold text-[#0F1C3F] font-lexend line-clamp-2 group-hover:text-[#E8A020] transition-colors leading-relaxed h-12 mb-4">
+                        <CardContent className="p-5">
+                           <h3 className="text-base font-bold text-[#101828] font-['Lexend_Deca'] line-clamp-2 group-hover:text-[#0F1C3F] transition-colors leading-relaxed h-12 mb-4">
                               {course.title}
                            </h3>
-                           <div className="grid grid-cols-2 gap-3 mb-6 pt-4 border-t border-slate-50">
+                           <div className="grid grid-cols-2 gap-3 mb-5 pt-4 border-t border-[#E4E7EC]">
                               <div className="flex flex-col">
-                                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">ISI MATERI</span>
-                                 <span className="text-xs font-bold text-[#0F1C3F] mt-1">{course._count?.modules ?? 0} Modul</span>
+                                 <span className="text-[9px] font-bold uppercase tracking-wider text-[#98A2B3]">ISI MATERI</span>
+                                 <span className="text-xs font-bold text-[#101828] mt-1">{course._count?.modules ?? 0} Modul</span>
                               </div>
                               <div className="flex flex-col">
-                                 <span className="text-[8px] font-black uppercase tracking-widest text-slate-300">PARTISIPAN</span>
-                                 <span className="text-xs font-bold text-[#0F1C3F] mt-1">{course._count?.enrollments ?? 0} User</span>
+                                 <span className="text-[9px] font-bold uppercase tracking-wider text-[#98A2B3]">PARTISIPAN</span>
+                                 <span className="text-xs font-bold text-[#101828] mt-1">{course._count?.enrollments ?? 0} User</span>
                               </div>
                            </div>
                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2 text-[10px] font-bold text-slate-300">
-                                 <CalendarDays className="h-3 w-3" />
+                              <div className="flex items-center gap-1.5 text-[11px] font-medium text-[#475467]">
+                                 <CalendarDays className="h-3.5 w-3.5" />
                                  {format(new Date(course.createdAt), "dd MMM yyyy", { locale: localeId })}
                               </div>
                               <div className="flex items-center gap-1">
                                  <Link href={`/admin/courses/${course.id}`}>
-                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-indigo-50 hover:text-indigo-600">
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg hover:bg-[#F8F9FB] hover:text-[#0F1C3F]">
                                        <FileEdit className="h-4 w-4" />
                                     </Button>
                                  </Link>

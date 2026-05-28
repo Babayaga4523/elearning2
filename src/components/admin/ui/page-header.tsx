@@ -7,20 +7,20 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions, badge }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-1.5 sm:flex-row sm:items-end sm:justify-between">
+    <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between font-['DM_Sans']">
       <div className="space-y-1">
         <div className="flex items-center gap-2">
-          <h1 className="text-xl sm:text-2xl font-bold text-[#0F1C3F] tracking-tight font-lexend">
+          <h1 className="text-2xl sm:text-3xl font-bold text-[#101828] tracking-tight font-['Lexend_Deca']">
             {title}
           </h1>
           {badge && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#E8A020]/10 text-[#E8A020] border border-[#E8A020]/20">
+            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#ECFDF3] text-[#027A48]">
               {badge}
             </span>
           )}
         </div>
         {description && (
-          <p className="text-xs sm:text-sm text-slate-400 font-medium leading-relaxed max-w-xl">
+          <p className="text-[13px] sm:text-sm text-[#475467] font-medium leading-relaxed max-w-xl">
             {description}
           </p>
         )}

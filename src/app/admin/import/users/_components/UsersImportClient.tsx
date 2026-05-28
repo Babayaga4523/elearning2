@@ -111,22 +111,22 @@ export function UsersImportClient() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8 font-sans">
         <Link href="/admin/users">
-          <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4 h-10 px-4 rounded-lg hover:bg-[#F8F9FB] hover:text-[#0F1C3F] text-[#475467] font-bold">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Kembali
           </Button>
         </Link>
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
-            <Users className="h-8 w-8 text-orange-600 dark:text-orange-400" />
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-[#0F1C3F] shadow-sm rounded-xl">
+            <Users className="h-8 w-8 text-[#E8A020]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold text-[#101828] font-lexend tracking-tight">
               Import Karyawan
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-[14px] text-[#475467] font-medium mt-1">
               Upload file Excel untuk import karyawan secara massal
             </p>
           </div>
@@ -134,48 +134,50 @@ export function UsersImportClient() {
       </div>
 
       {!showPreview ? (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
           {/* Instructions */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+          <div className="p-5 bg-[#F8F9FB] border border-[#E4E7EC] rounded-xl shadow-sm">
+            <h3 className="font-bold text-[#101828] font-lexend mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#0F1C3F] text-[#E8A020] text-xs">?</span>
               Cara Import Karyawan:
             </h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-200">
-              <li>Download template Excel</li>
+            <ol className="list-decimal list-inside space-y-1.5 text-[13px] font-medium text-[#475467] ml-2">
+              <li>Download template Excel melalui tombol yang tersedia</li>
               <li>Isi template dengan data karyawan (Name, Email wajib diisi)</li>
               <li>Password akan di-generate otomatis jika tidak diisi</li>
               <li>Upload file Excel yang sudah diisi</li>
               <li>Pilih apakah ingin mengirim welcome email</li>
-              <li>Konfirmasi import</li>
+              <li>Review preview data dan konfirmasi import</li>
             </ol>
           </div>
 
           {/* Download Template */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white rounded-xl border border-[#E4E7EC] shadow-sm gap-4">
             <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
+              <p className="font-bold text-[#101828] font-lexend">
                 Template Excel
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Download template untuk format yang benar
+              <p className="text-[13px] font-medium text-[#475467] mt-0.5">
+                Download template kosong untuk format kolom yang sesuai
               </p>
             </div>
-            <Button onClick={handleDownloadTemplate} variant="outline">
+            <Button onClick={handleDownloadTemplate} variant="outline" className="border-[#E4E7EC] hover:bg-[#F8F9FB] text-[#475467] font-bold h-10 px-5 rounded-lg shrink-0">
               <Download className="h-4 w-4 mr-2" />
               Download Template
             </Button>
           </div>
 
           {/* Welcome Email Option */}
-          <div className="flex items-center space-x-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3 p-5 bg-white rounded-xl border border-[#E4E7EC] shadow-sm">
             <Checkbox
               id="welcomeEmail"
               checked={sendWelcomeEmail}
               onCheckedChange={(checked) => setSendWelcomeEmail(checked as boolean)}
+              className="data-[state=checked]:bg-[#0F1C3F] data-[state=checked]:border-[#0F1C3F]"
             />
             <label
               htmlFor="welcomeEmail"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              className="text-[13px] font-bold text-[#101828] peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
               Kirim welcome email ke karyawan baru (berisi username & password)
             </label>
@@ -189,31 +191,33 @@ export function UsersImportClient() {
 
           {/* Import Result */}
           {importResult && (
-            <div className="p-4 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg space-y-2">
-              <h4 className="font-semibold text-green-800 dark:text-green-200">
+            <div className="p-5 bg-[#ECFDF3] border border-[#A6F4C5] rounded-xl space-y-3">
+              <h4 className="font-bold text-[#05603A] font-lexend flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5" />
                 Import Selesai
               </h4>
-              <p className="text-sm text-green-700 dark:text-green-300">
-                ✓ {importResult.count} karyawan berhasil diimport
+              <p className="text-[13px] font-medium text-[#05603A] ml-7">
+                <span className="font-bold text-[#027A48]">{importResult.count}</span> karyawan berhasil diimport
               </p>
               {importResult.skipped > 0 && (
-                <>
-                  <p className="text-sm text-green-700 dark:text-green-300">
-                    ⚠ {importResult.skipped} karyawan dilewati (email sudah terdaftar)
+                <div className="ml-7 pt-2 border-t border-[#A6F4C5]/50">
+                  <p className="text-[13px] font-medium text-[#B54708] flex items-center gap-1.5">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="font-bold">{importResult.skipped}</span> karyawan dilewati (email sudah terdaftar)
                   </p>
                   {importResult.skippedEmails.length > 0 && (
-                    <details className="text-sm text-green-700 dark:text-green-300">
-                      <summary className="cursor-pointer font-medium">
+                    <details className="text-[13px] text-[#B54708] mt-2 group">
+                      <summary className="cursor-pointer font-bold hover:text-[#93370D] transition-colors">
                         Lihat email yang dilewati
                       </summary>
-                      <ul className="mt-2 ml-4 space-y-1">
+                      <ul className="mt-2 ml-4 space-y-1 bg-[#FEF3F2]/50 p-3 rounded-lg border border-[#FECDCA]">
                         {importResult.skippedEmails.map((email, i) => (
-                          <li key={i}>• {email}</li>
+                          <li key={i} className="font-medium">• {email}</li>
                         ))}
                       </ul>
                     </details>
                   )}
-                </>
+                </div>
               )}
             </div>
           )}

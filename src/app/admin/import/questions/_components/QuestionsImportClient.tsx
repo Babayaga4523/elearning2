@@ -155,22 +155,22 @@ export function QuestionsImportClient() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8 font-sans">
         <Link href="/admin/courses">
-          <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4 h-10 px-4 rounded-lg hover:bg-[#F8F9FB] hover:text-[#0F1C3F] text-[#475467] font-bold">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Kembali
           </Button>
         </Link>
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-violet-100 dark:bg-violet-900/30 rounded-lg">
-            <FileSpreadsheet className="h-8 w-8 text-violet-600 dark:text-violet-400" />
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-[#0F1C3F] shadow-sm rounded-xl">
+            <FileSpreadsheet className="h-8 w-8 text-[#E8A020]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold text-[#101828] font-lexend tracking-tight">
               Import Soal
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-[14px] text-[#475467] font-medium mt-1">
               Upload file Excel untuk import soal secara massal
             </p>
           </div>
@@ -178,33 +178,34 @@ export function QuestionsImportClient() {
       </div>
 
       {!showPreview ? (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
           {/* Instructions */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+          <div className="p-5 bg-[#F8F9FB] border border-[#E4E7EC] rounded-xl shadow-sm">
+            <h3 className="font-bold text-[#101828] font-lexend mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#0F1C3F] text-[#E8A020] text-xs">?</span>
               Cara Import Soal:
             </h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-200">
-              <li>Pilih test tujuan dari dropdown</li>
-              <li>Download template Excel (opsional)</li>
-              <li>Isi template dengan data soal</li>
+            <ol className="list-decimal list-inside space-y-1.5 text-[13px] font-medium text-[#475467] ml-2">
+              <li>Pilih test tujuan dari dropdown di bawah</li>
+              <li>Download template Excel melalui tombol yang tersedia</li>
+              <li>Isi template dengan data soal sesuai format</li>
               <li>Upload file Excel yang sudah diisi</li>
-              <li>Review preview dan konfirmasi import</li>
+              <li>Review preview data dan konfirmasi import</li>
             </ol>
           </div>
 
           {/* Test Selector */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Pilih Test <span className="text-red-500">*</span>
+          <div className="space-y-2.5">
+            <label className="text-[13px] font-bold text-[#101828] uppercase tracking-wider">
+              Pilih Test <span className="text-[#B42318]">*</span>
             </label>
             <Select value={selectedTestId} onValueChange={setSelectedTestId}>
-              <SelectTrigger>
+              <SelectTrigger className="h-12 bg-white border-[#E4E7EC] rounded-xl font-medium text-[#101828] focus:ring-[#0F1C3F] focus:border-[#0F1C3F]">
                 <SelectValue placeholder="Pilih test..." />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="rounded-xl border-[#E4E7EC] shadow-md font-sans">
                 {tests.map((test) => (
-                  <SelectItem key={test.id} value={test.id}>
+                  <SelectItem key={test.id} value={test.id} className="font-medium focus:bg-[#F8F9FB] focus:text-[#0F1C3F]">
                     {test.title} - {test.courseTitle}
                   </SelectItem>
                 ))}
@@ -213,16 +214,16 @@ export function QuestionsImportClient() {
           </div>
 
           {/* Download Template */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white rounded-xl border border-[#E4E7EC] shadow-sm gap-4">
             <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
+              <p className="font-bold text-[#101828] font-lexend">
                 Template Excel
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Download template untuk format yang benar
+              <p className="text-[13px] font-medium text-[#475467] mt-0.5">
+                Download template kosong untuk format kolom yang sesuai
               </p>
             </div>
-            <Button onClick={handleDownloadTemplate} variant="outline">
+            <Button onClick={handleDownloadTemplate} variant="outline" className="border-[#E4E7EC] hover:bg-[#F8F9FB] text-[#475467] font-bold h-10 px-5 rounded-lg shrink-0">
               <Download className="h-4 w-4 mr-2" />
               Download Template
             </Button>

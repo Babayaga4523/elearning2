@@ -63,26 +63,26 @@ export const CourseCategoryForm = ({
   const selectedOption = options.find((option) => option.value === initialData.categoryId);
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Course category
-        <Button onClick={toggleEdit} variant="ghost">
+    <div className="p-6 bg-white transition-all">
+      <div className="font-bold text-sm text-[#101828] flex items-center justify-between font-['Lexend_Deca']">
+        Kategori Kursus
+        <Button onClick={toggleEdit} variant="ghost" className="h-8 text-[#475467] hover:bg-[#F8F9FB] hover:text-[#101828]">
           {isEditing ? (
-            <>Cancel</>
+            <>Batal</>
           ) : (
             <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit category
+              <Pencil className="h-3.5 w-3.5 mr-2" />
+              Edit
             </>
           )}
         </Button>
       </div>
       {!isEditing && (
         <p className={cn(
-          "text-sm mt-2",
-          !initialData.categoryId && "text-slate-500 italic"
+          "text-sm mt-2 font-['DM_Sans']",
+          !initialData.categoryId ? "text-[#98A2B3] italic" : "text-[#475467]"
         )}>
-          {selectedOption?.label || "No category"}
+          {selectedOption?.label || "Belum ada kategori terpilih"}
         </p>
       )}
       {isEditing && (
@@ -100,9 +100,9 @@ export const CourseCategoryForm = ({
                     <select
                       {...field}
                       disabled={isSubmitting}
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      className="flex h-10 w-full rounded-lg border border-[#E4E7EC] bg-[#F8F9FB] px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-[#0F1C3F] disabled:cursor-not-allowed disabled:opacity-50 font-medium text-[#101828]"
                     >
-                      <option value="">Select a category...</option>
+                      <option value="">Pilih Kategori...</option>
                       {options.map((option) => (
                         <option key={option.value} value={option.value}>
                           {option.label}
@@ -110,7 +110,7 @@ export const CourseCategoryForm = ({
                       ))}
                     </select>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-[#F04438]" />
                 </FormItem>
               )}
             />
@@ -118,8 +118,9 @@ export const CourseCategoryForm = ({
               <Button
                 disabled={!isValid || isSubmitting}
                 type="submit"
+                className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white rounded-lg h-9 text-xs font-semibold px-4"
               >
-                Save
+                Simpan Perubahan
               </Button>
             </div>
           </form>

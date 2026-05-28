@@ -86,22 +86,22 @@ export const CourseTitleForm = ({
   }
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Course title
-        <Button onClick={toggleEdit} variant="ghost">
+    <div className="p-6 bg-white transition-all">
+      <div className="font-bold text-sm text-[#101828] flex items-center justify-between font-['Lexend_Deca']">
+        Judul Kursus
+        <Button onClick={toggleEdit} variant="ghost" className="h-8 text-[#475467] hover:bg-[#F8F9FB] hover:text-[#101828]">
           {isEditing ? (
-            <>Cancel</>
+            <>Batal</>
           ) : (
             <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit title
+              <Pencil className="h-3.5 w-3.5 mr-2" />
+              Edit
             </>
           )}
         </Button>
       </div>
       {!isEditing && (
-        <p className="text-sm mt-2">
+        <p className="text-sm mt-2 text-[#475467] font-['DM_Sans']">
           {initialData.title}
         </p>
       )}
@@ -119,11 +119,12 @@ export const CourseTitleForm = ({
                   <FormControl>
                     <Input
                       disabled={isSubmitting}
-                      placeholder="e.g. 'Advanced Web Development'"
+                      placeholder="Contoh: Pengenalan Budaya Perusahaan"
+                      className="bg-[#F8F9FB] border-[#E4E7EC] focus-visible:ring-1 focus-visible:ring-[#0F1C3F]"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-[#F04438]" />
                 </FormItem>
               )}
             />
@@ -131,8 +132,9 @@ export const CourseTitleForm = ({
               <Button
                 disabled={!isValid || isSubmitting}
                 type="submit"
+                className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white rounded-lg h-9 text-xs font-semibold px-4"
               >
-                Save
+                Simpan Perubahan
               </Button>
             </div>
           </form>

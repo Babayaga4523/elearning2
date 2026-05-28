@@ -77,26 +77,26 @@ export const CourseDescriptionForm = ({
   }
 
   return (
-    <div className="mt-6 border bg-slate-100 rounded-md p-4">
-      <div className="font-medium flex items-center justify-between">
-        Course description
-        <Button onClick={toggleEdit} variant="ghost">
+    <div className="p-6 bg-white transition-all">
+      <div className="font-bold text-sm text-[#101828] flex items-center justify-between font-['Lexend_Deca']">
+        Deskripsi Kursus
+        <Button onClick={toggleEdit} variant="ghost" className="h-8 text-[#475467] hover:bg-[#F8F9FB] hover:text-[#101828]">
           {isEditing ? (
-            <>Cancel</>
+            <>Batal</>
           ) : (
             <>
-              <Pencil className="h-4 w-4 mr-2" />
-              Edit description
+              <Pencil className="h-3.5 w-3.5 mr-2" />
+              Edit
             </>
           )}
         </Button>
       </div>
       {!isEditing && (
         <p className={cn(
-          "text-sm mt-2",
-          !initialData.description && "text-slate-500 italic"
+          "text-sm mt-2 font-['DM_Sans']",
+          !initialData.description ? "text-[#98A2B3] italic" : "text-[#475467]"
         )}>
-          {initialData.description || "No description"}
+          {initialData.description || "Belum ada deskripsi"}
         </p>
       )}
       {isEditing && (
@@ -113,11 +113,12 @@ export const CourseDescriptionForm = ({
                   <FormControl>
                     <Textarea
                       disabled={isSubmitting}
-                      placeholder="e.g. 'This course is about...'"
+                      placeholder="Contoh: Kursus ini mempelajari tentang..."
+                      className="bg-[#F8F9FB] border-[#E4E7EC] focus-visible:ring-1 focus-visible:ring-[#0F1C3F] min-h-[120px]"
                       {...field}
                     />
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-[#F04438]" />
                 </FormItem>
               )}
             />
@@ -125,8 +126,9 @@ export const CourseDescriptionForm = ({
               <Button
                 disabled={!isValid || isSubmitting}
                 type="submit"
+                className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white rounded-lg h-9 text-xs font-semibold px-4"
               >
-                Save
+                Simpan Perubahan
               </Button>
             </div>
           </form>

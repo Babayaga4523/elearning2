@@ -110,22 +110,22 @@ export function EnrollmentsImportClient() {
   return (
     <div className="container mx-auto py-8 px-4 max-w-5xl">
       {/* Header */}
-      <div className="mb-8">
+      <div className="mb-8 font-sans">
         <Link href="/admin/enrollments">
-          <Button variant="ghost" size="sm" className="mb-4">
+          <Button variant="ghost" size="sm" className="mb-4 h-10 px-4 rounded-lg hover:bg-[#F8F9FB] hover:text-[#0F1C3F] text-[#475467] font-bold">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Kembali
           </Button>
         </Link>
-        <div className="flex items-center space-x-3">
-          <div className="p-3 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-            <GraduationCap className="h-8 w-8 text-emerald-600 dark:text-emerald-400" />
+        <div className="flex items-center space-x-4">
+          <div className="p-3 bg-[#0F1C3F] shadow-sm rounded-xl">
+            <GraduationCap className="h-8 w-8 text-[#E8A020]" />
           </div>
           <div>
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
+            <h1 className="text-3xl font-bold text-[#101828] font-lexend tracking-tight">
               Import Enrollment
             </h1>
-            <p className="text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-[14px] text-[#475467] font-medium mt-1">
               Upload file Excel untuk enrollment karyawan ke kursus secara massal
             </p>
           </div>
@@ -133,48 +133,50 @@ export function EnrollmentsImportClient() {
       </div>
 
       {!showPreview ? (
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
           {/* Instructions */}
-          <div className="p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">
+          <div className="p-5 bg-[#F8F9FB] border border-[#E4E7EC] rounded-xl shadow-sm">
+            <h3 className="font-bold text-[#101828] font-lexend mb-3 flex items-center gap-2">
+              <span className="flex h-6 w-6 items-center justify-center rounded-md bg-[#0F1C3F] text-[#E8A020] text-xs">?</span>
               Cara Import Enrollment:
             </h3>
-            <ol className="list-decimal list-inside space-y-1 text-sm text-blue-800 dark:text-blue-200">
-              <li>Download template Excel</li>
+            <ol className="list-decimal list-inside space-y-1.5 text-[13px] font-medium text-[#475467] ml-2">
+              <li>Download template Excel melalui tombol yang tersedia</li>
               <li>Isi template dengan User Email dan Course Title (harus exact match)</li>
               <li>Deadline opsional (format: YYYY-MM-DD), jika kosong akan otomatis 30 hari</li>
               <li>Upload file Excel yang sudah diisi</li>
               <li>Pilih apakah ingin mengirim notifikasi ke karyawan</li>
-              <li>Konfirmasi import</li>
+              <li>Review preview data dan konfirmasi import</li>
             </ol>
           </div>
 
           {/* Download Template */}
-          <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between p-5 bg-white rounded-xl border border-[#E4E7EC] shadow-sm gap-4">
             <div>
-              <p className="font-medium text-gray-900 dark:text-gray-100">
+              <p className="font-bold text-[#101828] font-lexend">
                 Template Excel
               </p>
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                Download template untuk format yang benar
+              <p className="text-[13px] font-medium text-[#475467] mt-0.5">
+                Download template kosong untuk format kolom yang sesuai
               </p>
             </div>
-            <Button onClick={handleDownloadTemplate} variant="outline">
+            <Button onClick={handleDownloadTemplate} variant="outline" className="border-[#E4E7EC] hover:bg-[#F8F9FB] text-[#475467] font-bold h-10 px-5 rounded-lg shrink-0">
               <Download className="h-4 w-4 mr-2" />
               Download Template
             </Button>
           </div>
 
           {/* Notification Option */}
-          <div className="flex items-center space-x-2 p-4 bg-gray-50 dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-3 p-5 bg-white rounded-xl border border-[#E4E7EC] shadow-sm">
             <Checkbox
               id="notification"
               checked={sendNotification}
               onCheckedChange={(checked) => setSendNotification(checked as boolean)}
+              className="data-[state=checked]:bg-[#0F1C3F] data-[state=checked]:border-[#0F1C3F]"
             />
             <label
               htmlFor="notification"
-              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              className="text-[13px] font-bold text-[#101828] peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
             >
               Kirim notifikasi ke karyawan tentang enrollment baru
             </label>
@@ -188,36 +190,46 @@ export function EnrollmentsImportClient() {
 
           {/* Import Result */}
           {importResult && (
-            <div className={`p-4 rounded-lg border space-y-2 ${
+            <div className={cn(
+              "p-5 rounded-xl border space-y-3",
               importResult.errors.length > 0
-                ? "bg-yellow-50 dark:bg-yellow-950/20 border-yellow-200 dark:border-yellow-800"
-                : "bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
-            }`}>
-              <h4 className={`font-semibold ${
-                importResult.errors.length > 0
-                  ? "text-yellow-800 dark:text-yellow-200"
-                  : "text-green-800 dark:text-green-200"
-              }`}>
+                ? "bg-[#FFFAEB] border-[#FDB022]"
+                : "bg-[#ECFDF3] border-[#A6F4C5]"
+            )}>
+              <h4 className={cn(
+                "font-bold font-lexend flex items-center gap-2",
+                importResult.errors.length > 0 ? "text-[#B54708]" : "text-[#05603A]"
+              )}>
+                {importResult.errors.length > 0 ? (
+                  <AlertCircle className="h-5 w-5" />
+                ) : (
+                  <CheckCircle2 className="h-5 w-5" />
+                )}
                 Import Selesai
               </h4>
-              <p className={`text-sm ${
-                importResult.errors.length > 0
-                  ? "text-yellow-700 dark:text-yellow-300"
-                  : "text-green-700 dark:text-green-300"
-              }`}>
-                ✓ {importResult.count} enrollment berhasil dibuat
+              <p className={cn(
+                "text-[13px] font-medium ml-7",
+                importResult.errors.length > 0 ? "text-[#B54708]" : "text-[#05603A]"
+              )}>
+                <span className={cn(
+                  "font-bold",
+                  importResult.errors.length > 0 ? "text-[#93370D]" : "text-[#027A48]"
+                )}>{importResult.count}</span> enrollment berhasil dibuat
               </p>
               {importResult.errors.length > 0 && (
-                <details className="text-sm text-yellow-700 dark:text-yellow-300">
-                  <summary className="cursor-pointer font-medium">
-                    ⚠ {importResult.errors.length} baris gagal (lihat detail)
-                  </summary>
-                  <ul className="mt-2 ml-4 space-y-1 max-h-40 overflow-y-auto">
-                    {importResult.errors.map((error, i) => (
-                      <li key={i}>• {error}</li>
-                    ))}
-                  </ul>
-                </details>
+                <div className="ml-7 pt-2 border-t border-[#FDB022]/50">
+                  <details className="text-[13px] text-[#B54708] group">
+                    <summary className="cursor-pointer font-bold hover:text-[#93370D] transition-colors flex items-center gap-1.5">
+                      <AlertCircle className="h-4 w-4" />
+                      {importResult.errors.length} baris gagal (lihat detail)
+                    </summary>
+                    <ul className="mt-2 ml-4 space-y-1 max-h-40 overflow-y-auto bg-white/50 p-3 rounded-lg border border-[#FDB022]/30">
+                      {importResult.errors.map((error, i) => (
+                        <li key={i} className="font-medium">• {error}</li>
+                      ))}
+                    </ul>
+                  </details>
+                </div>
               )}
             </div>
           )}

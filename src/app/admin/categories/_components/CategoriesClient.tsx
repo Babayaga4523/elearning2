@@ -15,6 +15,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createCategory, updateCategory, deleteCategory } from "../actions";
 import { toast } from "sonner";
+import { PageHeader } from "@/components/admin/ui/page-header";
+import { DataCard } from "@/components/analytics/data-card";
+import { EmptyState } from "@/components/admin/ui/empty-state";
+import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
 
 interface Category {
   id: string;
@@ -103,143 +109,118 @@ export function CategoriesClient({ categories }: CategoriesClientProps) {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-3xl font-bold text-[#0F1C3F]">Kelola Kategori</h1>
-          <p className="text-slate-500 mt-1">
-            Kelola kategori untuk mengorganisir kursus
-          </p>
-        </div>
-        <Button
-          onClick={() => setIsCreateOpen(true)}
-          className="bg-[#E8A020] hover:bg-[#E8A020]/90 text-white"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Tambah Kategori
-        </Button>
-      </div>
+    <div className="space-y-6 pb-20 animate-in fade-in duration-700">
+      <PageHeader
+        title="Kelola Kategori"
+        description="Organisasikan kursus dan materi pelatihan ke dalam kategori yang terstruktur."
+        actions={
+          <Button
+            onClick={() => setIsCreateOpen(true)}
+            className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white gap-2 h-10 px-5 rounded-lg shadow-sm font-bold transition-all active:scale-95 font-['DM_Sans']"
+          >
+            <Plus className="w-4 h-4 text-white" />
+            Tambah Kategori
+          </Button>
+        }
+      />
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Total Kategori</p>
-              <p className="text-2xl font-bold text-[#0F1C3F]">{categories.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Total Kursus</p>
-              <p className="text-2xl font-bold text-[#0F1C3F]">
-                {categories.reduce((sum, cat) => sum + cat._count.courses, 0)}
-              </p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm text-slate-500">Rata-rata Kursus</p>
-              <p className="text-2xl font-bold text-[#0F1C3F]">
-                {categories.length > 0
-                  ? Math.round(
-                      categories.reduce((sum, cat) => sum + cat._count.courses, 0) /
-                        categories.length
-                    )
-                  : 0}
-              </p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <DataCard 
+          label="Total Kategori" 
+          value={categories.length} 
+          icon={BookOpen} 
+          color="blue" 
+          description="Kategori aktif di sistem" 
+        />
+        <DataCard 
+          label="Total Kursus" 
+          value={categories.reduce((sum, cat) => sum + cat._count.courses, 0)} 
+          icon={BookOpen} 
+          color="emerald" 
+          description="Kursus dalam seluruh kategori" 
+        />
+        <DataCard 
+          label="Rata-rata Kursus/Kategori" 
+          value={categories.length > 0 ? Math.round(categories.reduce((sum, cat) => sum + cat._count.courses, 0) / categories.length) : 0} 
+          icon={BookOpen} 
+          color="amber" 
+          description="Persebaran materi kursus" 
+        />
       </div>
 
       {/* Categories List */}
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-slate-50 border-b border-slate-200">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+      <div className="font-['DM_Sans']">
+        <Card className="rounded-xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden">
+          <Table>
+            <TableHeader className="bg-[#F8F9FB] border-b border-[#E4E7EC]">
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className="w-[500px] text-[11px] font-bold uppercase tracking-wider text-[#475467] pl-6 py-3 font-['Lexend_Deca']">
                   Nama Kategori
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#475467] py-3 font-['Lexend_Deca']">
                   Jumlah Kursus
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                </TableHead>
+                <TableHead className="text-[11px] font-bold uppercase tracking-wider text-[#475467] text-right pr-6 py-3 font-['Lexend_Deca']">
                   Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200">
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody className="divide-y divide-[#E4E7EC]">
               {categories.length === 0 ? (
-                <tr>
-                  <td colSpan={3} className="px-6 py-12 text-center">
-                    <BookOpen className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-                    <p className="text-slate-500">Belum ada kategori</p>
-                    <p className="text-sm text-slate-400 mt-1">
-                      Klik tombol &quot;Tambah Kategori&quot; untuk membuat kategori baru
-                    </p>
-                  </td>
-                </tr>
+                <TableRow>
+                  <TableCell colSpan={3} className="h-64">
+                    <EmptyState 
+                      title="Belum ada kategori"
+                      description="Klik tombol 'Tambah Kategori' untuk membuat kategori baru."
+                    />
+                  </TableCell>
+                </TableRow>
               ) : (
                 categories.map((category) => (
-                  <tr key={category.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
-                          <BookOpen className="w-4 h-4 text-blue-600" />
+                  <TableRow key={category.id} className="group hover:bg-[#F8F9FB] transition-colors border-none">
+                    <TableCell className="pl-6 py-4">
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm border border-[#E4E7EC] bg-[#EFF8FF] text-[#175CD3]">
+                          <BookOpen className="h-4 w-4" />
                         </div>
-                        <span className="font-semibold text-[#0F1C3F]">
+                        <span className="text-sm font-bold text-[#101828] font-['Lexend_Deca'] truncate group-hover:text-[#0F1C3F] transition-colors">
                           {category.name}
                         </span>
                       </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {category._count.courses} kursus
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right">
+                    </TableCell>
+                    <TableCell className="py-4">
+                      <Badge variant="outline" className="text-[11px] font-bold bg-[#F8F9FB] text-[#475467] border-[#E4E7EC] shadow-none">
+                        {category._count.courses} Kursus
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right pr-6 py-4">
                       <div className="flex items-center justify-end gap-2">
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => openEditDialog(category)}
-                          className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          className="h-8 w-8 rounded-lg hover:bg-[#F8F9FB] hover:text-[#0F1C3F] text-[#475467]"
                         >
-                          <Pencil className="w-4 h-4" />
+                          <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
-                          size="sm"
+                          size="icon"
                           onClick={() => openDeleteDialog(category)}
-                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          className="h-8 w-8 rounded-lg hover:bg-[#FEF3F2] hover:text-[#B42318] text-[#475467]"
                           disabled={category._count.courses > 0}
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
+        </Card>
       </div>
 
       {/* Create Dialog */}
@@ -281,7 +262,7 @@ export function CategoriesClient({ categories }: CategoriesClientProps) {
             <Button
               onClick={handleCreate}
               disabled={isLoading}
-              className="bg-[#E8A020] hover:bg-[#E8A020]/90"
+              className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white"
             >
               {isLoading ? "Menyimpan..." : "Simpan"}
             </Button>
@@ -329,7 +310,7 @@ export function CategoriesClient({ categories }: CategoriesClientProps) {
             <Button
               onClick={handleEdit}
               disabled={isLoading}
-              className="bg-[#E8A020] hover:bg-[#E8A020]/90"
+              className="bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white"
             >
               {isLoading ? "Menyimpan..." : "Simpan"}
             </Button>

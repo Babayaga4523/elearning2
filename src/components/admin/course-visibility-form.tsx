@@ -40,39 +40,45 @@ export const CourseVisibilityForm = ({
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-200 transition-all hover:bg-white hover:shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className={cn(
-            "h-10 w-10 flex items-center justify-center rounded-xl shadow-inner transition-all duration-500",
-            isVisible ? "bg-blue-100 text-blue-600" : "bg-slate-200 text-slate-500"
-          )}>
-            {isVisible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+    <div className="p-6 bg-white transition-all">
+      <div className="font-bold text-sm text-[#101828] flex items-center justify-between font-['Lexend_Deca'] mb-4">
+        Visibilitas Katalog
+      </div>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between p-4 bg-[#F8F9FB] rounded-xl border border-[#E4E7EC] transition-all">
+          <div className="flex items-center gap-4">
+            <div className={cn(
+              "h-10 w-10 flex items-center justify-center rounded-lg transition-all duration-300",
+              isVisible ? "bg-[#EFF8FF] text-[#2E90FA]" : "bg-[#F1F3F7] text-[#98A2B3]"
+            )}>
+              {isVisible ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}
+            </div>
+            <div className="space-y-0.5">
+              <p className="text-sm font-bold text-[#101828]">Tampilkan di Katalog</p>
+              <p className="text-[10px] font-medium text-[#475467] uppercase tracking-wider font-['DM_Sans']">
+                {isVisible ? "Kursus muncul di katalog karyawan" : "Hanya karyawan terdaftar yang bisa melihat"}
+              </p>
+            </div>
           </div>
-          <div className="space-y-0.5">
-            <p className="text-sm font-black text-slate-800">Tampilkan di Katalog</p>
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">
-              {isVisible ? "Kursus muncul di katalog karyawan" : "Hanya karyawan terdaftar yang bisa melihat"}
+          <Switch
+            disabled={isUpdating}
+            checked={isVisible}
+            onCheckedChange={onChange}
+            className="data-[state=checked]:bg-[#12B76A]"
+          />
+        </div>
+        
+        {!isVisible && (
+          <div className="p-3 bg-[#FFFAEB] rounded-xl border border-[#FEC84B] flex gap-3">
+            <div className="h-5 w-5 flex items-center justify-center bg-[#F79009] rounded-full shrink-0 text-white font-bold text-xs">
+              !
+            </div>
+            <p className="text-[11px] font-medium text-[#B54708] leading-relaxed">
+              Kursus ini disembunyikan dari Katalog. Karyawan baru tidak akan menemukannya kecuali Anda mendaftarkan mereka secara manual.
             </p>
           </div>
-        </div>
-        <Switch
-          disabled={isUpdating}
-          checked={isVisible}
-          onCheckedChange={onChange}
-        />
+        )}
       </div>
-      
-      {!isVisible && (
-        <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 flex gap-3 animate-in fade-in slide-in-from-top-2">
-          <div className="h-5 w-5 flex items-center justify-center bg-amber-200 rounded-full shrink-0">
-             <span className="text-[10px] font-black text-amber-700">!</span>
-          </div>
-          <p className="text-[10px] font-medium text-amber-700 leading-relaxed">
-            Kursus ini disembunyikan dari Katalog. Karyawan baru tidak akan menemukannya kecuali Anda mendaftarkan mereka secara manual.
-          </p>
-        </div>
-      )}
     </div>
   );
 };

@@ -33,34 +33,34 @@ export const DataCard = ({
   const c = colorMap[color];
 
   return (
-    <Card className="group overflow-hidden border-slate-100 bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5">
-      <CardContent className="p-3 md:p-4">
+    <Card className="group overflow-hidden border border-[#E4E7EC] bg-white shadow-sm transition-all hover:shadow-md hover:-translate-y-0.5 rounded-xl font-['DM_Sans']">
+      <CardContent className="p-4 md:p-5">
         {/* Icon + Trend */}
         <div className="flex items-start justify-between">
-          <div className="rounded-lg bg-[#0F1C3F]/5 p-1.5 transition-colors group-hover:bg-[#0F1C3F]/10">
-            <Icon className="h-3.5 w-3.5 text-[#E8A020]" />
+          <div className="rounded-lg bg-[#F8F9FB] border border-[#E4E7EC] p-2 transition-colors group-hover:bg-[#0F1C3F] group-hover:text-white">
+            <Icon className="h-4 w-4 text-[#475467] group-hover:text-white transition-colors" />
           </div>
           {trend && (
-            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded-full">
+            <span className="text-[10px] font-bold text-[#027A48] bg-[#ECFDF3] px-2 py-0.5 rounded-md">
               {trend}
             </span>
           )}
         </div>
         
         {/* Value */}
-        <div className="mt-3">
-          <p className="text-xl font-black text-[#0F1C3F] font-lexend tracking-tight">
+        <div className="mt-4">
+          <p className="text-2xl font-bold text-[#101828] font-['Lexend_Deca'] tracking-tight">
             {value}
           </p>
           {/* Label */}
-          <p className="mt-0.5 text-[10px] font-bold uppercase tracking-[0.1em] text-slate-400">
+          <p className="mt-1 text-[11px] font-bold uppercase tracking-wider text-[#98A2B3]">
             {label}
           </p>
         </div>
         
         {description && (
-          <div className="mt-3 pt-3 border-t border-slate-50">
-            <p className="text-[10px] font-medium text-slate-400 truncate">
+          <div className="mt-4 pt-3 border-t border-[#E4E7EC]">
+            <p className="text-[11px] font-medium text-[#475467] truncate">
                {description}
             </p>
           </div>

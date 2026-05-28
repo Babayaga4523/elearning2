@@ -4,17 +4,18 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { CourseSetupClient } from "./_components/CourseSetupClient";
 
-export const metadata: Metadata = { title: "Edit Kursus | Admin HCMS" };
+export const metadata: Metadata = { title: "Edit Kursus | HCMS Admin" };
 
-export default async function CourseIdPage({
+export default async function CourseEditPage({
   params,
   searchParams,
 }: {
   params: { courseId: string };
   searchParams: { step?: string };
 }) {
-  const step = Math.max(1, Number(searchParams?.step ?? 2));
+  const step = Math.max(1, Number(searchParams.step ?? 2));
   const session = await auth();
+
   if (!session?.user?.id) return redirect("/auth/login");
   const role = session.user.activeRole;
   if (role !== "ADMIN" && role !== "SUPER_ADMIN") return redirect("/dashboard");
@@ -22,19 +23,17 @@ export default async function CourseIdPage({
   const course = await db.course.findUnique({
     where: { id: params.courseId },
     include: {
-      modules: { orderBy: { position: "asc" } },
-      tests: { include: { questions: { include: { options: true } } } },
+      modules: { orderBy: { position: "asc" as const } },
+      tests: {
+        include: { questions: { include: { options: true } },
+      },
     },
   });
 
   if (!course) return redirect("/admin/courses");
 
-  const preTest = course.tests.find((t: any) => t.type === "PRE") ?? null;
-  const postTest = course.tests.find((t: any) => t.type === "POST") ?? null;
-
-  const categories = await db.category.findMany({
-    orderBy: { name: "asc" },
-  });
+  const preTest = course.tests.find((t) => t.type === "PRE") ?? null;
+  const postTest = course.tests.find((t) => t.type === "POST") ?? null;
 
   return (
     <CourseSetupClient
@@ -45,8 +44,6 @@ export default async function CourseIdPage({
       modules={course.modules as any}
       preTest={preTest as any}
       postTest={postTest as any}
-      initialData={course as any}
-      categories={categories.map(c => ({ label: c.name, value: c.id }))}
     />
   );
 }
