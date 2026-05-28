@@ -77,42 +77,85 @@ export default function DashboardClient({
         
         {/* Urgent Alerts */}
         {urgentAlerts.length > 0 && (
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {urgentAlerts.map((alert, idx) => {
-              const isExpired = alert.daysRemaining <= 0;
+              const isExpired = alert.daysRemaining < 0;
+              const isToday = alert.daysRemaining === 0;
+
+              // Smart UI Mapping based on deadline state
+              const style = isExpired
+                ? {
+                    bg: "bg-rose-50/50",
+                    border: "border-rose-200/60",
+                    iconContainer: "bg-rose-100",
+                    icon: "text-rose-600",
+                    badgeText: "text-rose-700",
+                    btn: "bg-white text-rose-700 border border-rose-200 hover:bg-rose-50 hover:border-rose-300",
+                    label: "Telah lewat deadline",
+                    btnText: "Lihat Detail",
+                    Icon: AlertTriangle,
+                  }
+                : isToday
+                ? {
+                    bg: "bg-amber-50/50",
+                    border: "border-amber-200/60",
+                    iconContainer: "bg-amber-100",
+                    icon: "text-amber-600",
+                    badgeText: "text-amber-800",
+                    btn: "bg-amber-500 text-white border border-transparent hover:bg-amber-600",
+                    label: "Tenggat Waktu Hari Ini",
+                    btnText: "Selesaikan Segera",
+                    Icon: Clock,
+                  }
+                : {
+                    bg: "bg-blue-50/50",
+                    border: "border-blue-200/60",
+                    iconContainer: "bg-blue-100",
+                    icon: "text-blue-600",
+                    badgeText: "text-blue-800",
+                    btn: "bg-blue-600 text-white border border-transparent hover:bg-blue-700",
+                    label: `${alert.daysRemaining} Hari Lagi`,
+                    btnText: "Lanjutkan Belajar",
+                    Icon: Clock,
+                  };
+
               return (
-                <div 
-                  key={idx} 
-                  className={`border rounded-lg p-4 flex items-start gap-4 ${
-                    isExpired 
-                      ? "bg-[#ffdad6] border-[#ba1a1a]" 
-                      : "bg-[#ffdcbf] border-[#8c4f00]"
-                  }`}
+                <div
+                  key={idx}
+                  className={`group relative overflow-hidden rounded-xl border ${style.border} ${style.bg} p-4 sm:p-5 transition-all duration-300 hover:shadow-sm`}
                 >
-                  {isExpired ? (
-                    <AlertTriangle className="text-[#93000a] mt-1 shrink-0 w-6 h-6" />
-                  ) : (
-                    <Clock className="text-[#8c4f00] mt-1 shrink-0 w-6 h-6" />
-                  )}
-                  <div className="flex-1">
-                    <h4 className={`text-sm font-semibold tracking-wide ${
-                      isExpired ? "text-[#93000a]" : "text-[#6b3b00]"
-                    }`}>
-                      {isExpired ? "Telah lewat deadline" : `${alert.daysRemaining} hari lagi`}
-                    </h4>
-                    <p className={`text-sm mt-1 ${
-                      isExpired ? "text-[#93000a]" : "text-[#6b3b00]"
-                    }`}>
-                      {alert.title}
-                    </p>
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                    {/* Icon Section */}
+                    <div className={`flex items-center justify-center h-10 w-10 rounded-full shrink-0 ${style.iconContainer}`}>
+                      <style.Icon className={`h-5 w-5 ${style.icon}`} />
+                    </div>
+
+                    {/* Content Section */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className={`text-xs font-bold uppercase tracking-wider ${style.badgeText}`}>
+                          {style.label}
+                        </span>
+                        {isToday && (
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+                          </span>
+                        )}
+                      </div>
+                      <h4 className="text-sm font-semibold text-slate-800 truncate">
+                        {alert.title}
+                      </h4>
+                    </div>
+
+                    {/* Action Button */}
+                    <Link href={`/courses/${alert.courseId}`} className="shrink-0 mt-3 sm:mt-0">
+                      <button className={`w-full sm:w-auto px-5 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 shadow-sm active:scale-95 flex items-center justify-center gap-2 ${style.btn}`}>
+                        {style.btnText}
+                        <ChevronRight className="w-4 h-4" />
+                      </button>
+                    </Link>
                   </div>
-                  <Link href={`/courses/${alert.courseId}`}>
-                    <button className={`text-xs px-4 py-2 font-bold rounded-md text-white transition-colors ${
-                      isExpired ? "bg-[#ba1a1a] hover:bg-[#93000a]" : "bg-[#f7941d] hover:bg-[#8c4f00]"
-                    }`}>
-                      {isExpired ? "Selesaikan Sekarang" : "Lanjutkan"}
-                    </button>
-                  </Link>
                 </div>
               );
             })}

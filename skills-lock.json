@@ -385,6 +385,12 @@
       "skillPath": "plugins/testing-handbook-skills/skills/testing-handbook-generator/SKILL.md",
       "computedHash": "7b486c8cd405c7b28c45e77948ecc50c39dc1c761d5eabf705b237381aecf363"
     },
+    "to-prd": {
+      "source": "mattpocock/skills",
+      "sourceType": "github",
+      "skillPath": "skills/engineering/to-prd/SKILL.md",
+      "computedHash": "a80acb8760af6521a37ea4f079e617712fcaa800f8a766e247f815c5dabb20d2"
+    },
     "token-integration-analyzer": {
       "source": "trailofbits/skills",
       "sourceType": "github",

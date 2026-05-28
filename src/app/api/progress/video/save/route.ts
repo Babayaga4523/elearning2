@@ -9,6 +9,7 @@ import { VideoProgressService } from "@/lib/services/video-progress.service";
 import { log } from "@/lib/logger";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
+import { db } from "@/lib/db";
 
 // Validation schema
 const saveVideoProgressSchema = z.object({
@@ -65,6 +66,22 @@ export async function POST(request: NextRequest) {
     }
 
     const { moduleId, currentTime, duration, watchTime } = validation.data;
+
+    // Check if module is published
+    const courseModule = await db.module.findUnique({
+      where: { id: moduleId },
+      select: { isPublished: true },
+    });
+
+    if (!courseModule || !courseModule.isPublished) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Cannot save progress for unpublished module",
+        },
+        { status: 403 }
+      );
+    }
 
     // Save progress
     const progress = await VideoProgressService.saveProgress({

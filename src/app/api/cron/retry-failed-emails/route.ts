@@ -95,6 +95,11 @@ export async function GET(req: Request) {
         const userName = metadata.userName || "Karyawan";
         const userEmail = metadata.userEmail;
 
+        const escapeHtml = (unsafe: string) => 
+          unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        const safeTitle = escapeHtml(courseTitle);
+        const safeName = escapeHtml(userName);
+
         if (!userEmail) {
           throw new Error("No email address in metadata");
         }
@@ -124,15 +129,15 @@ export async function GET(req: Request) {
         // Retry email send
         await sendEmailWithAttachment({
           to: userEmail,
-          subject: `[Reminder - Retry] Pelatihan: ${courseTitle}`,
+          subject: `[Reminder - Retry] Pelatihan: ${safeTitle}`,
           html: `
             <div style="font-family: sans-serif; color: #0F1C3F;">
               <div style="background-color: #0F1C3F; padding: 20px; text-align: center;">
                 <h1 style="color: #E8A020; margin: 0;">Peringatan Tenggat Waktu</h1>
               </div>
               <div style="padding: 20px; border: 1px solid #e2e8f0;">
-                <p>Halo <b>${userName}</b>,</p>
-                <p>Kami mengingatkan bahwa pelatihan <b>"${courseTitle}"</b> harus segera diselesaikan dalam <b>${reminderDays} hari</b> lagi.</p>
+                <p>Halo <b>${safeName}</b>,</p>
+                <p>Kami mengingatkan bahwa pelatihan <b>"${safeTitle}"</b> harus segera diselesaikan dalam <b>${reminderDays} hari</b> lagi.</p>
                 <div style="padding: 15px; background-color: #f8fafc; border-radius: 8px; margin: 20px 0;">
                   <p style="margin: 0;"><b>Tenggat Waktu:</b> ${enrollment.deadline ? new Date(enrollment.deadline).toLocaleDateString("id-ID", { dateStyle: "long" }) : "—"}</p>
                 </div>

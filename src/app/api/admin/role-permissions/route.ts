@@ -9,6 +9,15 @@ import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 import { log } from "@/lib/logger";
 
+const MASTER_PERMISSIONS = [
+  { key: "manage_courses", label: "Kelola Kursus", description: "Membuat, mengedit, dan menghapus kursus serta modul", group: "Kursus" },
+  { key: "view_course_reports", label: "Laporan Kursus", description: "Melihat laporan progress dan enrollment per kursus", group: "Laporan" },
+  { key: "manage_users", label: "Kelola User", description: "Mengelola data karyawan, import user, dan akun terkunci", group: "User Management" },
+  { key: "manage_roles", label: "Kelola Role & Permission", description: "Mengatur permission untuk setiap role admin", group: "Sistem" },
+  { key: "view_all_reports", label: "Semua Laporan", description: "Melihat seluruh laporan analitik dan log sistem", group: "Laporan" },
+  { key: "manage_settings", label: "Pengaturan Sistem", description: "Mengelola konfigurasi sistem, scheduler, dan pengaturan lainnya", group: "Sistem" },
+];
+
 export async function GET() {
   try {
     const session = await auth();
@@ -24,9 +33,25 @@ export async function GET() {
     }
 
     // Fetch all permissions
-    const permissions = await db.permission.findMany({
+    let permissions = await db.permission.findMany({
       orderBy: [{ group: "asc" }, { key: "asc" }],
     });
+
+    // Auto-seed if empty or mismatched count
+    if (permissions.length !== MASTER_PERMISSIONS.length) {
+      for (const perm of MASTER_PERMISSIONS) {
+        await db.permission.upsert({
+          where: { key: perm.key },
+          update: { label: perm.label, description: perm.description, group: perm.group },
+          create: { key: perm.key, label: perm.label, description: perm.description, group: perm.group },
+        });
+      }
+      
+      // Re-fetch after seeding
+      permissions = await db.permission.findMany({
+        orderBy: [{ group: "asc" }, { key: "asc" }],
+      });
+    }
 
     // Fetch current ADMIN role permissions
     const adminRolePermissions = await db.rolePermission.findMany({

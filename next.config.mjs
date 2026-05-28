@@ -33,7 +33,12 @@ const nextConfig = {
           // Disable DNS prefetch for privacy
           { key: "X-DNS-Prefetch-Control", value: "off" },
           // Force HTTPS for 1 year (enable only when on HTTPS in production)
-          // { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+          // Basic Content Security Policy
+          {
+            key: "Content-Security-Policy",
+            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss:;"
+          }
         ],
       },
     ];
