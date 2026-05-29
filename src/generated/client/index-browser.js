@@ -348,6 +348,16 @@ exports.Prisma.LoginAttemptScalarFieldEnum = {
   createdAt: 'createdAt'
 };
 
+exports.Prisma.PasswordResetTokenScalarFieldEnum = {
+  id: 'id',
+  email: 'email',
+  tokenHash: 'tokenHash',
+  expiresAt: 'expiresAt',
+  usedAt: 'usedAt',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.VideoProgressScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -471,6 +481,7 @@ exports.Prisma.ModelName = {
   RolePermission: 'RolePermission',
   SchedulerLog: 'SchedulerLog',
   LoginAttempt: 'LoginAttempt',
+  PasswordResetToken: 'PasswordResetToken',
   VideoProgress: 'VideoProgress',
   PDFProgress: 'PDFProgress'
 };

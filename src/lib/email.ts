@@ -65,3 +65,51 @@ export async function sendEmailWithAttachment({
     })),
   });
 }
+
+export async function sendEmailWithRetry({
+  to,
+  subject,
+  html,
+  text,
+  retries = 3
+}: {
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  retries?: number;
+}): Promise<{ success: boolean; error?: string }> {
+  let attempt = 0;
+  
+  while (attempt < retries) {
+    try {
+      await transporter.sendMail({
+        from: `"BNI Finance E-Learning" <${env.SMTP_USER}>`,
+        to,
+        subject,
+        html,
+        text,
+      });
+      return { success: true };
+    } catch (error) {
+      attempt++;
+      log.warn(`Email sending failed (attempt ${attempt}/${retries})`, {
+        to,
+        error: error instanceof Error ? error.message : "Unknown error",
+        context: "email"
+      });
+      
+      if (attempt >= retries) {
+        return { 
+          success: false, 
+          error: error instanceof Error ? error.message : "Failed to send email after retries"
+        };
+      }
+      
+      // Wait before retrying (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * attempt));
+    }
+  }
+  
+  return { success: false, error: "Max retries exceeded" };
+}

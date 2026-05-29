@@ -334,6 +334,19 @@ model LoginAttempt {
   @@index([ipAddress, createdAt])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  email     String
+  tokenHash String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([email, createdAt])
+  @@index([tokenHash])
+}
+
 model VideoProgress {
   id              String   @id @default(cuid())
   userId          String
