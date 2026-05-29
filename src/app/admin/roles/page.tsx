@@ -140,8 +140,8 @@ export default function RolesPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="flex flex-col items-center gap-4">
-          <Loader2 className="h-8 w-8 animate-spin text-[#E8A020]" />
-          <p className="text-sm text-slate-500 font-medium">Memuat data permission...</p>
+          <Loader2 className="h-8 w-8 animate-spin text-[#0F1C3F]" />
+          <p className="text-sm text-[#475467] font-medium font-['DM_Sans']">Memuat data permission...</p>
         </div>
       </div>
     );
@@ -151,97 +151,93 @@ export default function RolesPage() {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center space-y-3">
-          <ShieldAlert className="h-16 w-16 text-rose-400 mx-auto" />
-          <h2 className="text-xl font-bold text-slate-800">Akses Ditolak</h2>
-          <p className="text-slate-500">Hanya Super Admin yang dapat mengakses halaman ini.</p>
+          <ShieldAlert className="h-16 w-16 text-rose-500 mx-auto" />
+          <h2 className="text-xl font-bold text-[#101828] font-['Lexend_Deca']">Akses Ditolak</h2>
+          <p className="text-[#475467] font-['DM_Sans']">Hanya Super Admin yang dapat mengakses halaman ini.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="w-full min-w-0 space-y-6 lg:space-y-8">
       {/* Header */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-[#0F1C3F] to-[#1A3060] flex items-center justify-center shadow-lg">
-              <Shield className="h-5 w-5 text-[#E8A020]" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-800 tracking-tight">
-                Kelola Permission
-              </h1>
-              <p className="text-sm text-slate-500">
-                Atur akses fitur untuk role <span className="font-semibold text-[#0F1C3F]">ADMIN</span>
-              </p>
-            </div>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className="flex items-center gap-4">
+          <div className="h-12 w-12 rounded-xl bg-[#0F1C3F] flex items-center justify-center">
+            <Shield className="h-6 w-6 text-[#E8A020]" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-900 font-['Lexend_Deca']">Kelola Permission</h1>
+            <p className="text-sm text-[#475467] mt-1 font-['DM_Sans']">
+              Atur akses fitur untuk role <span className="font-semibold text-[#0F1C3F]">ADMIN</span>
+            </p>
           </div>
         </div>
 
         {/* Stats Badge */}
-        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-slate-200 shadow-sm">
-          <ShieldCheck className="h-4 w-4 text-emerald-500" />
-          <span className="text-sm font-semibold text-slate-700">
+        <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-[#E4E7EC] shadow-sm">
+          <ShieldCheck className="h-5 w-5 text-emerald-600" />
+          <span className="text-sm font-semibold text-[#101828] font-['DM_Sans']">
             {assignedCount}/{permissions.length}
           </span>
-          <span className="text-xs text-slate-400">aktif</span>
+          <span className="text-xs text-[#475467] font-['DM_Sans']">aktif</span>
         </div>
       </div>
 
       {/* Info Banner */}
       <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200/50">
-        <Info className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+        <Info className="h-5 w-5 text-blue-600 mt-0.5 shrink-0" />
         <div className="space-y-1">
-          <p className="text-sm font-medium text-blue-800">
+          <p className="text-sm font-semibold text-blue-900 font-['Lexend_Deca']">
             Tentang Permission System
           </p>
-          <p className="text-xs text-blue-600 leading-relaxed">
+          <p className="text-sm text-blue-800 leading-relaxed font-['DM_Sans']">
             Permission yang dicentang akan diberikan kepada semua user dengan role ADMIN. 
             Perubahan akan langsung berlaku pada sesi berikutnya. 
-            <span className="font-semibold">SUPER_ADMIN selalu memiliki akses penuh</span> dan tidak dapat diubah.
+            <span className="font-semibold"> SUPER_ADMIN selalu memiliki akses penuh</span> dan tidak dapat diubah.
           </p>
         </div>
       </div>
 
       {/* Alert Messages */}
       {error && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-rose-50 border border-rose-200/50 animate-in fade-in slide-in-from-top-2 duration-300">
-          <XCircle className="h-5 w-5 text-rose-500 shrink-0" />
-          <p className="text-sm font-medium text-rose-700">{error}</p>
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-red-50 border border-red-200">
+          <XCircle className="h-5 w-5 text-red-600 shrink-0" />
+          <p className="text-sm font-medium text-red-800 font-['DM_Sans']">{error}</p>
         </div>
       )}
 
       {successMessage && (
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200/50 animate-in fade-in slide-in-from-top-2 duration-300">
-          <CheckCircle2 className="h-5 w-5 text-emerald-500 shrink-0" />
-          <p className="text-sm font-medium text-emerald-700">{successMessage}</p>
+        <div className="flex items-center gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+          <p className="text-sm font-medium text-emerald-800 font-['DM_Sans']">{successMessage}</p>
         </div>
       )}
 
       {/* Permission Groups */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         {Object.entries(groupedPermissions).map(([group, perms]) => (
           <div
             key={group}
-            className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden transition-all duration-200 hover:shadow-md"
+            className="bg-white rounded-xl border border-[#E4E7EC] overflow-hidden"
           >
             {/* Group Header */}
-            <div className="px-5 py-3 bg-gradient-to-r from-slate-50 to-white border-b border-slate-100">
-              <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
+            <div className="px-5 py-4 bg-[#F8F9FB] border-b border-[#E4E7EC]">
+              <h3 className="text-sm font-semibold text-[#101828] uppercase tracking-wider font-['DM_Sans']">
                 {group}
               </h3>
             </div>
 
             {/* Permission Items */}
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#E4E7EC]">
               {perms.map((perm) => (
                 <label
                   key={perm.id}
                   className={cn(
                     "flex items-center gap-4 px-5 py-4 cursor-pointer transition-all duration-200 group",
                     perm.isAssigned
-                      ? "bg-emerald-50/50 hover:bg-emerald-50"
+                      ? "bg-emerald-50/30 hover:bg-emerald-50/50"
                       : "hover:bg-slate-50"
                   )}
                 >
@@ -277,18 +273,18 @@ export default function RolesPage() {
                     <div className="flex items-center gap-2">
                       <span
                         className={cn(
-                          "text-sm font-semibold transition-colors duration-200",
-                          perm.isAssigned ? "text-slate-800" : "text-slate-600"
+                          "text-sm font-semibold transition-colors duration-200 font-['DM_Sans']",
+                          perm.isAssigned ? "text-[#101828]" : "text-[#475467]"
                         )}
                       >
                         {perm.label}
                       </span>
-                      <code className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-400 font-mono">
+                      <code className="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-[#475467] font-mono">
                         {perm.key}
                       </code>
                     </div>
                     {perm.description && (
-                      <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                      <p className="text-sm text-[#475467] mt-0.5 leading-relaxed font-['DM_Sans']">
                         {perm.description}
                       </p>
                     )}
@@ -297,12 +293,13 @@ export default function RolesPage() {
                   {/* Status Badge */}
                   <div
                     className={cn(
-                      "shrink-0 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200",
+                      "shrink-0 px-2.5 py-1 rounded-full text-xs font-medium border border-transparent flex items-center gap-1.5 transition-all duration-200",
                       perm.isAssigned
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-slate-100 text-slate-400"
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-slate-100 text-slate-600"
                     )}
                   >
+                    <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", perm.isAssigned ? "bg-emerald-500" : "bg-slate-400")} />
                     {perm.isAssigned ? "Aktif" : "Nonaktif"}
                   </div>
                 </label>
@@ -313,17 +310,17 @@ export default function RolesPage() {
       </div>
 
       {/* Save Button */}
-      <div className="sticky bottom-0 py-4 bg-gradient-to-t from-slate-50 via-slate-50 to-transparent">
-        <div className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-white border border-slate-200 shadow-lg">
-          <div className="flex items-center gap-2 text-sm text-slate-500">
+      <div className="sticky bottom-6 mt-8">
+        <div className="flex items-center justify-between gap-4 p-4 rounded-xl bg-white border border-[#E4E7EC] shadow-md">
+          <div className="flex items-center gap-2 text-sm text-[#475467] font-['DM_Sans']">
             {hasChanges ? (
               <>
-                <div className="h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                <span className="font-medium text-amber-600">Ada perubahan yang belum disimpan</span>
+                <div className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />
+                <span className="font-medium text-amber-700">Ada perubahan yang belum disimpan</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                 <span>Semua perubahan tersimpan</span>
               </>
             )}
@@ -333,9 +330,9 @@ export default function RolesPage() {
             onClick={handleSave}
             disabled={!hasChanges || isSaving}
             className={cn(
-              "flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all duration-200",
+              "flex items-center gap-2 px-6 py-2.5 rounded-lg text-sm font-semibold transition-all duration-200 font-['DM_Sans']",
               hasChanges && !isSaving
-                ? "bg-gradient-to-r from-[#0F1C3F] to-[#1A3060] text-white shadow-lg hover:shadow-xl hover:scale-[1.02] active:scale-95"
+                ? "bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white"
                 : "bg-slate-100 text-slate-400 cursor-not-allowed"
             )}
           >

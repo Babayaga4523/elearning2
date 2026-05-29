@@ -133,6 +133,12 @@
       "skillPath": "plugins/debug-buttercup/skills/debug-buttercup/SKILL.md",
       "computedHash": "cb7037964e5dbc26f51eec9ea362cba690e250da1d60a4354e75da682e8b3fe6"
     },
+    "design-taste-frontend": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/taste-skill/SKILL.md",
+      "computedHash": "899b84384f74f540ea5284d9b2e9234e050998b42eacc805410b518d4226c0b3"
+    },
     "designing-workflow-skills": {
       "source": "trailofbits/skills",
       "sourceType": "github",
@@ -169,6 +175,12 @@
       "skillPath": "plugins/dwarf-expert/skills/dwarf-expert/SKILL.md",
       "computedHash": "97ca63d0bb2d45354e676624b3db5cf3231e19179a013d32b475254b8a5f4794"
     },
+    "emil-design-eng": {
+      "source": "emilkowalski/skill",
+      "sourceType": "github",
+      "skillPath": "skills/emil-design-eng/SKILL.md",
+      "computedHash": "ac3fc5b4e206488ffc408a2806f829bb2e5eaf518fded09be34790685c2b3a0d"
+    },
     "entry-point-analyzer": {
       "source": "trailofbits/skills",
       "sourceType": "github",
@@ -186,6 +198,12 @@
       "sourceType": "github",
       "skillPath": "plugins/fp-check/skills/fp-check/SKILL.md",
       "computedHash": "672b5341502a135aff96851c809a98508e1387ccbf22accf5d9cb731f00b0661"
+    },
+    "full-output-enforcement": {
+      "source": "Leonxlnx/taste-skill",
+      "sourceType": "github",
+      "skillPath": "skills/output-skill/SKILL.md",
+      "computedHash": "524f7c7950c3fde726101613f630140411c7d080e63be718687f4b38f919be81"
     },
     "fuzzing-dictionary": {
       "source": "trailofbits/skills",
@@ -282,6 +300,12 @@
       "sourceType": "github",
       "skillPath": "plugins/mutation-testing/skills/mutation-testing/SKILL.md",
       "computedHash": "0c5ead881c2a5cded92747d5b1dfb898104804bc649b6a6aeabcd1c1a0d9e1bb"
+    },
+    "nextjs": {
+      "source": "teachingai/full-stack-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react-skills/nextjs/SKILL.md",
+      "computedHash": "cd0305861e74172e31d5715acbf583e8a51a3b25aa6a7cb4030467b3e2990542"
     },
     "ossfuzz": {
       "source": "trailofbits/skills",

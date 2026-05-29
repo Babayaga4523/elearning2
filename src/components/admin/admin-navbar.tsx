@@ -72,15 +72,18 @@ export const AdminNavbar = ({
       {/* Right Section */}
       <div className="flex items-center gap-3" suppressHydrationWarning>
         {/* Search - Desktop Only */}
-        <div className="hidden lg:flex relative group">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#E8A020] transition-colors" />
+        <div className="hidden lg:flex relative group" role="search">
+          <label htmlFor="admin-search-console" className="sr-only">Cari di konsol admin</label>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-[#E8A020] transition-colors" aria-hidden="true" />
           <input
             id="admin-search-console"
             name="q"
-            type="text"
+            type="search"
+            role="searchbox"
             placeholder="Search console..."
-            className="h-9 w-64 pl-10 pr-4 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#E8A020] focus:ring-2 focus:ring-[#E8A020]/20 transition-all text-sm font-medium outline-none placeholder:text-slate-400"
-            suppressHydrationWarning
+            autoComplete="off"
+            aria-label="Cari di konsol admin"
+            className="h-9 w-64 pl-10 pr-4 rounded-lg bg-slate-50 border border-slate-200 focus:bg-white focus:border-[#E8A020] focus:ring-2 focus:ring-[#E8A020]/20 transition-colors duration-200 text-sm font-medium placeholder:text-slate-400"
           />
         </div>
 
@@ -110,7 +113,9 @@ export const AdminNavbar = ({
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-all outline-none group active:scale-95 border border-transparent hover:border-slate-200"
+                aria-label="Menu profil admin"
+                aria-haspopup="menu"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-slate-50 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2 group active:scale-95 border border-transparent hover:border-slate-200"
               >
                 <Avatar className="h-8 w-8 border-2 border-white shadow-sm ring-1 ring-slate-100 group-hover:ring-[#E8A020]/30 transition-all">
                   <AvatarFallback className="bg-gradient-to-br from-[#0F1C3F] to-[#1A3060] text-[#E8A020] font-bold text-xs">

@@ -59,8 +59,8 @@ export function Pagination({
         <button
           onClick={() => onPageChange(1)}
           disabled={currentPage === 1}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          title="Halaman pertama"
+          aria-label="Halaman pertama"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
         >
           <ChevronsLeft className="h-3.5 w-3.5" />
         </button>
@@ -69,8 +69,8 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          title="Halaman sebelumnya"
+          aria-label="Halaman sebelumnya"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
         >
           <ChevronLeft className="h-3.5 w-3.5" />
         </button>
@@ -86,8 +86,10 @@ export function Pagination({
               <button
                 key={page}
                 onClick={() => onPageChange(page as number)}
+                aria-label={`Halaman ${page}`}
+                aria-current={page === currentPage ? 'page' : undefined}
                 className={cn(
-                  "h-8 min-w-[2rem] px-2 rounded-lg text-xs font-black transition-all",
+                  "h-8 min-w-[2rem] px-2 rounded-lg text-xs font-black transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2",
                   page === currentPage
                     ? "bg-[#0F1C3F] text-white shadow-sm"
                     : "text-slate-500 hover:bg-slate-100 hover:text-slate-800"
@@ -103,8 +105,8 @@ export function Pagination({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          title="Halaman berikutnya"
+          aria-label="Halaman berikutnya"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
         >
           <ChevronRight className="h-3.5 w-3.5" />
         </button>
@@ -113,8 +115,8 @@ export function Pagination({
         <button
           onClick={() => onPageChange(totalPages)}
           disabled={currentPage === totalPages}
-          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-          title="Halaman terakhir"
+          aria-label="Halaman terakhir"
+          className="h-8 w-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
         >
           <ChevronsRight className="h-3.5 w-3.5" />
         </button>

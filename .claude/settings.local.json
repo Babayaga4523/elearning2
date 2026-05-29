@@ -6,7 +6,12 @@
       "Bash(npm run *)",
       "Bash(node -e \"require\\('./src/app/admin/page.tsx'\\)\")",
       "WebFetch(domain:minimax-algeng-chat-tts-us.oss-us-east-1.aliyuncs.com)",
-      "Bash(git fetch *)"
+      "Bash(git fetch *)",
+      "Bash(cd /d c:\\\\Dev\\\\elearning2)",
+      "Bash(node -e \"const m = require\\('./node_modules/framer-motion/package.json'\\); console.log\\(m.version\\)\")",
+      "Bash(node *)",
+      "mcp__ide__getDiagnostics",
+      "Bash(curl *)"
     ]
   }
 }

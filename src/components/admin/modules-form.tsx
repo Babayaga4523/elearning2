@@ -14,6 +14,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
@@ -94,8 +95,10 @@ export const ModulesForm = ({
               name="title"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel htmlFor="module-title">Judul Modul</FormLabel>
                   <FormControl>
                     <Input
+                      id="module-title"
                       disabled={isSubmitting}
                       placeholder="e.g. 'Introduction to the course'"
                       {...field}

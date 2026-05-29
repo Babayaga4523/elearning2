@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { User, Shield, Loader2, LogOut, ChevronRight } from "lucide-react"
+import { User, Shield, Loader2, LogOut, ChevronRight, Briefcase } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
@@ -106,99 +106,113 @@ export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalPr
 
   const getRoleIcon = (role: string) => {
     if (role === "ADMIN" || role === "SUPER_ADMIN") {
-      return <Shield className="h-5 w-5" />
+      return <Shield className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
     }
-    return <User className="h-5 w-5" />
+    return <User className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" />
   }
 
   const getRoleColor = (role: string) => {
     if (role === "ADMIN" || role === "SUPER_ADMIN") {
-      return "text-amber-600 bg-amber-50 hover:bg-amber-100 border-amber-200"
+      return "text-[#E8A020] bg-[#FEF3DC] group-hover:bg-[#E8A020] group-hover:text-white"
     }
-    return "text-blue-600 bg-blue-50 hover:bg-blue-100 border-blue-200"
+    return "text-[#0F1C3F] bg-[#F8F9FB] group-hover:bg-[#0F1C3F] group-hover:text-white"
   }
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent 
-        className="sm:max-w-[400px] p-0 gap-0 overflow-hidden" 
+        className="sm:max-w-[440px] p-0 gap-0 overflow-hidden border-0 rounded-[24px] shadow-[0_24px_60px_-12px_rgba(15,28,63,0.25)] bg-white/95 backdrop-blur-xl font-['DM_Sans']" 
         onInteractOutside={(e) => e.preventDefault()}
         aria-describedby="role-selection-description"
       >
-        {/* Header with gradient */}
-        <div className="relative bg-gradient-to-br from-[#0F1C3F] to-[#1a2b5a] px-6 py-8 text-white">
-          <div className="absolute inset-0 bg-[url('/login-bg.png')] opacity-10 bg-cover bg-center" />
-          <div className="relative">
-            <DialogHeader className="space-y-3">
-              <DialogTitle className="text-center text-xl font-bold">
-                Pilih Role Anda
-              </DialogTitle>
-              <DialogDescription id="role-selection-description" className="text-center text-sm text-white/80">
-                Pilih role untuk melanjutkan
-              </DialogDescription>
-            </DialogHeader>
-
-            {/* User Profile - Compact */}
-            <div className="flex flex-col items-center mt-6 space-y-2">
-              <Avatar className="h-16 w-16 border-2 border-white/20 shadow-lg">
-                <AvatarImage src={user.image || undefined} alt={user.name} />
-                <AvatarFallback className="text-base bg-white/10 text-white font-bold backdrop-blur">
+        <div className="p-7">
+          <DialogHeader className="space-y-4 mb-7">
+            <div className="flex flex-col items-center text-center space-y-5">
+              <Avatar className="h-20 w-20 border-4 border-white shadow-lg ring-4 ring-[#FEF3DC]/60 bg-gradient-to-br from-[#0F1C3F] to-[#1A2D5A]">
+                <AvatarImage src={user.image || undefined} alt={user.name} className="object-cover" />
+                <AvatarFallback className="text-2xl text-white font-bold bg-transparent">
                   {getInitials(user.name)}
                 </AvatarFallback>
               </Avatar>
-              
-              <div className="text-center">
-                <h3 className="font-semibold text-base">{user.name}</h3>
-                {user.nip && (
-                  <p className="text-xs text-white/70 mt-0.5">NIP: {user.nip}</p>
-                )}
-                <p className="text-xs text-white/60 mt-0.5">{user.email}</p>
+              <div className="flex flex-col items-center">
+                <DialogTitle className="text-2xl font-bold text-[#101828]">
+                  Pilih Role Anda
+                </DialogTitle>
+                <DialogDescription id="role-selection-description" className="text-sm text-[#475467] mt-1.5 font-medium flex flex-col items-center">
+                  <span>Masuk sebagai apa hari ini?</span>
+                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F8F9FB] border border-[#E4E7EC] text-[13px] mt-4 shadow-sm">
+                    <span className="font-bold text-[#101828]">{user.name.split(" ")[0]}</span>
+                    <span className="w-1 h-1 rounded-full bg-[#D0D5DD]" />
+                    <span className="text-[#475467] truncate max-w-[150px]">{user.email}</span>
+                    {user.nip && (
+                      <>
+                        <span className="w-1 h-1 rounded-full bg-[#D0D5DD]" />
+                        <span className="text-[#475467]">{user.nip}</span>
+                      </>
+                    )}
+                  </div>
+                </DialogDescription>
               </div>
             </div>
+          </DialogHeader>
+
+          {/* Role Selection */}
+          <div className="space-y-3">
+            {user.roles.map((role) => (
+              <button
+                key={role}
+                onClick={() => handleSelectRole(role)}
+                disabled={loading}
+                className={cn(
+                  "w-full flex items-center justify-between p-4 rounded-2xl border transition-all duration-300 ease-out group text-left",
+                  "active:scale-[0.98]",
+                  "border-[#E4E7EC] bg-white hover:border-[#E8A020]/40 hover:bg-[#FEF3DC]/20 hover:shadow-md hover:shadow-[#E8A020]/5",
+                  loading && selectedRole !== role && "opacity-40 cursor-not-allowed scale-[0.99]",
+                  loading && selectedRole === role && "border-[#E8A020] bg-[#FEF3DC]/40 shadow-sm"
+                )}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={cn(
+                    "h-12 w-12 rounded-[14px] flex items-center justify-center shrink-0 transition-all duration-300 shadow-sm",
+                    getRoleColor(role),
+                    loading && selectedRole === role && "bg-[#E8A020] text-white"
+                  )}>
+                    {loading && selectedRole === role ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-white" />
+                    ) : (
+                      getRoleIcon(role)
+                    )}
+                  </div>
+                  <div>
+                    <div className="font-bold text-[15px] text-[#101828] group-hover:text-[#0F1C3F] transition-colors duration-200">
+                      {getRoleLabel(role)}
+                    </div>
+                    <div className="text-[13px] text-[#475467] mt-0.5 font-medium">
+                      {getRoleDescription(role)}
+                    </div>
+                  </div>
+                </div>
+                <div className="h-8 w-8 rounded-full bg-[#F8F9FB] flex items-center justify-center group-hover:bg-[#E8A020] transition-colors duration-300">
+                  <ChevronRight className="h-4 w-4 text-[#98A2B3] group-hover:text-white transition-colors duration-300" />
+                </div>
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Role Selection - Compact */}
-        <div className="p-6 space-y-3">
-          {user.roles.map((role) => (
-            <Button
-              key={role}
-              variant="outline"
-              className={cn(
-                "w-full h-auto py-3 px-4 flex items-center justify-between transition-all",
-                "border-2 hover:scale-[1.02] active:scale-[0.98]",
-                getRoleColor(role),
-                loading && selectedRole !== role && "opacity-50 cursor-not-allowed"
-              )}
-              onClick={() => handleSelectRole(role)}
-              disabled={loading}
-            >
-              <div className="flex items-center gap-3">
-                {loading && selectedRole === role ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  getRoleIcon(role)
-                )}
-                <div className="text-left">
-                  <div className="font-semibold text-sm">{getRoleLabel(role)}</div>
-                  <div className="text-xs opacity-70">{getRoleDescription(role)}</div>
-                </div>
-              </div>
-              <ChevronRight className="h-4 w-4 opacity-50" />
-            </Button>
-          ))}
-        </div>
-
-        {/* Footer - Compact */}
-        <div className="border-t bg-gray-50 px-6 py-3">
+        {/* Footer */}
+        <div className="border-t border-[#E4E7EC] bg-gradient-to-b from-[#F8F9FB] to-white px-7 py-5">
           <Button
             variant="ghost"
-            size="sm"
-            className="w-full text-xs text-muted-foreground hover:text-destructive"
+            className={cn(
+              "w-full h-12 text-[14px] font-bold rounded-xl transition-all duration-200",
+              "text-[#475467] hover:text-[#B42318] hover:bg-[#FEF3F2]",
+              "active:scale-[0.98]"
+            )}
             onClick={handleLogout}
             disabled={loading}
           >
-            <LogOut className="h-3 w-3 mr-1.5" />
+            <LogOut className="h-4 w-4 mr-2" />
             Bukan Anda? Logout
           </Button>
         </div>

@@ -3,6 +3,13 @@
 import * as z from "zod";
 import { AuthError } from "next-auth";
 import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+const isRedirectError = (error: unknown) => {
+  if (typeof error !== "object" || error === null) return false;
+  const digest = (error as Record<string, unknown>).digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+};
+
 
 import { signIn } from "@/auth";
 import { db } from "@/lib/db";
@@ -87,7 +94,7 @@ export const login = async (
     const result = await signIn("credentials", {
       email,
       password,
-      redirect: false, // Don't auto-redirect, we'll handle it manually
+      redirectTo: redirectPath,
     });
 
     // If we reach here, login was successful — clear failed attempt history
@@ -97,6 +104,14 @@ export const login = async (
     return { success: true, redirectTo: redirectPath };
 
   } catch (error) {
+    if (isRedirectError(error)) {
+      // Login succeeded, clear failed attempt history
+      await clearLoginAttempts(email);
+      // Return success object so the client can perform a hard redirect (window.location.href)
+      // This ensures the session is properly loaded on the next page view
+      return { success: true, redirectTo: "/auth/login?check-role=true" };
+    }
+
     if (error instanceof AuthError) {
       switch (error.type) {
         case "CredentialsSignin": {

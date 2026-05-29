@@ -17,7 +17,8 @@
     "restore:db": "bash scripts/restore-database.sh",
     "migrate:multi-role": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} prisma/migrate-users-to-multi-role.ts",
     "update:karyawan": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/update-karyawan-multi-role.ts",
-    "check:roles": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/check-user-roles.ts"
+    "check:roles": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/check-user-roles.ts",
+    "update:holidays": "ts-node --compiler-options {\\\"module\\\":\\\"CommonJS\\\"} scripts/update-holidays.ts"
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.1.0",

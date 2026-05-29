@@ -166,16 +166,19 @@ export const QuestionItem = ({
                 render={({ field }) => (
                   <FormItem className="flex items-center space-x-2 space-y-0">
                     <FormControl>
-                      <input
-                        id={`correct-${question.id}`}
-                        name={`correct-${question.id}`}
-                        type="checkbox"
-                        checked={field.value}
-                        onChange={field.onChange}
-                        className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                      />
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={`correct-${question.id}`}
+                          name={`correct-${question.id}`}
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
+                          aria-describedby={`correct-${question.id}-label`}
+                        />
+                        <span id={`correct-${question.id}-label`} className="text-xs font-medium">Opsi Benar?</span>
+                      </div>
                     </FormControl>
-                    <span className="text-xs font-medium">Correct?</span>
                   </FormItem>
                 )}
               />

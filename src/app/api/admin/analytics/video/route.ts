@@ -28,9 +28,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Check admin role using new multi-role system
+    log.info("Video analytics request", {
+      email: session.user.email,
+      roles: session.user.roles,
+      activeRole: session.user.activeRole,
+      context: "api"
+    });
     if (!isAdmin(session)) {
-      log.error("Unauthorized access attempt to video analytics", {
+      log.warn("Video analytics access denied", {
         email: session.user.email,
+        roles: session.user.roles,
         activeRole: session.user.activeRole,
         context: "api"
       });

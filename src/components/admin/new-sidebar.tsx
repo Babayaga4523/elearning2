@@ -123,12 +123,6 @@ const menuItems: MenuItem[] = [
     href: "/admin/roles",
     superAdminOnly: true,
   },
-  {
-    label: "Pengaturan",
-    icon: Settings,
-    href: "/admin/settings",
-    permission: "manage_settings",
-  },
 ];
 
 interface NewSidebarProps {
@@ -218,9 +212,10 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className="absolute top-2 right-2 h-7 w-7 rounded-lg hover:bg-white/10 border border-white/20 text-white hover:text-[#E8A020] transition-all duration-300"
+            aria-label="Ciutkan sidebar"
+            className="absolute top-2 right-2 h-7 w-7 rounded-lg hover:bg-white/10 border border-white/20 text-white hover:text-[#E8A020] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
           >
-            <ChevronLeft className="h-3 w-3" />
+            <ChevronLeft className="h-3 w-3" aria-hidden="true" />
           </Button>
         )}
       </div>
@@ -255,7 +250,7 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
                       )} />
                       {!isCollapsed && (
                         <>
-                          <span className="flex-1 truncate transition-all duration-300 text-left">{item.label}</span>
+                          <span className="flex-1 truncate transition-all duration-300 text-left min-w-0">{item.label}</span>
                           <ChevronDown className={cn(
                             "h-3 w-3 transition-transform duration-200",
                             isExpanded && "rotate-180"
@@ -366,9 +361,10 @@ export function NewSidebar({ isCollapsed, onToggle }: NewSidebarProps) {
             variant="ghost"
             size="icon"
             onClick={onToggle}
-            className="w-full h-9 rounded-lg hover:bg-white/10 border border-white/20 text-white hover:text-[#E8A020] transition-all duration-300"
+            aria-label="Perluas sidebar"
+            className="w-full h-9 rounded-lg hover:bg-white/10 border border-white/20 text-white hover:text-[#E8A020] transition-colors duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </Button>
         )}
       </div>

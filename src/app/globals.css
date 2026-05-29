@@ -196,30 +196,98 @@
   padding: 0.5rem 0.75rem !important;
 }
 
-/* Events */
+/* Events - Enhanced Badge Styling */
 .fc-event {
-  border-radius: 0.4rem !important;
+  border-radius: 6px !important;
   border: none !important;
-  font-size: 0.7rem !important;
-  font-weight: 700 !important;
-  padding: 3px 6px !important;
-  margin: 1px 4px !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  padding: 4px 8px !important;
+  margin: 2px 3px !important;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.1);
 }
 
 .fc-event:hover {
-  transform: translateY(-1px) scale(1.01);
-  filter: brightness(1.1);
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  filter: brightness(1.05);
 }
 
-.fc-h-event .fc-event-main {
-  color: white !important;
-  padding: 2px;
+.fc-event::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: rgba(255,255,255,0.3);
+}
+
+.fc-event .fc-event-title {
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  padding-left: 4px;
+}
+
+/* Event type data attribute styling */
+.fc-event[data-event-type="DEADLINE"],
+.fc-event.event-deadline {
+  background: linear-gradient(135deg, #F04438 0%, #E11D48 100%) !important;
+  border-left: 3px solid #B91C1C !important;
+}
+
+.fc-event[data-event-type="ENROLLMENT"],
+.fc-event.event-enrollment {
+  background: linear-gradient(135deg, #12B76A 0%, #059669 100%) !important;
+  border-left: 3px solid #047857 !important;
+}
+
+.fc-event[data-event-type="SYSTEM"],
+.fc-event.event-system {
+  background: linear-gradient(135deg, #2E90FA 0%, #2563EB 100%) !important;
+  border-left: 3px solid #1D4ED8 !important;
+}
+
+.fc-event[data-event-type="COMPLETION"],
+.fc-event.event-completion {
+  background: linear-gradient(135deg, #E8A020 0%, #C4861A 100%) !important;
+  border-left: 3px solid #B45309 !important;
+}
+
+/* Event icon badge */
+.fc-event .event-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.2);
+  margin-right: 4px;
+}
+
+/* More events link */
+.fc-daygrid-more-link {
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 8px !important;
+  border-radius: 10px !important;
+  background: #FEF3DC !important;
+  color: #C4861A !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  margin-top: 2px;
+}
+
+.fc-daygrid-more-link:hover {
+  background: #FEF3DC !important;
+  filter: brightness(0.95);
 }
 
 /* Border grid */
@@ -232,8 +300,6 @@
 .fc td, .fc th {
   border-color: #f1f5f9 !important;
 }
-
-
 
 /* Suppress hydration warnings from browser extensions in development */
 @media screen {

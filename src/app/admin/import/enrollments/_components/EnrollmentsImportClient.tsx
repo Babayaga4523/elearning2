@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { Download, GraduationCap, ArrowLeft } from "lucide-react";
+import { Download, GraduationCap, ArrowLeft, AlertCircle, CheckCircle2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ExcelUploader } from "@/components/import/ExcelUploader";
 import { ImportPreview } from "@/components/import/ImportPreview";

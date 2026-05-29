@@ -24,9 +24,10 @@ export function MobileNav({ isOpen, onOpenChange }: MobileNavProps) {
         variant="ghost"
         size="icon"
         onClick={() => onOpenChange(true)}
+        aria-label="Buka menu navigasi"
         className="md:hidden h-9 w-9 rounded-lg hover:bg-slate-100"
       >
-        <Menu className="h-5 w-5 text-slate-700" />
+        <Menu className="h-5 w-5 text-slate-700" aria-hidden="true" />
       </Button>
 
       {/* Mobile Sheet */}

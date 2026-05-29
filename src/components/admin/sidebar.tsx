@@ -108,12 +108,6 @@ const menuItems: MenuItem[] = [
     href: "/admin/locked-accounts",
     color: "text-rose-500",
   },
-  {
-    label: "Pengaturan",
-    icon: Settings,
-    href: "/admin/settings",
-    color: "text-gray-500",
-  },
 ];
 
 export interface SidebarProps {
@@ -125,9 +119,6 @@ export const Sidebar = ({ hideHeader = false }: SidebarProps) => {
   const { isDesktopMini, toggleDesktopSidebar } = useSidebar();
   const [expandedItems, setExpandedItems] = React.useState<string[]>([]);
   const [lockedCount, setLockedCount] = React.useState(0);
-
-  // Debug log
-  console.log("[Sidebar] isDesktopMini:", isDesktopMini);
 
   // Fetch locked accounts count
   React.useEffect(() => {
@@ -203,16 +194,17 @@ export const Sidebar = ({ hideHeader = false }: SidebarProps) => {
           <button
             onClick={toggleDesktopSidebar}
             className={cn(
-              "hidden md:flex h-7 w-7 rounded-lg items-center justify-center transition-all duration-300 absolute top-2 right-2",
+              "hidden md:flex h-7 w-7 rounded-lg items-center justify-center absolute top-2 right-2",
               "bg-white/10 backdrop-blur-sm",
               "border border-white/20 shadow-lg",
+              "transition-transform duration-300",
               "hover:bg-white/20 hover:scale-105 hover:border-[#E8A020]/50",
               "active:scale-95",
-              "group relative"
+              "group relative",
+              "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#E8A020] focus-visible:ring-offset-2"
             )}
             aria-label="Toggle sidebar"
             type="button"
-            suppressHydrationWarning
           >
             {/* Animated Icon */}
             <div className="relative flex items-center justify-center">
@@ -254,7 +246,7 @@ export const Sidebar = ({ hideHeader = false }: SidebarProps) => {
                     )} />
                     {!isDesktopMini && (
                       <>
-                        <span className="ml-3 truncate transition-all duration-300 flex-1 text-left">
+                        <span className="ml-3 truncate transition-all duration-300 flex-1 text-left min-w-0">
                           {item.label}
                         </span>
                         <ChevronDown className={cn(

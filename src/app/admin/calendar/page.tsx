@@ -9,7 +9,6 @@ export const metadata = {
 
 export default async function AdminCalendarPage() {
   const session = await auth();
-  // Admin layout already handles authorization, but double-check
   if (session?.user?.activeRole !== "ADMIN" && session?.user?.activeRole !== "SUPER_ADMIN") return redirect("/");
 
   const now = new Date();
@@ -36,9 +35,7 @@ export default async function AdminCalendarPage() {
   enrollmentsRange.setDate(enrollmentsRange.getDate() - 60);
 
   const recentEnrollments = await db.enrollment.findMany({
-    where: {
-      createdAt: { gte: enrollmentsRange },
-    },
+    where: { createdAt: { gte: enrollmentsRange } },
     include: {
       user: { select: { name: true, department: true } },
       course: { select: { title: true, id: true } },
@@ -49,19 +46,21 @@ export default async function AdminCalendarPage() {
 
   // Build calendar events
   const events = [
+    // Course deadline events
     ...coursesWithDeadline.map((c) => ({
       id: `deadline-${c.id}`,
       type: "DEADLINE" as const,
-      title: `⏰ Deadline: ${c.title}`,
+      title: `⏰ ${c.title}`,
       date: c.deadlineDate!.toISOString(),
       meta: `${c._count.enrollments} Peserta`,
       href: `/admin/courses/${c.id}`,
       color: "rose" as const,
     })),
+    // Enrollment events
     ...recentEnrollments.map((e) => ({
       id: `enroll-${e.id}`,
       type: "ENROLLMENT" as const,
-      title: `📋 Enroll: ${e.course.title}`,
+      title: `📋 ${e.course.title}`,
       date: e.createdAt.toISOString(),
       meta: e.user.name ?? "Karyawan",
       href: `/admin/enrollments`,
@@ -69,7 +68,7 @@ export default async function AdminCalendarPage() {
     })),
   ];
 
-  // Stats 
+  // Stats
   const totalDeadlinesThisMonth = coursesWithDeadline.filter(c => {
     const d = new Date(c.deadlineDate!);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();

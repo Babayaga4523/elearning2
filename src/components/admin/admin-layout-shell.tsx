@@ -77,9 +77,15 @@ export const AdminLayoutShell = ({
 
       {/* Overlay for mobile when sidebar is open */}
       {isMobileOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30 transition-opacity duration-300"
+        <button
+          className="md:hidden fixed inset-0 bg-black/50 z-30 transition-opacity duration-300 cursor-default"
           onClick={toggleMobileSidebar}
+          aria-label="Tutup menu navigasi"
+          onKeyDown={(e) => {
+            if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') {
+              toggleMobileSidebar();
+            }
+          }}
         />
       )}
 

@@ -6,7 +6,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition, Suspense, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { isRedirectError } from "next/dist/client/components/redirect";
+const isRedirectError = (error: unknown) => {
+  if (typeof error !== "object" || error === null) return false;
+  const digest = (error as Record<string, unknown>).digest;
+  return typeof digest === "string" && digest.startsWith("NEXT_REDIRECT");
+};
 import { motion, AnimatePresence } from "framer-motion";
 
 import { login } from "@/actions/login";
@@ -419,7 +423,7 @@ function LoginForm() {
               autoComplete="current-password"
               disabled={isPending || lockedOut}
               className={cn(
-                "w-full h-12 pl-10 pr-10 text-sm rounded-xl border font-['DM_Sans]",
+                "w-full h-12 pl-10 pr-10 text-sm rounded-xl border font-['DM_Sans']",
                 "outline-none transition-all duration-200",
                 "text-[#101828] placeholder:text-[#98A2B3]",
                 "border-[#E4E7EC] bg-white",
@@ -484,7 +488,7 @@ function LoginPageContent() {
 
   useEffect(() => {
     if (checkRole && session?.user && session.user.roles) {
-      if (session.user.roles.length > 1) {
+      if (session.user.roles.length > 0) {
         setShowRoleModal(true);
       } else {
         const activeRole = (session.user as { activeRole?: string; role?: string }).activeRole

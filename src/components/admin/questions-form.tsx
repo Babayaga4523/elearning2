@@ -13,6 +13,7 @@ import {
   FormControl,
   FormField,
   FormItem,
+  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
@@ -102,8 +103,12 @@ export const QuestionsForm = ({
               name="text"
               render={({ field }) => (
                 <FormItem>
+                  <FormLabel htmlFor="question-text" className="text-sm font-medium text-slate-700">
+                    Teks Pertanyaan
+                  </FormLabel>
                   <FormControl>
                     <Input
+                      id="question-text"
                       disabled={isSubmitting}
                       placeholder="e.g. 'What is the purpose of...'"
                       {...field}
