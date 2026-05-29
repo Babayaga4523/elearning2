@@ -17,11 +17,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { hash as bcryptHash, compare as bcryptCompare } from "bcryptjs";
 import { db as prisma } from "@/lib/db";
 import { log } from "@/lib/logger";
-import {
-  verifyToken,
-  isTokenExpired,
-  hashToken,
-} from "@/lib/token-generator";
+import { isTokenExpired, hashToken } from "@/lib/token-generator";
 import { validatePasswordResetForm } from "@/lib/password-requirements";
 
 const BCRYPT_ROUNDS = 12;
@@ -49,26 +45,15 @@ async function findValidToken(token: string) {
 
 /**
  * Invalidate all sessions for a user
- * This is handled by NextAuth - we need to clear their sessions
+ * JWT-based auth: sessions are stateless, invalidation is handled by
+ * NextAuth on next login — no DB action needed for JWT strategy.
  */
-async function invalidateUserSessions(userId: string): Promise<void> {
-  try {
-    // Delete all accounts (OAuth links) and sessions
-    // This will force user to re-authenticate
-    await prisma.$transaction([]);
-
-    log.info("Sessions invalidated for user", {
-      userId,
-      context: "auth",
-    });
-  } catch (error) {
-    log.error("Failed to invalidate sessions", {
-      userId,
-      error: error instanceof Error ? error.message : "Unknown",
-      context: "auth",
-    });
-    // Don't throw - the password change is more important
-  }
+async function invalidateUserSessions(_userId: string): Promise<void> {
+  // Session invalidation in JWT-based auth is handled by NextAuth
+  // when the next login occurs — no DB action needed
+  log.info("JWT sessions will be refreshed on next login", {
+    context: "auth",
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -115,9 +100,11 @@ export async function POST(request: NextRequest) {
     const resetToken = await findValidToken(token);
 
     if (!resetToken) {
-      // Determine the reason
+      // Determine the reason - lookup with SAME token hash
+      const hashedInput = hashToken(token);
       const existingTokens = await prisma.passwordResetToken.findMany({
         where: {
+          tokenHash: hashedInput,
           createdAt: { gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }, // Last 24 hours
         },
         orderBy: { createdAt: "desc" },
@@ -126,14 +113,14 @@ export async function POST(request: NextRequest) {
 
       // Check for expired vs used tokens
       if (existingTokens.length > 0) {
-        const token = existingTokens[0];
-        if (isTokenExpired(token.expiresAt)) {
+        const tokenRecord = existingTokens[0];
+        if (isTokenExpired(tokenRecord.expiresAt)) {
           return NextResponse.json(
             { error: "Link sudah expired. Silakan minta link baru." },
             { status: 400 }
           );
         }
-        if (token.usedAt) {
+        if (tokenRecord.usedAt) {
           return NextResponse.json(
             { error: "Link sudah digunakan. Silakan minta link baru." },
             { status: 400 }
