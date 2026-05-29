@@ -19,96 +19,183 @@ interface CourseAnalysisItem {
   lastAttempt: string | null;
 }
 
-interface PerformanceClientProps {
-  courseAnalysis: CourseAnalysisItem[];
+/* ─── Status Badge ────────────────────────────────────────────────── */
+const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
+  COMPLETED: {
+    label: "Selesai",
+    className: "bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6]",
+  },
+  FAILED: {
+    label: "Gagal",
+    className: "bg-[#FEF3F2] text-[#B42318] border-[#FDA29B]",
+  },
+  IN_PROGRESS: {
+    label: "Berlangsung",
+    className: "bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]",
+  },
+};
+
+/* ─── Course Analysis Row ─────────────────────────────────────────────── */
+function CourseAnalysisRow({ course }: { course: CourseAnalysisItem }) {
+  const status = STATUS_CONFIG[course.status] ?? STATUS_CONFIG.IN_PROGRESS;
+
+  return (
+    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-[#E4E7EC] hover:border-[#C4861A] hover:shadow-sm transition-all duration-200 bg-white">
+      {/* Left: title + badges */}
+      <div className="flex-1 min-w-0 space-y-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          <Badge
+            variant="outline"
+            className="text-[10px] font-semibold font-['DM_Sans'] text-[#475467] border-[#E4E7EC] bg-[#F8F9FB]"
+          >
+            {course.category}
+          </Badge>
+          <Badge
+            className={cn(
+              "text-[10px] font-semibold font-['DM_Sans'] border",
+              status.className
+            )}
+          >
+            {status.label}
+          </Badge>
+        </div>
+        <p className="text-sm font-semibold text-[#101828] font-['DM_Sans'] leading-snug line-clamp-1">
+          {course.title}
+        </p>
+        {course.lastAttempt && (
+          <p className="text-[11px] text-[#98A2B3] font-['DM_Sans']">
+            {new Date(course.lastAttempt).toLocaleDateString("id-ID", {
+              day: "numeric",
+              month: "short",
+              year: "numeric",
+            })}
+          </p>
+        )}
+      </div>
+
+      {/* Divider */}
+      <Separator className="hidden sm:block h-10 w-px bg-[#E4E7EC]" />
+
+      {/* Progress */}
+      <div className="sm:w-36 space-y-1.5">
+        <div className="flex justify-between text-xs text-[#475467] font-['DM_Sans']">
+          <span>Progress</span>
+          <span className="font-semibold text-[#101828]">{course.progress}%</span>
+        </div>
+        <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              course.progress === 100
+                ? "bg-gradient-to-r from-[#12B76A] to-[#027A48]"
+                : "bg-gradient-to-r from-[#E8A020] to-[#F5C05A]"
+            )}
+            style={{ width: `${course.progress}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Divider */}
+      <Separator className="hidden sm:block h-10 w-px bg-[#E4E7EC]" />
+
+      {/* Scores */}
+      <div className="flex items-center gap-3">
+        {/* Pre score */}
+        <div className="text-center min-w-[52px]">
+          <p className="text-[10px] text-[#98A2B3] font-['DM_Sans'] mb-1 uppercase tracking-wider">
+            Pre
+          </p>
+          <div
+            className={cn(
+              "px-2.5 py-1.5 rounded-lg border text-sm font-bold font-['Lexend_Deca'] leading-none",
+              course.preScore !== null
+                ? course.preScore >= 70
+                  ? "bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6]"
+                  : "bg-[#FEF3F2] text-[#B42318] border-[#FDA29B]"
+                : "bg-[#F8F9FB] text-[#98A2B3] border-[#E4E7EC]"
+            )}
+          >
+            {course.preScore !== null ? `${Math.round(course.preScore)}%` : "—"}
+          </div>
+        </div>
+
+        {/* Arrow */}
+        <span className="text-[#98A2B3] text-xs">→</span>
+
+        {/* Post score */}
+        <div className="text-center min-w-[52px]">
+          <p className="text-[10px] text-[#98A2B3] font-['DM_Sans'] mb-1 uppercase tracking-wider">
+            Post
+          </p>
+          <div
+            className={cn(
+              "px-2.5 py-1.5 rounded-lg border text-sm font-bold font-['Lexend_Deca'] leading-none",
+              course.postScore !== null
+                ? course.postScore >= 70
+                  ? "bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6]"
+                  : "bg-[#FEF3F2] text-[#B42318] border-[#FDA29B]"
+                : "bg-[#F8F9FB] text-[#98A2B3] border-[#E4E7EC]"
+            )}
+          >
+            {course.postScore !== null ? `${Math.round(course.postScore)}%` : "—"}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
 
-export function PerformanceClient({ courseAnalysis }: PerformanceClientProps) {
+/* ══════════════════════════════════════════════════════════════════════
+   PERFORMANCE CLIENT — Course Analysis Table
+═══════════════════════════════════════════════════════════════════════ */
+export function PerformanceClient({
+  courseAnalysis,
+}: {
+  courseAnalysis: CourseAnalysisItem[];
+}) {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 6;
 
   const totalPages = Math.ceil(courseAnalysis.length / itemsPerPage);
   const paginatedCourses = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return courseAnalysis.slice(startIndex, startIndex + itemsPerPage);
-  }, [courseAnalysis, currentPage, itemsPerPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return courseAnalysis.slice(start, start + itemsPerPage);
+  }, [courseAnalysis, currentPage]);
 
   return (
     <div className="space-y-4">
+      {/* Table header */}
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-slate-900">Analisis Kompetensi Kursus</h2>
-        <Badge variant="outline" className="text-slate-700">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-[#EFF8FF] flex items-center justify-center">
+            <span className="text-[10px] font-bold text-[#175CD3]">📊</span>
+          </div>
+          <h3 className="text-sm font-semibold text-[#101828] font-['Lexend_Deca']">
+            Analisis Kompetensi
+          </h3>
+        </div>
+        <Badge
+          variant="outline"
+          className="text-xs font-semibold font-['DM_Sans'] text-[#475467] border-[#E4E7EC] bg-[#F8F9FB]"
+        >
           {courseAnalysis.length} kursus
         </Badge>
       </div>
 
-      <div className="space-y-3">
-        {paginatedCourses.map((course) => {
-          const statusMap: Record<string, { label: string; className: string }> = {
-            COMPLETED: { label: "Selesai", className: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-            FAILED: { label: "Gagal", className: "bg-rose-50 text-rose-700 border-rose-200" },
-            IN_PROGRESS: { label: "Berjalan", className: "bg-blue-50 text-blue-700 border-blue-200" },
-          };
-          const status = statusMap[course.status] ?? statusMap.IN_PROGRESS;
-
-          return (
-            <Card key={course.id} className="border shadow-sm rounded-lg bg-white hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <div className="flex flex-col sm:flex-row sm:items-center gap-5">
-
-                  {/* Title + status */}
-                  <div className="flex-1 min-w-0 space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="secondary" className="text-xs">
-                        {course.category}
-                      </Badge>
-                      <Badge className={cn("text-xs", status.className)}>
-                        {status.label}
-                      </Badge>
-                    </div>
-                    <p className="font-semibold text-sm leading-snug line-clamp-1 text-slate-900">{course.title}</p>
-                    {course.lastAttempt && (
-                      <p className="text-xs text-slate-500">
-                        {new Date(course.lastAttempt).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })}
-                      </p>
-                    )}
-                  </div>
-
-                  <Separator orientation="vertical" className="hidden sm:block h-14" />
-
-                  {/* Progress */}
-                  <div className="sm:w-36 space-y-2">
-                    <div className="flex justify-between text-xs text-slate-600">
-                      <span>Progres Modul</span>
-                      <span className="font-semibold">{course.progress}%</span>
-                    </div>
-                    <Progress value={course.progress} className="h-2" />
-                  </div>
-
-                  <Separator orientation="vertical" className="hidden sm:block h-14" />
-
-                  {/* Scores */}
-                  <div className="flex items-center gap-4">
-                    <div className="text-center bg-slate-50 p-2 rounded-lg min-w-[50px] border">
-                      <p className="text-xs text-slate-500 mb-1">Pre</p>
-                      <p className="text-sm font-semibold tabular-nums text-slate-700">
-                        {course.preScore !== null ? `${Math.round(course.preScore)}%` : "—"}
-                      </p>
-                    </div>
-                    <div className="text-slate-300">→</div>
-                    <div className="text-center bg-slate-50 p-2 rounded-lg min-w-[50px] border">
-                      <p className="text-xs text-slate-500 mb-1">Post</p>
-                      <p className="text-sm font-semibold tabular-nums text-slate-700">
-                        {course.postScore !== null ? `${Math.round(course.postScore)}%` : "—"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
+      {/* Rows */}
+      {paginatedCourses.length === 0 ? (
+        <div className="py-12 text-center">
+          <p className="text-sm text-[#98A2B3] font-['DM_Sans']">
+            Belum ada data kursus.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {paginatedCourses.map((course) => (
+            <CourseAnalysisRow key={course.id} course={course} />
+          ))}
+        </div>
+      )}
 
       {/* Pagination */}
       {totalPages > 1 && (

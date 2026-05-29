@@ -13,7 +13,6 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import type { ChartConfig } from "@/components/ui/chart";
 
@@ -24,128 +23,130 @@ interface ActivityChartProps {
 const chartConfig = {
   count: {
     label: "Modul Selesai",
-    color: "hsl(var(--chart-1))",
+    color: "#E8A020",
   },
 } satisfies ChartConfig;
 
+/* ─── Chart axis tick styled to match design system ─── */
+const axisTickStyle = {
+  fontSize: 12 as const,
+  fontWeight: 600 as const,
+  fontFamily: "'DM Sans', sans-serif",
+};
+
 export default function ActivityChart({ data }: ActivityChartProps) {
-  // Calculate statistics
   const totalModules = data.reduce((sum, item) => sum + item.count, 0);
-  const avgPerDay = (totalModules / data.length).toFixed(1);
-  const maxDay = data.reduce((max, item) => item.count > max.count ? item : max, data[0]);
-  
+  const avgPerDay = data.length > 0 ? (totalModules / data.length).toFixed(1) : "0";
+  const maxDay = data.reduce(
+    (max, item) => (item.count > (max?.count ?? 0) ? item : max),
+    data[0]
+  );
+
   return (
-    <Card className="bg-white shadow-sm border-slate-200 h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-semibold text-slate-900">
-              Aktivitas 7 Hari Terakhir
-            </CardTitle>
-            <CardDescription className="text-sm text-slate-600">
-              {totalModules} modul diselesaikan minggu ini
-            </CardDescription>
-          </div>
-          
-          {totalModules > 0 && (
-            <div className="flex items-center gap-2 text-sm shrink-0">
-              <TrendingUp className="h-4 w-4 text-emerald-600" />
-              <span className="font-medium text-slate-700">
-                {avgPerDay} modul/hari
+    <div className="w-full h-full flex flex-col">
+      {/* Stats row */}
+      <div className="flex items-center justify-between mb-4 px-1">
+        {totalModules > 0 ? (
+          <>
+            <div>
+              <p className="text-3xl font-bold text-[#101828] font-['Lexend_Deca'] leading-none tabular-nums">
+                {totalModules}
+              </p>
+              <p className="text-sm text-[#475467] font-['DM_Sans'] mt-1">
+                modul diselesaikan
+              </p>
+            </div>
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#ECFDF3] border border-[#6CE9A6]">
+              <TrendingUp size={14} className="text-[#027A48]" />
+              <span className="text-sm font-semibold text-[#027A48] font-['DM_Sans']">
+                {avgPerDay}/hari
               </span>
             </div>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex flex-col pt-0 pb-4">
-        <ChartContainer config={chartConfig} className="flex-1 w-full min-h-0">
-          <BarChart 
-            data={data} 
-            margin={{ top: 5, right: 10, left: -20, bottom: 5 }}
+          </>
+        ) : (
+          <p className="text-sm text-[#98A2B3] font-['DM_Sans']">
+            Belum ada aktivitas minggu ini
+          </p>
+        )}
+      </div>
+
+      {/* Chart */}
+      <div className="flex-1 w-full min-h-[200px]">
+        <ChartContainer config={chartConfig} className="w-full h-full">
+          <BarChart
+            data={data}
+            margin={{ top: 8, right: 12, left: -8, bottom: 8 }}
+            barCategoryGap="35%"
           >
             <defs>
               <linearGradient id="activityGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="hsl(var(--chart-1))" stopOpacity={1} />
-                <stop offset="100%" stopColor="hsl(var(--chart-1))" stopOpacity={0.7} />
+                <stop offset="0%" stopColor="#E8A020" stopOpacity={1} />
+                <stop offset="100%" stopColor="#C4861A" stopOpacity={0.75} />
               </linearGradient>
             </defs>
-            
-            <CartesianGrid 
-              vertical={false} 
-              strokeDasharray="3 3" 
-              stroke="hsl(var(--border))" 
-              opacity={0.5}
+
+            <CartesianGrid
+              vertical={false}
+              strokeDasharray="3 3"
+              stroke="#E4E7EC"
+              opacity={0.7}
             />
-            
-            <XAxis 
-              dataKey="day" 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ 
-                fill: "hsl(var(--muted-foreground))", 
-                fontSize: 12, 
-                fontWeight: 600 
-              }}
-              dy={5}
+
+            <XAxis
+              dataKey="day"
+              axisLine={false}
+              tickLine={false}
+              tick={{ ...axisTickStyle, fill: "#98A2B3" }}
+              dy={8}
             />
-            
-            <YAxis 
-              axisLine={false} 
-              tickLine={false} 
-              tick={{ 
-                fill: "hsl(var(--muted-foreground))", 
-                fontSize: 12, 
-                fontWeight: 600 
-              }}
+
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ ...axisTickStyle, fill: "#98A2B3" }}
               tickFormatter={(value) => `${value}`}
+              allowDecimals={false}
             />
-            
-            <ChartTooltip 
+
+            <ChartTooltip
               content={
-                <ChartTooltipContent 
+                <ChartTooltipContent
                   indicator="dot"
                   labelFormatter={(value) => `${value}`}
-                  formatter={(value, name) => (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">
-                          {value} modul
-                        </span>
-                      </div>
-                    </>
-                  )}
+                  formatter={(value) => [
+                    <span key="val" className="font-semibold text-[#101828] text-sm font-['DM_Sans']">
+                      {value} modul
+                    </span>,
+                  ]}
                 />
               }
-              cursor={{ fill: "hsl(var(--muted))", opacity: 0.15 }}
+              cursor={{ fill: "rgba(232,160,32,0.07)" }}
             />
-            
-            <Bar 
-              dataKey="count" 
+
+            <Bar
+              dataKey="count"
               fill="url(#activityGradient)"
-              radius={[8, 8, 0, 0]} 
-              maxBarSize={48}
+              radius={[8, 8, 0, 0]}
+              maxBarSize={52}
             />
           </BarChart>
         </ChartContainer>
-        
-        {/* Summary Footer */}
-        {totalModules > 0 && maxDay && (
-          <div className="mt-3 pt-3 border-t border-slate-200">
-            <div className="flex items-center justify-between text-sm">
-              <div className="flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-slate-600">
-                  Hari paling produktif:
-                </span>
-              </div>
-              <span className="font-semibold text-slate-900">
-                {maxDay.day} ({maxDay.count} modul)
-              </span>
-            </div>
+      </div>
+
+      {/* Footer */}
+      {totalModules > 0 && maxDay && (
+        <div className="mt-4 pt-3 border-t border-[#E4E7EC] flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 rounded-full bg-gradient-to-r from-[#E8A020] to-[#F5C05A]" />
+            <span className="text-sm text-[#475467] font-['DM_Sans']">
+              Paling produktif:
+            </span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <span className="text-sm font-semibold text-[#101828] font-['DM_Sans']">
+            {maxDay.day} ({maxDay.count} modul)
+          </span>
+        </div>
+      )}
+    </div>
   );
 }

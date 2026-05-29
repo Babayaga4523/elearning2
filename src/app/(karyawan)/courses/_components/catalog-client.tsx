@@ -1,10 +1,27 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import {
-  Search, BookOpen, CheckCircle2, Clock, ChevronRight, ChevronLeft, X, Filter,
-  List, Building, Scale, Users, Terminal, Brain, AlertTriangle, CalendarClock
+  Search,
+  BookOpen,
+  CheckCircle2,
+  Clock,
+  ChevronRight,
+  ChevronLeft,
+  X,
+  Filter,
+  List,
+  Building,
+  Scale,
+  Users,
+  Terminal,
+  Brain,
+  AlertTriangle,
+  CalendarClock,
+  ChevronDown,
+  ArrowUpRight,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
@@ -13,6 +30,270 @@ import { id as idLocale } from "date-fns/locale";
 import { Pagination } from "@/components/admin/Pagination";
 import { cn } from "@/lib/utils";
 
+/* ════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — World-Class Design System
+═══════════════════════════════════════════════════════════════════════ */
+const t = {
+  navy: "#0F1C3F",
+  gold: "#E8A020",
+  surface: "#F8F9FB",
+  surface2: "#F1F3F7",
+  border: "#E4E7EC",
+  text: "#101828",
+  textSecondary: "#475467",
+  textTertiary: "#98A2B3",
+  success: { bg: "#ECFDF3", text: "#027A48", border: "#6CE9A6" },
+  warning: { bg: "#FFFAEB", text: "#B54708", border: "#FEC84B" },
+  danger: { bg: "#FEF3F2", text: "#B42318", border: "#FDA29B" },
+  info: { bg: "#EFF8FF", text: "#175CD3", border: "#B2DDFF" },
+};
+
+/* ─── Category Icons ────────────────────────────────────────────────── */
+const CATEGORY_ICONS: Record<string, React.ElementType> = {
+  finance: Building,
+  legal: Scale,
+  leader: Users,
+  tech: Terminal,
+  brain: Brain,
+};
+
+function getCategoryIcon(name: string): React.ElementType {
+  const n = name.toLowerCase();
+  if (n.includes("finance") || n.includes("keuangan") || n.includes("bank"))
+    return CATEGORY_ICONS.finance;
+  if (n.includes("legal") || n.includes("hukum") || n.includes("compliance"))
+    return CATEGORY_ICONS.legal;
+  if (n.includes("leader") || n.includes("pimpin"))
+    return CATEGORY_ICONS.leader;
+  if (n.includes("tech") || n.includes("it") || n.includes("data"))
+    return CATEGORY_ICONS.tech;
+  return Brain;
+}
+
+/* ─── Status Badge Config ────────────────────────────────────────────── */
+const STATUS_CONFIG: Record<string, {
+  label: string;
+  icon: React.ElementType;
+  className: string;
+}> = {
+  PENDING: {
+    label: "Menunggu",
+    icon: Clock,
+    className: "bg-[#FFFAEB] text-[#B54708] border-[#FEC84B]",
+  },
+  IN_PROGRESS: {
+    label: "Sedang Berjalan",
+    icon: BookOpen,
+    className: "bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]",
+  },
+  COMPLETED: {
+    label: "Selesai",
+    icon: CheckCircle2,
+    className: "bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6]",
+  },
+  FAILED: {
+    label: "Gagal",
+    icon: AlertTriangle,
+    className: "bg-[#FEF3F2] text-[#B42318] border-[#FDA29B]",
+  },
+  REJECTED: {
+    label: "Ditolak",
+    icon: Clock,
+    className: "bg-[#F1F3F7] text-[#475467] border-[#E4E7EC]",
+  },
+};
+
+/* ─── Course Card ───────────────────────────────────────────────────── */
+function CourseCard({
+  course,
+}: {
+  course: {
+    id: string;
+    title: string;
+    description?: string | null;
+    imageUrl?: string | null;
+    deadlineDate?: Date | null;
+    category?: { name: string } | null;
+    _count?: { modules: number; enrollments: number };
+    enrollments?: Array<{ status: string }>;
+  };
+}) {
+  const enrollment = course.enrollments?.[0] ?? null;
+  const status = enrollment?.status;
+  const statusConfig = status
+    ? STATUS_CONFIG[status] ?? STATUS_CONFIG.PENDING
+    : null;
+  const StatusIcon = statusConfig?.icon;
+
+  const hasDeadline = !!course.deadlineDate;
+  const deadlineDate = course.deadlineDate ? new Date(course.deadlineDate) : null;
+  const isDeadlinePast = deadlineDate ? isPast(deadlineDate) : false;
+  const isDeadlineSoon =
+    deadlineDate && !isDeadlinePast
+      ? differenceInDays(deadlineDate, new Date()) <= 3
+      : false;
+
+  return (
+    <Link
+      href={`/courses/${course.id}`}
+      className="group block bg-white rounded-2xl border border-[#E4E7EC] overflow-hidden hover:border-[#C4861A] hover:shadow-[0_8px_32px_rgba(0,0,0,0.08)] transition-all duration-300 h-full"
+    >
+      {/* Thumbnail */}
+      <div className="relative h-44 bg-gradient-to-br from-[#E8EDF7] to-[#EFF8FF] overflow-hidden">
+        {course.imageUrl ? (
+          <Image
+            src={course.imageUrl}
+            alt={course.title}
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-500"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center">
+            <div className="w-14 h-14 rounded-2xl bg-[#E4E7EC]/60 flex items-center justify-center">
+              <BookOpen size={28} className="text-[#98A2B3]" />
+            </div>
+          </div>
+        )}
+
+        {/* Status badge overlay */}
+        {statusConfig && (
+          <div className="absolute top-3 right-3">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-semibold border font-['DM_Sans']",
+                statusConfig.className
+              )}
+            >
+              {StatusIcon && <StatusIcon size={10} />}
+              {statusConfig.label}
+            </span>
+          </div>
+        )}
+
+        {/* Gradient overlay bottom */}
+        <div className="absolute inset-x-0 bottom-0 h-12 bg-gradient-to-t from-black/20 to-transparent" />
+      </div>
+
+      {/* Content */}
+      <div className="p-5 flex flex-col flex-1">
+        {/* Category tag */}
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#EFF8FF] border border-[#B2DDFF] text-xs font-semibold text-[#175CD3] font-['DM_Sans'] mb-3 w-fit">
+          {(() => {
+            const Icon = getCategoryIcon(course.category?.name || "");
+            return <Icon size={11} />;
+          })()}
+          {course.category?.name || "General"}
+        </div>
+
+        {/* Title */}
+        <h3 className="text-base font-semibold text-[#101828] font-['Lexend_Deca'] leading-snug line-clamp-2 mb-2 group-hover:text-[#C4861A] transition-colors duration-200">
+          {course.title}
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm text-[#475467] font-['DM_Sans'] line-clamp-2 mb-4 flex-1 leading-relaxed">
+          {course.description ||
+            "Pelajari materi ini untuk meningkatkan kompetensi dan keahlian Anda di lingkungan perusahaan."}
+        </p>
+
+        {/* Deadline */}
+        {hasDeadline && deadlineDate && (
+          <div
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-xl border text-xs font-semibold font-['DM_Sans'] mb-4",
+              isDeadlinePast
+                ? "bg-[#FEF3F2] text-[#B42318] border-[#FDA29B]"
+                : isDeadlineSoon
+                ? "bg-[#FFFAEB] text-[#B54708] border-[#FEC84B]"
+                : "bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF]"
+            )}
+          >
+            {isDeadlinePast ? (
+              <AlertTriangle size={13} />
+            ) : (
+              <CalendarClock size={13} />
+            )}
+            <span className="flex-1">
+              {isDeadlinePast
+                ? "Deadline terlewat"
+                : isToday(deadlineDate)
+                ? "Deadline hari ini"
+                : `${differenceInDays(deadlineDate, new Date())} hari lagi`}
+            </span>
+            <span className="text-[10px] opacity-70">
+              {format(deadlineDate, "dd MMM yyyy", { locale: idLocale })}
+            </span>
+          </div>
+        )}
+
+        {/* Footer stats */}
+        <div className="flex items-center justify-between pt-3 border-t border-[#E4E7EC] mt-auto">
+          <div className="flex items-center gap-1.5 text-[#475467] text-xs font-semibold font-['DM_Sans']">
+            <BookOpen size={13} />
+            {course._count?.modules ?? 0} Modul
+          </div>
+          <div className="flex items-center gap-1.5 text-[#475467] text-xs font-semibold font-['DM_Sans']">
+            <Users size={13} />
+            {course._count?.enrollments ?? 0} Peserta
+          </div>
+          <ArrowUpRight
+            size={15}
+            className="text-[#98A2B3] group-hover:text-[#E8A020] transition-colors duration-150"
+          />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+/* ─── Sidebar Category Button ───────────────────────────────────────── */
+function CategoryButton({
+  category,
+  count,
+  isActive,
+  onClick,
+}: {
+  category?: { id: string; name: string };
+  count: number;
+  isActive: boolean;
+  onClick: () => void;
+}) {
+  const Icon = category ? getCategoryIcon(category.name) : List;
+
+  return (
+    <button
+      onClick={onClick}
+      className={cn(
+        "w-full flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-150 text-left font-['DM_Sans']",
+        isActive
+          ? "bg-[#0F1C3F] text-white shadow-md"
+          : "text-[#475467] hover:bg-[#F1F3F7] hover:text-[#101828]"
+      )}
+    >
+      <div
+        className={cn(
+          "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-150",
+          isActive ? "bg-white/20 text-white" : "bg-[#F8F9FB] text-[#475467]"
+        )}
+      >
+        <Icon size={15} />
+      </div>
+      <span className="flex-1 truncate">{category?.name || "Semua Kursus"}</span>
+      <span
+        className={cn(
+          "px-2 py-0.5 rounded-full text-[10px] font-bold transition-colors duration-150",
+          isActive ? "bg-white/20 text-white" : "bg-[#E4E7EC] text-[#475467]"
+        )}
+      >
+        {count}
+      </span>
+    </button>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CATALOG CLIENT
+═══════════════════════════════════════════════════════════════════════ */
 interface CatalogClientProps {
   courses: any[];
   categories: any[];
@@ -23,36 +304,14 @@ interface CatalogClientProps {
   totalItems: number;
 }
 
-// Helper function untuk singkat nama kategori
-const getCategoryShortName = (name: string) => {
-  const shortNames: Record<string, string> = {
-    "Ilmu Pengetahuan Alam": "IPA",
-    "Ilmu Pengetahuan Sosial": "IPS",
-    "Technical Skills": "Tech Skills",
-    "Corporate Culture": "Corporate",
-  };
-  return shortNames[name] || name;
-};
-
-// Icon mapper untuk kategori
-const getCategoryIcon = (name: string) => {
-  const n = name.toLowerCase();
-  if (n.includes("finance") || n.includes("keuangan") || n.includes("bank")) return <Building className="w-5 h-5" />;
-  if (n.includes("legal") || n.includes("hukum") || n.includes("compliance")) return <Scale className="w-5 h-5" />;
-  if (n.includes("leader") || n.includes("pimpin")) return <Users className="w-5 h-5" />;
-  if (n.includes("tech") || n.includes("it") || n.includes("data")) return <Terminal className="w-5 h-5" />;
-  if (n.includes("soft skill") || n.includes("komunikasi")) return <Brain className="w-5 h-5" />;
-  return <BookOpen className="w-5 h-5" />;
-};
-
-export function CatalogClient({ 
-  courses, 
+export function CatalogClient({
+  courses,
   categories,
   categoryCounts,
   totalAllCourses,
   currentPage,
   totalPages,
-  totalItems
+  totalItems,
 }: CatalogClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -61,17 +320,18 @@ export function CatalogClient({
   const [search, setSearch] = useState(searchParams.get("search") || "");
   const activeCategory = searchParams.get("category") || "all";
 
-  const updateUrl = (newSearch: string, newCategory: string, page: number = 1) => {
+  const updateUrl = (
+    newSearch: string,
+    newCategory: string,
+    page: number = 1
+  ) => {
     const params = new URLSearchParams(searchParams);
     if (newSearch.trim()) params.set("search", newSearch);
     else params.delete("search");
-    
     if (newCategory !== "all") params.set("category", newCategory);
     else params.delete("category");
-    
     if (page > 1) params.set("page", page.toString());
     else params.delete("page");
-
     router.replace(`${pathname}?${params.toString()}`, { scroll: false });
   };
 
@@ -88,7 +348,7 @@ export function CatalogClient({
     setSearch("");
     updateUrl("", "all", 1);
   };
-  
+
   const handlePageChange = (page: number) => {
     updateUrl(search, activeCategory, page);
   };
@@ -96,100 +356,129 @@ export function CatalogClient({
   const hasActiveFilters = search.trim() !== "" || activeCategory !== "all";
 
   return (
-    <div className="bg-[#f8f9ff] text-[#0b1c30] font-sans antialiased min-h-[calc(100vh-4rem)] flex flex-col w-full">
-      {/* Header Hero */}
-      <header className="bg-gradient-to-r from-[#00474c] to-[#0b1c30] py-12 px-4 md:px-8 relative overflow-hidden">
-        <div className="max-w-[1440px] mx-auto relative z-10">
-          <h1 className="text-[#ffffff] text-4xl md:text-5xl font-bold mb-2">Katalog Kursus</h1>
-          <p className="text-[#cbdbf5] text-lg mb-8 max-w-2xl">
-            Tingkatkan kompetensi Anda dengan berbagai modul pelatihan yang dirancang khusus untuk profesional BNI Finance.
-          </p>
-          <div className="relative max-w-3xl">
-            <form onSubmit={handleSearchSubmit} className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[#544435] w-5 h-5" />
-              <input 
-                className="w-full pl-12 pr-28 py-4 rounded-xl border-none shadow-lg text-base text-[#0b1c30] bg-[#ffffff] focus:ring-2 focus:ring-[#f7941d] focus:outline-none placeholder:text-[#544435]" 
-                placeholder="Cari berdasarkan nama kursus, kategori, atau keahlian..." 
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-              />
-              <button 
-                type="submit"
-                className="absolute right-2 top-1/2 -translate-y-1/2 bg-[#f7941d] text-[#ffffff] px-6 py-2 rounded-lg text-sm font-semibold hover:bg-opacity-90 transition-colors shadow-sm"
-              >
-                Cari
-              </button>
-            </form>
+    <div
+      className="min-h-screen bg-[#F8F9FB]"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      {/* ═══ Hero Header ════════════════════════════════════════════════ */}
+      <header
+        className="relative overflow-hidden"
+        style={{
+          background: `linear-gradient(135deg, ${t.navy} 0%, #1A3060 100%)`,
+        }}
+      >
+        {/* Ambient glow */}
+        <div
+          className="absolute -right-32 top-0 w-96 h-96 rounded-full opacity-10 pointer-events-none"
+          style={{
+            background: `radial-gradient(circle, ${t.gold} 0%, transparent 70%)`,
+          }}
+        />
+
+        <div className="relative z-10 max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 py-10 md:py-12">
+          {/* Breadcrumb badge */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-semibold uppercase tracking-widest text-white/70 mb-4">
+            <Sparkles size={10} />
+            E-Learning
           </div>
+
+          <h1 className="text-3xl md:text-4xl font-bold text-white font-['Lexend_Deca'] leading-tight tracking-tight mb-3">
+            Katalog Kursus
+          </h1>
+          <p className="text-base text-white/60 font-['DM_Sans'] max-w-xl leading-relaxed mb-8">
+            Tingkatkan kompetensi Anda dengan berbagai modul pelatihan yang
+            dirancang khusus untuk profesional BNI Finance.
+          </p>
+
+          {/* Search bar */}
+          <form onSubmit={handleSearchSubmit} className="relative max-w-2xl">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none">
+              <Search size={18} className="text-[#98A2B3]" />
+            </div>
+            <input
+              className={cn(
+                "w-full pl-12 pr-36 py-3.5 rounded-xl border-0 shadow-lg text-sm",
+                "font-['DM_Sans'] text-[#101828]",
+                "focus:ring-2 focus:ring-[#E8A020] focus:outline-none",
+                "placeholder:text-[#98A2B3]"
+              )}
+              placeholder="Cari kursus, kategori, atau keahlian..."
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <button
+              type="submit"
+              className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2 bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-sm font-semibold rounded-lg font-['DM_Sans'] transition-all duration-150 shadow-md"
+            >
+              Cari
+            </button>
+          </form>
         </div>
-        <div className="absolute top-0 right-0 w-1/3 h-full opacity-10 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#f7941d] via-transparent to-transparent"></div>
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 w-full max-w-[1440px] mx-auto px-4 md:px-8 py-8 flex flex-col md:flex-row gap-8">
-        
-        {/* Sidebar Navigation (Filters) */}
-        <aside className="w-full md:w-[250px] shrink-0">
-          <div className="bg-[#ffffff] rounded-xl shadow-sm border border-[#d3e4fe] p-4 sticky top-24">
-            <h2 className="text-xl font-semibold text-[#0b1c30] mb-4 px-2">Kategori</h2>
-            <div className="flex flex-col gap-1">
-              <button 
+      {/* ═══ Main Content ══════════════════════════════════════════════ */}
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 md:px-8 py-8 flex gap-8">
+
+        {/* ═══ Sidebar ══════════════════════════════════════════════════ */}
+        <aside className="w-full md:w-56 lg:w-64 shrink-0">
+          <div className="bg-white rounded-2xl border border-[#E4E7EC] overflow-hidden sticky top-24">
+            {/* Sidebar header */}
+            <div className="px-4 py-3.5 border-b border-[#E4E7EC] bg-[#F8F9FB]">
+              <h2 className="text-xs font-semibold text-[#98A2B3] uppercase tracking-widest font-['DM_Sans']">
+                Kategori
+              </h2>
+            </div>
+
+            {/* Category list */}
+            <div className="p-3 space-y-1">
+              <CategoryButton
+                category={undefined}
+                count={totalAllCourses}
+                isActive={activeCategory === "all"}
                 onClick={() => handleCategorySelect("all")}
-                className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors text-left ${
-                  activeCategory === "all" 
-                    ? "bg-[#eff4ff] text-[#f7941d] border-l-4 border-[#f7941d] rounded-l-none" 
-                    : "text-[#544435] hover:bg-[#f8f9ff] hover:text-[#0b1c30]"
-                }`}
-              >
-                <List className="w-5 h-5" />
-                <span className="flex-1">Semua Kursus</span>
-                <span className="bg-[#e5eeff] text-[#206e7a] py-0.5 px-2 rounded-full text-xs font-bold">{totalAllCourses}</span>
-              </button>
-              
-              {categories.map((category) => {
-                const isActive = activeCategory === category.id;
-                const count = categoryCounts[category.id] || 0;
-                
-                return (
-                  <button 
-                    key={category.id}
-                    onClick={() => handleCategorySelect(category.id)}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm font-semibold rounded-lg transition-colors text-left ${
-                      isActive 
-                        ? "bg-[#eff4ff] text-[#f7941d] border-l-4 border-[#f7941d] rounded-l-none" 
-                        : "text-[#544435] hover:bg-[#f8f9ff] hover:text-[#0b1c30]"
-                    }`}
-                  >
-                    {getCategoryIcon(category.name)}
-                    <span className="flex-1">{category.name}</span>
-                    {count > 0 && (
-                      <span className="bg-[#e5eeff] text-[#206e7a] py-0.5 px-2 rounded-full text-xs font-bold">{count}</span>
-                    )}
-                  </button>
-                );
-              })}
+              />
+              {categories.map((cat: any) => (
+                <CategoryButton
+                  key={cat.id}
+                  category={cat}
+                  count={categoryCounts[cat.id] || 0}
+                  isActive={activeCategory === cat.id}
+                  onClick={() => handleCategorySelect(cat.id)}
+                />
+              ))}
             </div>
           </div>
         </aside>
 
-        {/* Course Grid Area */}
-        <section className="flex-1">
+        {/* ═══ Course Grid ═══════════════════════════════════════════════ */}
+        <section className="flex-1 min-w-0">
           {/* Toolbar */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-            <div className="text-base text-[#544435]">
-              Menampilkan <span className="font-semibold text-[#0b1c30]">{totalItems} kursus</span>
+          <div className="flex items-center justify-between mb-5 gap-4 flex-wrap">
+            <div className="text-sm font-['DM_Sans'] text-[#475467]">
+              <span className="font-semibold text-[#101828]">{totalItems}</span> kursus
+              {activeCategory !== "all" && (
+                <span className="text-[#98A2B3]"> · difilter</span>
+              )}
             </div>
-            <div className="flex items-center gap-4 w-full sm:w-auto">
+
+            <div className="flex items-center gap-3">
               {hasActiveFilters && (
-                <button 
+                <button
                   onClick={clearFilters}
-                  className="text-[#006970] hover:text-[#00474c] text-sm transition-colors flex items-center gap-1 font-semibold"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold font-['DM_Sans'] text-[#B42318] hover:bg-[#FEF3F2] rounded-lg transition-colors"
                 >
-                  <Filter className="w-4 h-4" /> Clear filters
+                  <X size={12} />
+                  Clear
                 </button>
               )}
-              <select className="bg-[#ffffff] border border-[#dac2af] rounded-lg text-sm text-[#0b1c30] py-2 pl-4 pr-8 focus:ring-1 focus:ring-[#f7941d] focus:border-[#f7941d] outline-none">
+              <select
+                className={cn(
+                  "bg-white border border-[#E4E7EC] rounded-lg text-xs font-['DM_Sans']",
+                  "py-2 pl-4 pr-8 text-[#344054] cursor-pointer",
+                  "focus:ring-2 focus:ring-[#E8A020]/20 focus:border-[#E8A020] outline-none"
+                )}
+              >
                 <option>Terbaru</option>
                 <option>Terpopuler</option>
                 <option>A-Z</option>
@@ -197,194 +486,101 @@ export function CatalogClient({
             </div>
           </div>
 
-          {/* Grid */}
+          {/* Course grid */}
           {courses.length === 0 ? (
-            <div className="bg-[#ffffff] border border-[#dac2af] rounded-xl p-12 text-center flex flex-col items-center">
-              <BookOpen className="w-16 h-16 text-[#dac2af] mb-4" />
-              <h3 className="text-xl font-semibold text-[#0b1c30] mb-2">Tidak ada kursus ditemukan</h3>
-              <p className="text-[#544435] max-w-md mx-auto">
-                Coba gunakan kata kunci pencarian lain atau pilih kategori yang berbeda.
+            <div className="bg-white rounded-2xl border border-[#E4E7EC] p-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-[#EFF8FF] flex items-center justify-center mx-auto mb-4">
+                <BookOpen size={28} className="text-[#98A2B3]" />
+              </div>
+              <h3 className="text-lg font-semibold text-[#101828] font-['Lexend_Deca'] mb-2">
+                Tidak ada kursus ditemukan
+              </h3>
+              <p className="text-sm text-[#475467] font-['DM_Sans'] max-w-sm mx-auto leading-relaxed">
+                Coba gunakan kata kunci lain atau pilih kategori berbeda.
               </p>
               {hasActiveFilters && (
-                <button 
+                <button
                   onClick={clearFilters}
-                  className="mt-6 bg-[#eff4ff] text-[#166874] px-6 py-2 rounded-lg text-sm font-semibold hover:bg-[#d3e4fe] transition-colors"
+                  className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-[#EFF8FF] text-[#175CD3] hover:bg-[#B2DDFF] text-sm font-semibold rounded-xl font-['DM_Sans'] transition-colors"
                 >
-                  Hapus Semua Filter
+                  <X size={14} />
+                  Hapus Filter
                 </button>
               )}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {courses.map((course) => {
-                const enrollment = course.enrollments && course.enrollments.length > 0 
-                  ? course.enrollments[0] 
-                  : null;
-                
-                const status = enrollment?.status;
-                
-                // Status badge mapping
-                const statusBadge = {
-                  PENDING: {
-                    label: "Menunggu",
-                    icon: Clock,
-                    className: "bg-[#ffdcbf] text-[#6b3b00] border-[#ffb874]"
-                  },
-                  IN_PROGRESS: {
-                    label: "Sedang Berjalan",
-                    icon: BookOpen,
-                    className: "bg-[#e0f2fe] text-[#0369a1] border-[#bae6fd]"
-                  },
-                  COMPLETED: {
-                    label: "Selesai",
-                    icon: CheckCircle2,
-                    className: "bg-[#d1fae5] text-[#065f46] border-[#a7f3d0]"
-                  },
-                  FAILED: {
-                    label: "Gagal",
-                    icon: Clock,
-                    className: "bg-[#fee2e2] text-[#991b1b] border-[#fecaca]"
-                  },
-                  REJECTED: {
-                    label: "Ditolak",
-                    icon: Clock,
-                    className: "bg-[#fef3c7] text-[#92400e] border-[#fde68a]"
-                  }
-                };
-
-                const currentStatus = status ? statusBadge[status as keyof typeof statusBadge] : null;
-                const StatusIcon = currentStatus?.icon;
-
-                return (
-                  <Link href={`/courses/${course.id}`} key={course.id}>
-                    <article className="bg-[#ffffff] rounded-xl border border-[#d3e4fe] shadow-sm hover:shadow-md transition-shadow overflow-hidden flex flex-col cursor-pointer group h-full">
-                      <div className="h-40 bg-[#e5eeff] relative overflow-hidden">
-                        {course.imageUrl ? (
-                          <Image 
-                            src={course.imageUrl} 
-                            alt={course.title} 
-                            fill
-                            className="object-cover group-hover:scale-105 transition-transform duration-500" 
-                          />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[#eff4ff] to-[#d3e4fe] group-hover:scale-105 transition-transform duration-500">
-                            <BookOpen className="w-12 h-12 text-[#3abcc6] opacity-50" />
-                          </div>
-                        )}
-                      </div>
-                      <div className="p-4 flex-1 flex flex-col">
-                        <div className="flex justify-between items-start mb-2 gap-2">
-                          <span className="bg-[#e5eeff] text-[#006970] text-xs font-semibold px-2 py-1 rounded-md shrink-0">
-                            {getCategoryShortName(course.category?.name || "General")}
-                          </span>
-                          
-                          {currentStatus && StatusIcon && (
-                            <span className={`text-xs font-semibold px-2 py-1 rounded-full border flex items-center gap-1 shrink-0 ${currentStatus.className}`}>
-                              <StatusIcon className="w-3 h-3" /> {currentStatus.label}
-                            </span>
-                          )}
-                        </div>
-                        
-                        <h3 className="text-lg font-semibold text-[#0b1c30] mb-2 leading-tight group-hover:text-[#f7941d] transition-colors line-clamp-2">
-                          {course.title}
-                        </h3>
-                        
-                        <p className="text-sm text-[#544435] line-clamp-2 mb-4 flex-1">
-                          {course.description || "Pelajari materi ini untuk meningkatkan kompetensi dan keahlian Anda di lingkungan perusahaan."}
-                        </p>
-                        
-                        {/* Deadline - Enhanced Display */}
-                        {course.deadlineDate && (
-                          <div className={cn(
-                            "mb-3 flex items-center gap-2 text-xs px-2.5 py-1.5 rounded-lg border",
-                            isPast(new Date(course.deadlineDate))
-                              ? "bg-red-50 text-red-700 border-red-200"
-                              : differenceInDays(new Date(course.deadlineDate), new Date()) <= 3
-                                ? "bg-amber-50 text-amber-700 border-amber-200"
-                                : "bg-[#eff4ff] text-[#006970] border-blue-200"
-                          )}>
-                            {isPast(new Date(course.deadlineDate)) ? (
-                              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-                            ) : (
-                              <CalendarClock className="w-3.5 h-3.5 shrink-0" />
-                            )}
-                            <span className="font-medium">
-                              {isPast(new Date(course.deadlineDate))
-                                ? "Deadline Terlewat"
-                                : isToday(new Date(course.deadlineDate))
-                                  ? "Deadline Hari Ini"
-                                  : `${differenceInDays(new Date(course.deadlineDate), new Date())} hari lagi`}
-                            </span>
-                            <span className="text-[10px] opacity-75">
-                              {format(new Date(course.deadlineDate), "dd MMM yyyy", { locale: idLocale })}
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center justify-between border-t border-[#d3e4fe] pt-3 mt-auto">
-                          <div className="flex items-center gap-1 text-[#544435] text-xs font-semibold">
-                            <BookOpen className="w-4 h-4" /> {course._count?.modules || 0} Modul
-                          </div>
-                          <div className="flex items-center gap-1 text-[#544435] text-xs font-semibold">
-                            <Users className="w-4 h-4" /> {course._count?.enrollments || 0} Peserta
-                          </div>
-                        </div>
-                      </div>
-                    </article>
-                  </Link>
-                );
-              })}
+              {courses.map((course) => (
+                <CourseCard key={course.id} course={course} />
+              ))}
             </div>
           )}
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-12 flex justify-center items-center gap-2">
-              <button 
-                onClick={() => handlePageChange(currentPage - 1)}
+            <div className="mt-10 flex justify-center items-center gap-2">
+              <button
+                onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                 disabled={currentPage <= 1}
-                className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#d3e4fe] text-[#544435] hover:bg-[#f8f9ff] hover:text-[#0b1c30] transition-colors disabled:opacity-50 disabled:hover:bg-transparent"
+                className={cn(
+                  "w-9 h-9 rounded-lg border border-[#E4E7EC] flex items-center justify-center transition-all",
+                  "text-[#475467] hover:bg-[#F8F9FB] hover:text-[#101828]",
+                  "disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                )}
               >
-                <ChevronLeft className="w-5 h-5" />
+                <ChevronLeft size={15} />
               </button>
-              
+
               {Array.from({ length: totalPages }).map((_, i) => {
                 const page = i + 1;
                 const isCurrent = page === currentPage;
-                // Simple logic to show limited pages
-                if (totalPages > 5 && Math.abs(page - currentPage) > 1 && page !== 1 && page !== totalPages) {
-                  if (page === 2 || page === totalPages - 1) {
-                    return <span key={page} className="text-[#544435] text-sm px-2">...</span>;
-                  }
+                if (
+                  totalPages > 5 &&
+                  Math.abs(page - currentPage) > 1 &&
+                  page !== 1 &&
+                  page !== totalPages
+                ) {
+                  if (page === 2 || page === totalPages - 1)
+                    return (
+                      <span
+                        key={page}
+                        className="text-[#98A2B3] text-xs px-1"
+                      >
+                        ···
+                      </span>
+                    );
                   return null;
                 }
-                
                 return (
-                  <button 
+                  <button
                     key={page}
                     onClick={() => handlePageChange(page)}
-                    className={`w-10 h-10 flex items-center justify-center rounded-lg border text-sm font-semibold transition-colors ${
-                      isCurrent 
-                        ? "bg-[#f7941d] text-[#ffffff] border-transparent shadow-sm" 
-                        : "border-[#d3e4fe] text-[#0b1c30] hover:bg-[#f8f9ff]"
-                    }`}
+                    className={cn(
+                      "w-9 h-9 rounded-lg text-xs font-semibold font-['DM_Sans'] transition-all",
+                      isCurrent
+                        ? "bg-[#0F1C3F] text-white border border-[#0F1C3F] shadow-sm"
+                        : "border border-[#E4E7EC] text-[#475467] hover:bg-[#F8F9FB]"
+                    )}
                   >
                     {page}
                   </button>
                 );
               })}
-              
-              <button 
-                onClick={() => handlePageChange(currentPage + 1)}
+
+              <button
+                onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                 disabled={currentPage >= totalPages}
-                className="w-10 h-10 flex items-center justify-center rounded-lg border border-[#d3e4fe] text-[#544435] hover:bg-[#f8f9ff] hover:text-[#0b1c30] transition-colors disabled:opacity-50 disabled:hover:bg-transparent"
+                className={cn(
+                  "w-9 h-9 rounded-lg border border-[#E4E7EC] flex items-center justify-center transition-all",
+                  "text-[#475467] hover:bg-[#F8F9FB] hover:text-[#101828]",
+                  "disabled:opacity-40 disabled:hover:bg-transparent disabled:cursor-not-allowed"
+                )}
               >
-                <ChevronRight className="w-5 h-5" />
+                <ChevronRight size={15} />
               </button>
             </div>
           )}
         </section>
-        
       </main>
     </div>
   );

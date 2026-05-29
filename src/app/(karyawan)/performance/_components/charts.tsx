@@ -1,102 +1,223 @@
 "use client";
 
 import {
-  AreaChart, Area,
-  BarChart, Bar,
-  XAxis, YAxis, CartesianGrid, LabelList,
+  AreaChart,
+  Area,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  LabelList,
+  Tooltip,
 } from "recharts";
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
-  ChartLegend,
-  ChartLegendContent,
 } from "@/components/ui/chart";
-import { TrendingUp, BarChart3 } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
-export function TrendAreaChart({ trendData, config }: { trendData: any[], config: any }) {
+/* ─── Consistent axis tick style ─── */
+const axisTickStyle = {
+  fontSize: 12 as const,
+  fontWeight: 600 as const,
+  fontFamily: "'DM Sans', sans-serif",
+};
+
+export function TrendAreaChart({
+  trendData,
+  config,
+}: {
+  trendData: any[];
+  config: any;
+}) {
   if (!trendData || trendData.length < 2) {
     return (
-      <div className="h-[220px] flex flex-col items-center justify-center text-slate-400 gap-3">
-        <TrendingUp className="h-10 w-10 opacity-20" />
-        <p className="text-xs font-bold uppercase tracking-wider opacity-60">Butuh minimal 2 data untuk menampilkan tren</p>
+      <div className="h-full flex flex-col items-center justify-center gap-3">
+        <TrendingUp className="h-10 w-10 text-[#E4E7EC]" />
+        <p className="text-sm text-[#98A2B3] font-['DM_Sans'] font-medium">
+          Butuh minimal 2 data untuk menampilkan tren
+        </p>
       </div>
     );
   }
 
   return (
-    <ChartContainer config={config} className="h-[220px] w-full">
-      <AreaChart data={trendData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+    <ChartContainer config={config} className="w-full h-full">
+      <AreaChart
+        data={trendData}
+        margin={{ top: 12, right: 12, left: -8, bottom: 8 }}
+      >
         <defs>
           <linearGradient id="scoreGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor="#E8A020" stopOpacity={0.3} />
-            <stop offset="95%" stopColor="#E8A020" stopOpacity={0} />
+            <stop offset="5%" stopColor="#E8A020" stopOpacity={0.35} />
+            <stop offset="95%" stopColor="#E8A020" stopOpacity={0.02} />
           </linearGradient>
         </defs>
-        <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+
+        <CartesianGrid
+          vertical={false}
+          strokeDasharray="3 3"
+          stroke="#E4E7EC"
+          opacity={0.7}
+        />
+
         <XAxis
           dataKey="title"
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 10, fill: "#64748b", fontWeight: 600 }}
-          tickFormatter={(v) => v.length > 8 ? v.slice(0, 8) + "…" : v}
+          tick={{ ...axisTickStyle, fill: "#98A2B3" }}
+          tickFormatter={(v) =>
+            v.length > 10 ? v.slice(0, 10) + "…" : v
+          }
+          dy={8}
         />
+
         <YAxis
           domain={[0, 100]}
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 10, fill: "#64748b", fontWeight: 600 }}
+          tick={{ ...axisTickStyle, fill: "#98A2B3" }}
           tickFormatter={(v) => `${v}%`}
         />
-        <ChartTooltip content={<ChartTooltipContent indicator="line" />} />
+
+        <ChartTooltip
+          cursor={{ stroke: "#E8A020", strokeWidth: 1, strokeDasharray: "4 4" }}
+          content={
+            <ChartTooltipContent
+              indicator="line"
+              labelFormatter={(label) => `${label}`}
+              formatter={(value) => [
+                <span
+                  key="val"
+                  className="font-semibold text-[#101828] text-sm font-['DM_Sans']"
+                >
+                  {value}%
+                </span>,
+              ]}
+            />
+          }
+        />
+
         <Area
           type="monotone"
           dataKey="score"
           stroke="#E8A020"
-          strokeWidth={3}
+          strokeWidth={2.5}
           fill="url(#scoreGrad)"
           dot={{ r: 4, fill: "#E8A020", strokeWidth: 0 }}
-          activeDot={{ r: 6, fill: "#0F1C3F", stroke: "#E8A020", strokeWidth: 2 }}
+          activeDot={{
+            r: 6,
+            fill: "#fff",
+            stroke: "#E8A020",
+            strokeWidth: 2.5,
+          }}
         />
       </AreaChart>
     </ChartContainer>
   );
 }
 
-export function CompareBarChart({ barData, config }: { barData: any[], config: any }) {
+export function CompareBarChart({
+  barData,
+  config,
+}: {
+  barData: any[];
+  config: any;
+}) {
   if (!barData || barData.length === 0) {
     return (
-      <div className="h-[220px] flex flex-col items-center justify-center text-slate-400 gap-3">
-        <BarChart3 className="h-10 w-10 opacity-20" />
-        <p className="text-xs font-bold uppercase tracking-wider opacity-60">Belum ada data perbandingan</p>
+      <div className="h-full flex flex-col items-center justify-center gap-3">
+        <TrendingUp className="h-10 w-10 text-[#E4E7EC]" />
+        <p className="text-sm text-[#98A2B3] font-['DM_Sans'] font-medium">
+          Belum ada data perbandingan
+        </p>
       </div>
     );
   }
 
   return (
-    <ChartContainer config={config} className="h-[220px] w-full">
-      <BarChart data={barData} margin={{ top: 10, right: 0, left: -25, bottom: 0 }} barGap={4}>
-        <CartesianGrid vertical={false} stroke="#e2e8f0" strokeDasharray="3 3" />
+    <ChartContainer config={config} className="w-full h-full">
+      <BarChart
+        data={barData}
+        margin={{ top: 12, right: 12, left: -8, bottom: 8 }}
+        barGap={6}
+      >
+        <CartesianGrid
+          vertical={false}
+          strokeDasharray="3 3"
+          stroke="#E4E7EC"
+          opacity={0.7}
+        />
+
         <XAxis
           dataKey="name"
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 9, fill: "#64748b", fontWeight: 600 }}
+          tick={{ ...axisTickStyle, fill: "#98A2B3" }}
+          tickFormatter={(v) =>
+            v.length > 10 ? v.slice(0, 10) + "…" : v
+          }
+          dy={8}
         />
+
         <YAxis
           domain={[0, 100]}
           tickLine={false}
           axisLine={false}
-          tick={{ fontSize: 9, fill: "#64748b", fontWeight: 600 }}
+          tick={{ ...axisTickStyle, fill: "#98A2B3" }}
           tickFormatter={(v) => `${v}`}
         />
-        <ChartTooltip content={<ChartTooltipContent />} />
-        <ChartLegend content={<ChartLegendContent />} />
-        <Bar dataKey="preScore" fill="#94a3b8" radius={[4, 4, 0, 0]} maxBarSize={28}>
-          <LabelList dataKey="preScore" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#64748b' }} formatter={(v: number) => v > 0 ? `${v}` : ''} />
+
+        <ChartTooltip
+          cursor={{ fill: "rgba(232,160,32,0.06)" }}
+          content={
+            <ChartTooltipContent
+              indicator="dot"
+              labelFormatter={(label) => `${label}`}
+            />
+          }
+        />
+
+        {/* Pre-Test bars */}
+        <Bar
+          dataKey="preScore"
+          fill="#CBD2E0"
+          radius={[6, 6, 0, 0]}
+          maxBarSize={32}
+        >
+          <LabelList
+            dataKey="preScore"
+            position="top"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              fill: "#475467",
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+            formatter={(v: number) => (v > 0 ? `${v}` : "")}
+          />
         </Bar>
-        <Bar dataKey="postScore" fill="#0F1C3F" radius={[4, 4, 0, 0]} maxBarSize={28}>
-          <LabelList dataKey="postScore" position="top" style={{ fontSize: '10px', fontWeight: 'bold', fill: '#0F1C3F' }} formatter={(v: number) => v > 0 ? `${v}` : ''} />
+
+        {/* Post-Test bars */}
+        <Bar
+          dataKey="postScore"
+          fill="#0F1C3F"
+          radius={[6, 6, 0, 0]}
+          maxBarSize={32}
+        >
+          <LabelList
+            dataKey="postScore"
+            position="top"
+            style={{
+              fontSize: "11px",
+              fontWeight: 700,
+              fill: "#0F1C3F",
+              fontFamily: "'DM Sans', sans-serif",
+            }}
+            formatter={(v: number) => (v > 0 ? `${v}` : "")}
+          />
         </Bar>
       </BarChart>
     </ChartContainer>
