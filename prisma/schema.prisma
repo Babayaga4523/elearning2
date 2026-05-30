@@ -118,9 +118,10 @@ model Test {
 model Question {
   id        String       @id @default(cuid())
   text      String
+  position  Int          @default(0)
   testId    String
   createdAt DateTime     @default(now())
-  updatedAt DateTime     @default(now()) @updatedAt
+  updatedAt DateTime     @updatedAt
   options   Option[]
   test      Test         @relation(fields: [testId], references: [id], onDelete: Cascade)
   answers   TestAnswer[]
@@ -132,6 +133,7 @@ model Option {
   id          String       @id @default(cuid())
   text        String
   isCorrect   Boolean      @default(false)
+  position    Int          @default(0)  // Urutan opsi (0 = pertama)
   questionId  String
   createdAt   DateTime     @default(now())
   updatedAt   DateTime     @default(now()) @updatedAt
@@ -253,6 +255,7 @@ model TestAnswer {
   questionId       String
   selectedOptionId String?
   isCorrect        Boolean
+  answerOrder      Int         @default(0)  // Urutan user menjawab (0 = pertama)
   createdAt        DateTime    @default(now())
   question         Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
   selectedOption   Option?     @relation(fields: [selectedOptionId], references: [id], onDelete: Cascade)

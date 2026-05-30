@@ -5,14 +5,26 @@ import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth-helpers";
 
-export async function createQuestion(testId: string, data: { text: string }) {
+export async function createQuestion(testId: string, data: { text: string; position?: number }) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
+
+  // Auto-assign position if not provided: append at end
+  let position = data.position;
+  if (position === undefined) {
+    const lastQuestion = await db.question.findFirst({
+      where: { testId },
+      orderBy: { position: "desc" },
+      select: { position: true },
+    });
+    position = (lastQuestion?.position ?? -1) + 1;
+  }
 
   const question = await db.question.create({
     data: {
       text: data.text,
       testId,
+      position,
     },
   });
 
@@ -288,16 +300,17 @@ export async function submitTest(
       },
     });
 
-    // Create TestAnswers
+    // Create TestAnswers — preserve answerOrder so result shows questions in the order user worked on them
     await tx.testAnswer.createMany({
-      data: test.questions.map((q) => {
-        const userAnswer = answersData.find((a) => a.questionId === q.id);
-        const correctOption = q.options.find((o) => o.isCorrect);
+      data: answersData.map((userAnswer, idx) => {
+        const question = test.questions.find((q) => q.id === userAnswer.questionId);
+        const correctOption = question?.options.find((o) => o.isCorrect);
         return {
           testAttemptId: testAttempt.id,
-          questionId: q.id,
-          selectedOptionId: userAnswer?.optionId ?? null,
-          isCorrect: !!(userAnswer && correctOption && userAnswer.optionId === correctOption.id),
+          questionId: userAnswer.questionId,
+          selectedOptionId: userAnswer.optionId ?? null,
+          isCorrect: !!(userAnswer.optionId && correctOption && userAnswer.optionId === correctOption.id),
+          answerOrder: idx,
         };
       }),
     });
@@ -442,12 +455,13 @@ export async function getTestAttemptDetail(attemptId: string) {
       test: {
         include: {
           questions: {
-            orderBy: { createdAt: "asc" },
-            include: { options: true },
+            orderBy: { position: "asc" },
+            include: { options: { orderBy: { position: "asc" } } },
           },
         },
       },
       answers: {
+        orderBy: { answerOrder: "asc" },
         include: { selectedOption: true },
       },
     },

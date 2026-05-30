@@ -11,7 +11,9 @@
       "Bash(node -e \"const m = require\\('./node_modules/framer-motion/package.json'\\); console.log\\(m.version\\)\")",
       "Bash(node *)",
       "mcp__ide__getDiagnostics",
-      "Bash(curl *)"
+      "Bash(curl *)",
+      "Bash(xxd C:/Dev/elearning2/_check.js)",
+      "Bash(xxd)"
     ]
   }
 }

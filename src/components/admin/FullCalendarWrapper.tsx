@@ -2,7 +2,7 @@
 
 /**
  * FullCalendar Wrapper
- * Custom styled calendar component matching admin design system
+ * Custom styled calendar component — accepts theme-aware color props
  */
 
 import { useEffect, useState } from "react";
@@ -11,14 +11,32 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list";
-import { Clock, Users } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FullCalendarWrapperProps {
   events: any[];
   onEventClick: (info: any) => void;
+  /** Primary brand color used for today indicator and active elements (default: blue-600) */
+  primaryColor?: string;
+  /** Accent color for "more" links (default: amber-500) */
+  accentColor?: string;
+  /** Text color for day numbers (default: slate-800) */
+  textColor?: string;
 }
 
-export default function FullCalendarWrapper({ events, onEventClick }: FullCalendarWrapperProps) {
+const DEFAULTS = {
+  primaryColor: "#2563EB",
+  accentColor: "#F59E0B",
+  textColor: "#1E293B",
+};
+
+export default function FullCalendarWrapper({
+  events,
+  onEventClick,
+  primaryColor = DEFAULTS.primaryColor,
+  accentColor = DEFAULTS.accentColor,
+  textColor = DEFAULTS.textColor,
+}: FullCalendarWrapperProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -29,7 +47,7 @@ export default function FullCalendarWrapper({ events, onEventClick }: FullCalend
   }, []);
 
   return (
-    <div className="[&_.fc]:font-['DM_Sans']">
+    <div className="[&_.fc]:font-['DM_Sans'] [&_.fc-theme-standard]:dark:bg-transparent">
       <FullCalendar
         plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
         initialView={isMobile ? "listMonth" : "dayGridMonth"}
@@ -51,8 +69,6 @@ export default function FullCalendarWrapper({ events, onEventClick }: FullCalend
           list: "Agenda",
         }}
         locale="id"
-
-        // Event display settings
         eventDisplay="block"
         eventTimeFormat={{
           hour: "2-digit",
@@ -61,57 +77,48 @@ export default function FullCalendarWrapper({ events, onEventClick }: FullCalend
         }}
         nowIndicator={true}
 
-        // Custom event content renderer
+        // Toolbar button styling via CSS
         eventContent={(arg) => {
-          const isDeadline = arg.event.extendedProps?.type === "DEADLINE";
-          const isEnrollment = arg.event.extendedProps?.type === "ENROLLMENT";
-
+          const type = arg.event.extendedProps?.type;
           return (
-            <div className={`
-              flex items-center gap-1 px-1.5 py-0.5 rounded-md
-              ${isDeadline ? "bg-white/20 border-l-2 border-white/50" : ""}
-              ${isEnrollment ? "bg-white/15 border-l-2 border-white/40" : ""}
-              hover:bg-white/25 transition-colors
-            `}>
-              <span className="text-[10px] font-semibold leading-tight truncate">
+            <div className={cn(
+              "flex items-center gap-1.5 px-1.5 py-0.5 rounded text-white/90",
+              "hover:bg-white/20 transition-colors duration-150"
+            )}>
+              <span className="text-[11px] font-semibold leading-tight truncate">
                 {arg.event.title}
               </span>
             </div>
           );
         }}
 
-        // More link content
-        moreLinkContent={(arg) => {
-          return (
-            <span className="
-              inline-flex items-center justify-center
-              px-2 py-0.5 rounded-full
-              bg-[#E8A020]/20 text-[#C4861A]
-              text-[10px] font-bold
-              hover:bg-[#E8A020]/30 transition-colors
-              cursor-pointer
-            ">
-              +{arg.num}
-            </span>
-          );
-        }}
+        moreLinkContent={(arg) => (
+          <span
+            className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[10px] font-bold cursor-pointer"
+            style={{
+              backgroundColor: `${accentColor}20`,
+              color: accentColor,
+            }}
+          >
+            +{arg.num}
+          </span>
+        )}
 
-        // Day cell content
-        dayCellContent={(arg) => {
-          const hasEvents = arg.dayEl?.querySelector(".fc-event");
-          return (
-            <div className="relative">
-              <span className={`
-                inline-flex items-center justify-center
-                w-7 h-7 rounded-full
-                ${arg.isToday ? "bg-[#0F1C3F] text-white font-bold" : "text-[#344054] font-medium"}
-                hover:bg-[#F8F9FB] transition-colors cursor-pointer
-              `}>
-                {arg.dayNumberText}
-              </span>
-            </div>
-          );
-        }}
+        dayCellContent={(arg) => (
+          <span
+            className={cn(
+              "inline-flex items-center justify-center w-7 h-7 rounded-full font-medium cursor-pointer",
+              "hover:ring-2 hover:ring-slate-200 transition-all duration-150"
+            )}
+            style={{
+              color: arg.isToday ? "#fff" : textColor,
+              backgroundColor: arg.isToday ? primaryColor : "transparent",
+              fontWeight: arg.isToday ? 700 : 500,
+            }}
+          >
+            {arg.dayNumberText}
+          </span>
+        )}
       />
     </div>
   );

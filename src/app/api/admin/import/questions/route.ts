@@ -81,20 +81,22 @@ export async function POST(req: NextRequest) {
     const result = await db.$transaction(async (tx) => {
       const createdQuestions = [];
 
-      for (const q of questions) {
+      for (let i = 0; i < questions.length; i++) {
+        const q = questions[i];
         const question = await tx.question.create({
           data: {
             text: q.questionText,
             testId: testId,
+            position: i,   // Preserve import order as question sequence
           },
         });
 
-        // Create options
+        // Create options with position preserved
         const options = [
-          { text: q.option1, isCorrect: q.correctOption === 1 },
-          { text: q.option2, isCorrect: q.correctOption === 2 },
-          { text: q.option3, isCorrect: q.correctOption === 3 },
-          { text: q.option4, isCorrect: q.correctOption === 4 },
+          { text: q.option1, isCorrect: q.correctOption === 1, position: 0 },
+          { text: q.option2, isCorrect: q.correctOption === 2, position: 1 },
+          { text: q.option3, isCorrect: q.correctOption === 3, position: 2 },
+          { text: q.option4, isCorrect: q.correctOption === 4, position: 3 },
         ];
 
         await tx.option.createMany({
@@ -102,6 +104,7 @@ export async function POST(req: NextRequest) {
             text: opt.text,
             isCorrect: opt.isCorrect,
             questionId: question.id,
+            position: opt.position,
           })),
         });
 

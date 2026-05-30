@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition, Suspense, useEffect, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
+import Link from "next/link";
 const isRedirectError = (error: unknown) => {
   if (typeof error !== "object" || error === null) return false;
   const digest = (error as Record<string, unknown>).digest;
@@ -401,12 +402,12 @@ function LoginForm() {
             <label htmlFor="password" className="block text-sm font-medium text-[#344054] font-['DM_Sans']">
               Password
             </label>
-            <a
-              href="#"
+            <Link
+              href="/auth/forgot-password"
               className="text-xs text-[#C4861A] hover:text-[#B5751A] font-medium font-['DM_Sans'] transition-colors duration-150"
             >
               Lupa password?
-            </a>
+            </Link>
           </div>
           <div className="relative group">
             <div className={cn(

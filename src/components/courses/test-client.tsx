@@ -264,10 +264,12 @@ export function TestClient({
     const loadingToast = toast.loading("Mengirim jawaban...");
 
     try {
-      const formattedAnswers = Object.entries(answers).map(([qId, oId]) => ({
-        questionId: qId,
-        optionId: oId,
-      }));
+      // Preserve order: map shuffledQuestions sequentially, not arbitrary Object.keys order
+      const formattedAnswers = shuffledQuestions
+        .map((q: any) => ({
+          questionId: q.id,
+          optionId: answers[q.id] ?? null,
+        }));
 
       const result = await submitTest(test.id, formattedAnswers);
       

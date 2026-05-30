@@ -34,10 +34,23 @@ const nextConfig = {
           { key: "X-DNS-Prefetch-Control", value: "off" },
           // Force HTTPS for 1 year (enable only when on HTTPS in production)
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
-          // Basic Content Security Policy
+          // ── Content Security Policy ────────────────────────────────────────────
+          // frame-src  : YouTube embeds in module viewers
+          // child-src  : required by some browsers alongside frame-src
+          // img-src    : allows data URIs (base64 thumbs) + external images
+          // connect-src: WebSocket for HMR + standard HTTP
           {
             key: "Content-Security-Policy",
-            value: "default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; font-src 'self' data:; connect-src 'self' ws: wss:;"
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
+              "style-src  'self' 'unsafe-inline'",
+              "img-src    'self' data: blob: https:",
+              "font-src   'self' data:",
+              "connect-src 'self' ws: wss:",
+              "frame-src  'self' https://www.youtube.com https://youtu.be",
+              "child-src  'self' https://www.youtube.com",
+            ].join("; "),
           }
         ],
       },

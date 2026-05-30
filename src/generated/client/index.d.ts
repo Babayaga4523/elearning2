@@ -8809,13 +8809,24 @@ export namespace Prisma {
 
   export type AggregateQuestion = {
     _count: QuestionCountAggregateOutputType | null
+    _avg: QuestionAvgAggregateOutputType | null
+    _sum: QuestionSumAggregateOutputType | null
     _min: QuestionMinAggregateOutputType | null
     _max: QuestionMaxAggregateOutputType | null
+  }
+
+  export type QuestionAvgAggregateOutputType = {
+    position: number | null
+  }
+
+  export type QuestionSumAggregateOutputType = {
+    position: number | null
   }
 
   export type QuestionMinAggregateOutputType = {
     id: string | null
     text: string | null
+    position: number | null
     testId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -8824,6 +8835,7 @@ export namespace Prisma {
   export type QuestionMaxAggregateOutputType = {
     id: string | null
     text: string | null
+    position: number | null
     testId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -8832,6 +8844,7 @@ export namespace Prisma {
   export type QuestionCountAggregateOutputType = {
     id: number
     text: number
+    position: number
     testId: number
     createdAt: number
     updatedAt: number
@@ -8839,9 +8852,18 @@ export namespace Prisma {
   }
 
 
+  export type QuestionAvgAggregateInputType = {
+    position?: true
+  }
+
+  export type QuestionSumAggregateInputType = {
+    position?: true
+  }
+
   export type QuestionMinAggregateInputType = {
     id?: true
     text?: true
+    position?: true
     testId?: true
     createdAt?: true
     updatedAt?: true
@@ -8850,6 +8872,7 @@ export namespace Prisma {
   export type QuestionMaxAggregateInputType = {
     id?: true
     text?: true
+    position?: true
     testId?: true
     createdAt?: true
     updatedAt?: true
@@ -8858,6 +8881,7 @@ export namespace Prisma {
   export type QuestionCountAggregateInputType = {
     id?: true
     text?: true
+    position?: true
     testId?: true
     createdAt?: true
     updatedAt?: true
@@ -8902,6 +8926,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: QuestionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: QuestionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: QuestionMinAggregateInputType
@@ -8932,6 +8968,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: QuestionCountAggregateInputType | true
+    _avg?: QuestionAvgAggregateInputType
+    _sum?: QuestionSumAggregateInputType
     _min?: QuestionMinAggregateInputType
     _max?: QuestionMaxAggregateInputType
   }
@@ -8939,10 +8977,13 @@ export namespace Prisma {
   export type QuestionGroupByOutputType = {
     id: string
     text: string
+    position: number
     testId: string
     createdAt: Date
     updatedAt: Date
     _count: QuestionCountAggregateOutputType | null
+    _avg: QuestionAvgAggregateOutputType | null
+    _sum: QuestionSumAggregateOutputType | null
     _min: QuestionMinAggregateOutputType | null
     _max: QuestionMaxAggregateOutputType | null
   }
@@ -8964,6 +9005,7 @@ export namespace Prisma {
   export type QuestionSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     text?: boolean
+    position?: boolean
     testId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8976,6 +9018,7 @@ export namespace Prisma {
   export type QuestionSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
     id?: boolean
     text?: boolean
+    position?: boolean
     testId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -8985,6 +9028,7 @@ export namespace Prisma {
   export type QuestionSelectScalar = {
     id?: boolean
     text?: boolean
+    position?: boolean
     testId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9010,6 +9054,7 @@ export namespace Prisma {
     scalars: $Extensions.GetPayloadResult<{
       id: string
       text: string
+      position: number
       testId: string
       createdAt: Date
       updatedAt: Date
@@ -9411,6 +9456,7 @@ export namespace Prisma {
   interface QuestionFieldRefs {
     readonly id: FieldRef<"Question", 'String'>
     readonly text: FieldRef<"Question", 'String'>
+    readonly position: FieldRef<"Question", 'Int'>
     readonly testId: FieldRef<"Question", 'String'>
     readonly createdAt: FieldRef<"Question", 'DateTime'>
     readonly updatedAt: FieldRef<"Question", 'DateTime'>
@@ -9792,14 +9838,25 @@ export namespace Prisma {
 
   export type AggregateOption = {
     _count: OptionCountAggregateOutputType | null
+    _avg: OptionAvgAggregateOutputType | null
+    _sum: OptionSumAggregateOutputType | null
     _min: OptionMinAggregateOutputType | null
     _max: OptionMaxAggregateOutputType | null
+  }
+
+  export type OptionAvgAggregateOutputType = {
+    position: number | null
+  }
+
+  export type OptionSumAggregateOutputType = {
+    position: number | null
   }
 
   export type OptionMinAggregateOutputType = {
     id: string | null
     text: string | null
     isCorrect: boolean | null
+    position: number | null
     questionId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -9809,6 +9866,7 @@ export namespace Prisma {
     id: string | null
     text: string | null
     isCorrect: boolean | null
+    position: number | null
     questionId: string | null
     createdAt: Date | null
     updatedAt: Date | null
@@ -9818,6 +9876,7 @@ export namespace Prisma {
     id: number
     text: number
     isCorrect: number
+    position: number
     questionId: number
     createdAt: number
     updatedAt: number
@@ -9825,10 +9884,19 @@ export namespace Prisma {
   }
 
 
+  export type OptionAvgAggregateInputType = {
+    position?: true
+  }
+
+  export type OptionSumAggregateInputType = {
+    position?: true
+  }
+
   export type OptionMinAggregateInputType = {
     id?: true
     text?: true
     isCorrect?: true
+    position?: true
     questionId?: true
     createdAt?: true
     updatedAt?: true
@@ -9838,6 +9906,7 @@ export namespace Prisma {
     id?: true
     text?: true
     isCorrect?: true
+    position?: true
     questionId?: true
     createdAt?: true
     updatedAt?: true
@@ -9847,6 +9916,7 @@ export namespace Prisma {
     id?: true
     text?: true
     isCorrect?: true
+    position?: true
     questionId?: true
     createdAt?: true
     updatedAt?: true
@@ -9891,6 +9961,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: OptionAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: OptionSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: OptionMinAggregateInputType
@@ -9921,6 +10003,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: OptionCountAggregateInputType | true
+    _avg?: OptionAvgAggregateInputType
+    _sum?: OptionSumAggregateInputType
     _min?: OptionMinAggregateInputType
     _max?: OptionMaxAggregateInputType
   }
@@ -9929,10 +10013,13 @@ export namespace Prisma {
     id: string
     text: string
     isCorrect: boolean
+    position: number
     questionId: string
     createdAt: Date
     updatedAt: Date
     _count: OptionCountAggregateOutputType | null
+    _avg: OptionAvgAggregateOutputType | null
+    _sum: OptionSumAggregateOutputType | null
     _min: OptionMinAggregateOutputType | null
     _max: OptionMaxAggregateOutputType | null
   }
@@ -9955,6 +10042,7 @@ export namespace Prisma {
     id?: boolean
     text?: boolean
     isCorrect?: boolean
+    position?: boolean
     questionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9967,6 +10055,7 @@ export namespace Prisma {
     id?: boolean
     text?: boolean
     isCorrect?: boolean
+    position?: boolean
     questionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -9977,6 +10066,7 @@ export namespace Prisma {
     id?: boolean
     text?: boolean
     isCorrect?: boolean
+    position?: boolean
     questionId?: boolean
     createdAt?: boolean
     updatedAt?: boolean
@@ -10001,6 +10091,7 @@ export namespace Prisma {
       id: string
       text: string
       isCorrect: boolean
+      position: number
       questionId: string
       createdAt: Date
       updatedAt: Date
@@ -10402,6 +10493,7 @@ export namespace Prisma {
     readonly id: FieldRef<"Option", 'String'>
     readonly text: FieldRef<"Option", 'String'>
     readonly isCorrect: FieldRef<"Option", 'Boolean'>
+    readonly position: FieldRef<"Option", 'Int'>
     readonly questionId: FieldRef<"Option", 'String'>
     readonly createdAt: FieldRef<"Option", 'DateTime'>
     readonly updatedAt: FieldRef<"Option", 'DateTime'>
@@ -16045,8 +16137,18 @@ export namespace Prisma {
 
   export type AggregateTestAnswer = {
     _count: TestAnswerCountAggregateOutputType | null
+    _avg: TestAnswerAvgAggregateOutputType | null
+    _sum: TestAnswerSumAggregateOutputType | null
     _min: TestAnswerMinAggregateOutputType | null
     _max: TestAnswerMaxAggregateOutputType | null
+  }
+
+  export type TestAnswerAvgAggregateOutputType = {
+    answerOrder: number | null
+  }
+
+  export type TestAnswerSumAggregateOutputType = {
+    answerOrder: number | null
   }
 
   export type TestAnswerMinAggregateOutputType = {
@@ -16055,6 +16157,7 @@ export namespace Prisma {
     questionId: string | null
     selectedOptionId: string | null
     isCorrect: boolean | null
+    answerOrder: number | null
     createdAt: Date | null
   }
 
@@ -16064,6 +16167,7 @@ export namespace Prisma {
     questionId: string | null
     selectedOptionId: string | null
     isCorrect: boolean | null
+    answerOrder: number | null
     createdAt: Date | null
   }
 
@@ -16073,10 +16177,19 @@ export namespace Prisma {
     questionId: number
     selectedOptionId: number
     isCorrect: number
+    answerOrder: number
     createdAt: number
     _all: number
   }
 
+
+  export type TestAnswerAvgAggregateInputType = {
+    answerOrder?: true
+  }
+
+  export type TestAnswerSumAggregateInputType = {
+    answerOrder?: true
+  }
 
   export type TestAnswerMinAggregateInputType = {
     id?: true
@@ -16084,6 +16197,7 @@ export namespace Prisma {
     questionId?: true
     selectedOptionId?: true
     isCorrect?: true
+    answerOrder?: true
     createdAt?: true
   }
 
@@ -16093,6 +16207,7 @@ export namespace Prisma {
     questionId?: true
     selectedOptionId?: true
     isCorrect?: true
+    answerOrder?: true
     createdAt?: true
   }
 
@@ -16102,6 +16217,7 @@ export namespace Prisma {
     questionId?: true
     selectedOptionId?: true
     isCorrect?: true
+    answerOrder?: true
     createdAt?: true
     _all?: true
   }
@@ -16144,6 +16260,18 @@ export namespace Prisma {
     /**
      * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
      * 
+     * Select which fields to average
+    **/
+    _avg?: TestAnswerAvgAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to sum
+    **/
+    _sum?: TestAnswerSumAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
      * Select which fields to find the minimum value
     **/
     _min?: TestAnswerMinAggregateInputType
@@ -16174,6 +16302,8 @@ export namespace Prisma {
     take?: number
     skip?: number
     _count?: TestAnswerCountAggregateInputType | true
+    _avg?: TestAnswerAvgAggregateInputType
+    _sum?: TestAnswerSumAggregateInputType
     _min?: TestAnswerMinAggregateInputType
     _max?: TestAnswerMaxAggregateInputType
   }
@@ -16184,8 +16314,11 @@ export namespace Prisma {
     questionId: string
     selectedOptionId: string | null
     isCorrect: boolean
+    answerOrder: number
     createdAt: Date
     _count: TestAnswerCountAggregateOutputType | null
+    _avg: TestAnswerAvgAggregateOutputType | null
+    _sum: TestAnswerSumAggregateOutputType | null
     _min: TestAnswerMinAggregateOutputType | null
     _max: TestAnswerMaxAggregateOutputType | null
   }
@@ -16210,6 +16343,7 @@ export namespace Prisma {
     questionId?: boolean
     selectedOptionId?: boolean
     isCorrect?: boolean
+    answerOrder?: boolean
     createdAt?: boolean
     question?: boolean | QuestionDefaultArgs<ExtArgs>
     selectedOption?: boolean | TestAnswer$selectedOptionArgs<ExtArgs>
@@ -16222,6 +16356,7 @@ export namespace Prisma {
     questionId?: boolean
     selectedOptionId?: boolean
     isCorrect?: boolean
+    answerOrder?: boolean
     createdAt?: boolean
     question?: boolean | QuestionDefaultArgs<ExtArgs>
     selectedOption?: boolean | TestAnswer$selectedOptionArgs<ExtArgs>
@@ -16234,6 +16369,7 @@ export namespace Prisma {
     questionId?: boolean
     selectedOptionId?: boolean
     isCorrect?: boolean
+    answerOrder?: boolean
     createdAt?: boolean
   }
 
@@ -16261,6 +16397,7 @@ export namespace Prisma {
       questionId: string
       selectedOptionId: string | null
       isCorrect: boolean
+      answerOrder: number
       createdAt: Date
     }, ExtArgs["result"]["testAnswer"]>
     composites: {}
@@ -16663,6 +16800,7 @@ export namespace Prisma {
     readonly questionId: FieldRef<"TestAnswer", 'String'>
     readonly selectedOptionId: FieldRef<"TestAnswer", 'String'>
     readonly isCorrect: FieldRef<"TestAnswer", 'Boolean'>
+    readonly answerOrder: FieldRef<"TestAnswer", 'Int'>
     readonly createdAt: FieldRef<"TestAnswer", 'DateTime'>
   }
     
@@ -25730,6 +25868,7 @@ export namespace Prisma {
   export const QuestionScalarFieldEnum: {
     id: 'id',
     text: 'text',
+    position: 'position',
     testId: 'testId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -25742,6 +25881,7 @@ export namespace Prisma {
     id: 'id',
     text: 'text',
     isCorrect: 'isCorrect',
+    position: 'position',
     questionId: 'questionId',
     createdAt: 'createdAt',
     updatedAt: 'updatedAt'
@@ -25840,6 +25980,7 @@ export namespace Prisma {
     questionId: 'questionId',
     selectedOptionId: 'selectedOptionId',
     isCorrect: 'isCorrect',
+    answerOrder: 'answerOrder',
     createdAt: 'createdAt'
   };
 
@@ -26724,6 +26865,7 @@ export namespace Prisma {
     NOT?: QuestionWhereInput | QuestionWhereInput[]
     id?: StringFilter<"Question"> | string
     text?: StringFilter<"Question"> | string
+    position?: IntFilter<"Question"> | number
     testId?: StringFilter<"Question"> | string
     createdAt?: DateTimeFilter<"Question"> | Date | string
     updatedAt?: DateTimeFilter<"Question"> | Date | string
@@ -26735,6 +26877,7 @@ export namespace Prisma {
   export type QuestionOrderByWithRelationInput = {
     id?: SortOrder
     text?: SortOrder
+    position?: SortOrder
     testId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26749,6 +26892,7 @@ export namespace Prisma {
     OR?: QuestionWhereInput[]
     NOT?: QuestionWhereInput | QuestionWhereInput[]
     text?: StringFilter<"Question"> | string
+    position?: IntFilter<"Question"> | number
     testId?: StringFilter<"Question"> | string
     createdAt?: DateTimeFilter<"Question"> | Date | string
     updatedAt?: DateTimeFilter<"Question"> | Date | string
@@ -26760,12 +26904,15 @@ export namespace Prisma {
   export type QuestionOrderByWithAggregationInput = {
     id?: SortOrder
     text?: SortOrder
+    position?: SortOrder
     testId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: QuestionCountOrderByAggregateInput
+    _avg?: QuestionAvgOrderByAggregateInput
     _max?: QuestionMaxOrderByAggregateInput
     _min?: QuestionMinOrderByAggregateInput
+    _sum?: QuestionSumOrderByAggregateInput
   }
 
   export type QuestionScalarWhereWithAggregatesInput = {
@@ -26774,6 +26921,7 @@ export namespace Prisma {
     NOT?: QuestionScalarWhereWithAggregatesInput | QuestionScalarWhereWithAggregatesInput[]
     id?: StringWithAggregatesFilter<"Question"> | string
     text?: StringWithAggregatesFilter<"Question"> | string
+    position?: IntWithAggregatesFilter<"Question"> | number
     testId?: StringWithAggregatesFilter<"Question"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Question"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Question"> | Date | string
@@ -26786,6 +26934,7 @@ export namespace Prisma {
     id?: StringFilter<"Option"> | string
     text?: StringFilter<"Option"> | string
     isCorrect?: BoolFilter<"Option"> | boolean
+    position?: IntFilter<"Option"> | number
     questionId?: StringFilter<"Option"> | string
     createdAt?: DateTimeFilter<"Option"> | Date | string
     updatedAt?: DateTimeFilter<"Option"> | Date | string
@@ -26797,6 +26946,7 @@ export namespace Prisma {
     id?: SortOrder
     text?: SortOrder
     isCorrect?: SortOrder
+    position?: SortOrder
     questionId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -26811,6 +26961,7 @@ export namespace Prisma {
     NOT?: OptionWhereInput | OptionWhereInput[]
     text?: StringFilter<"Option"> | string
     isCorrect?: BoolFilter<"Option"> | boolean
+    position?: IntFilter<"Option"> | number
     questionId?: StringFilter<"Option"> | string
     createdAt?: DateTimeFilter<"Option"> | Date | string
     updatedAt?: DateTimeFilter<"Option"> | Date | string
@@ -26822,12 +26973,15 @@ export namespace Prisma {
     id?: SortOrder
     text?: SortOrder
     isCorrect?: SortOrder
+    position?: SortOrder
     questionId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
     _count?: OptionCountOrderByAggregateInput
+    _avg?: OptionAvgOrderByAggregateInput
     _max?: OptionMaxOrderByAggregateInput
     _min?: OptionMinOrderByAggregateInput
+    _sum?: OptionSumOrderByAggregateInput
   }
 
   export type OptionScalarWhereWithAggregatesInput = {
@@ -26837,6 +26991,7 @@ export namespace Prisma {
     id?: StringWithAggregatesFilter<"Option"> | string
     text?: StringWithAggregatesFilter<"Option"> | string
     isCorrect?: BoolWithAggregatesFilter<"Option"> | boolean
+    position?: IntWithAggregatesFilter<"Option"> | number
     questionId?: StringWithAggregatesFilter<"Option"> | string
     createdAt?: DateTimeWithAggregatesFilter<"Option"> | Date | string
     updatedAt?: DateTimeWithAggregatesFilter<"Option"> | Date | string
@@ -27303,6 +27458,7 @@ export namespace Prisma {
     questionId?: StringFilter<"TestAnswer"> | string
     selectedOptionId?: StringNullableFilter<"TestAnswer"> | string | null
     isCorrect?: BoolFilter<"TestAnswer"> | boolean
+    answerOrder?: IntFilter<"TestAnswer"> | number
     createdAt?: DateTimeFilter<"TestAnswer"> | Date | string
     question?: XOR<QuestionRelationFilter, QuestionWhereInput>
     selectedOption?: XOR<OptionNullableRelationFilter, OptionWhereInput> | null
@@ -27315,6 +27471,7 @@ export namespace Prisma {
     questionId?: SortOrder
     selectedOptionId?: SortOrderInput | SortOrder
     isCorrect?: SortOrder
+    answerOrder?: SortOrder
     createdAt?: SortOrder
     question?: QuestionOrderByWithRelationInput
     selectedOption?: OptionOrderByWithRelationInput
@@ -27331,6 +27488,7 @@ export namespace Prisma {
     questionId?: StringFilter<"TestAnswer"> | string
     selectedOptionId?: StringNullableFilter<"TestAnswer"> | string | null
     isCorrect?: BoolFilter<"TestAnswer"> | boolean
+    answerOrder?: IntFilter<"TestAnswer"> | number
     createdAt?: DateTimeFilter<"TestAnswer"> | Date | string
     question?: XOR<QuestionRelationFilter, QuestionWhereInput>
     selectedOption?: XOR<OptionNullableRelationFilter, OptionWhereInput> | null
@@ -27343,10 +27501,13 @@ export namespace Prisma {
     questionId?: SortOrder
     selectedOptionId?: SortOrderInput | SortOrder
     isCorrect?: SortOrder
+    answerOrder?: SortOrder
     createdAt?: SortOrder
     _count?: TestAnswerCountOrderByAggregateInput
+    _avg?: TestAnswerAvgOrderByAggregateInput
     _max?: TestAnswerMaxOrderByAggregateInput
     _min?: TestAnswerMinOrderByAggregateInput
+    _sum?: TestAnswerSumOrderByAggregateInput
   }
 
   export type TestAnswerScalarWhereWithAggregatesInput = {
@@ -27358,6 +27519,7 @@ export namespace Prisma {
     questionId?: StringWithAggregatesFilter<"TestAnswer"> | string
     selectedOptionId?: StringNullableWithAggregatesFilter<"TestAnswer"> | string | null
     isCorrect?: BoolWithAggregatesFilter<"TestAnswer"> | boolean
+    answerOrder?: IntWithAggregatesFilter<"TestAnswer"> | number
     createdAt?: DateTimeWithAggregatesFilter<"TestAnswer"> | Date | string
   }
 
@@ -28586,6 +28748,7 @@ export namespace Prisma {
   export type QuestionCreateInput = {
     id?: string
     text: string
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     options?: OptionCreateNestedManyWithoutQuestionInput
@@ -28596,6 +28759,7 @@ export namespace Prisma {
   export type QuestionUncheckedCreateInput = {
     id?: string
     text: string
+    position?: number
     testId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28606,6 +28770,7 @@ export namespace Prisma {
   export type QuestionUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     options?: OptionUpdateManyWithoutQuestionNestedInput
@@ -28616,6 +28781,7 @@ export namespace Prisma {
   export type QuestionUncheckedUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     testId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28626,6 +28792,7 @@ export namespace Prisma {
   export type QuestionCreateManyInput = {
     id?: string
     text: string
+    position?: number
     testId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28634,6 +28801,7 @@ export namespace Prisma {
   export type QuestionUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -28641,6 +28809,7 @@ export namespace Prisma {
   export type QuestionUncheckedUpdateManyInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     testId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28650,6 +28819,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     question: QuestionCreateNestedOneWithoutOptionsInput
@@ -28660,6 +28830,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     questionId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28670,6 +28841,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     question?: QuestionUpdateOneRequiredWithoutOptionsNestedInput
@@ -28680,6 +28852,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     questionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -28690,6 +28863,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     questionId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -28699,6 +28873,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -28707,6 +28882,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     questionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -29200,6 +29376,7 @@ export namespace Prisma {
   export type TestAnswerCreateInput = {
     id?: string
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
     question: QuestionCreateNestedOneWithoutAnswersInput
     selectedOption?: OptionCreateNestedOneWithoutTestAnswersInput
@@ -29212,12 +29389,14 @@ export namespace Prisma {
     questionId: string
     selectedOptionId?: string | null
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
   export type TestAnswerUpdateInput = {
     id?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     question?: QuestionUpdateOneRequiredWithoutAnswersNestedInput
     selectedOption?: OptionUpdateOneWithoutTestAnswersNestedInput
@@ -29230,6 +29409,7 @@ export namespace Prisma {
     questionId?: StringFieldUpdateOperationsInput | string
     selectedOptionId?: NullableStringFieldUpdateOperationsInput | string | null
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -29239,12 +29419,14 @@ export namespace Prisma {
     questionId: string
     selectedOptionId?: string | null
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
   export type TestAnswerUpdateManyMutationInput = {
     id?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -29254,6 +29436,7 @@ export namespace Prisma {
     questionId?: StringFieldUpdateOperationsInput | string
     selectedOptionId?: NullableStringFieldUpdateOperationsInput | string | null
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -30663,14 +30846,20 @@ export namespace Prisma {
   export type QuestionCountOrderByAggregateInput = {
     id?: SortOrder
     text?: SortOrder
+    position?: SortOrder
     testId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
   }
 
+  export type QuestionAvgOrderByAggregateInput = {
+    position?: SortOrder
+  }
+
   export type QuestionMaxOrderByAggregateInput = {
     id?: SortOrder
     text?: SortOrder
+    position?: SortOrder
     testId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -30679,9 +30868,14 @@ export namespace Prisma {
   export type QuestionMinOrderByAggregateInput = {
     id?: SortOrder
     text?: SortOrder
+    position?: SortOrder
     testId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type QuestionSumOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type QuestionRelationFilter = {
@@ -30693,15 +30887,21 @@ export namespace Prisma {
     id?: SortOrder
     text?: SortOrder
     isCorrect?: SortOrder
+    position?: SortOrder
     questionId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type OptionAvgOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type OptionMaxOrderByAggregateInput = {
     id?: SortOrder
     text?: SortOrder
     isCorrect?: SortOrder
+    position?: SortOrder
     questionId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
@@ -30711,9 +30911,14 @@ export namespace Prisma {
     id?: SortOrder
     text?: SortOrder
     isCorrect?: SortOrder
+    position?: SortOrder
     questionId?: SortOrder
     createdAt?: SortOrder
     updatedAt?: SortOrder
+  }
+
+  export type OptionSumOrderByAggregateInput = {
+    position?: SortOrder
   }
 
   export type ModuleRelationFilter = {
@@ -31094,7 +31299,12 @@ export namespace Prisma {
     questionId?: SortOrder
     selectedOptionId?: SortOrder
     isCorrect?: SortOrder
+    answerOrder?: SortOrder
     createdAt?: SortOrder
+  }
+
+  export type TestAnswerAvgOrderByAggregateInput = {
+    answerOrder?: SortOrder
   }
 
   export type TestAnswerMaxOrderByAggregateInput = {
@@ -31103,6 +31313,7 @@ export namespace Prisma {
     questionId?: SortOrder
     selectedOptionId?: SortOrder
     isCorrect?: SortOrder
+    answerOrder?: SortOrder
     createdAt?: SortOrder
   }
 
@@ -31112,7 +31323,12 @@ export namespace Prisma {
     questionId?: SortOrder
     selectedOptionId?: SortOrder
     isCorrect?: SortOrder
+    answerOrder?: SortOrder
     createdAt?: SortOrder
+  }
+
+  export type TestAnswerSumOrderByAggregateInput = {
+    answerOrder?: SortOrder
   }
 
   export type AutoEnrollmentRuleCountOrderByAggregateInput = {
@@ -34673,6 +34889,7 @@ export namespace Prisma {
   export type QuestionCreateWithoutTestInput = {
     id?: string
     text: string
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     options?: OptionCreateNestedManyWithoutQuestionInput
@@ -34682,6 +34899,7 @@ export namespace Prisma {
   export type QuestionUncheckedCreateWithoutTestInput = {
     id?: string
     text: string
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     options?: OptionUncheckedCreateNestedManyWithoutQuestionInput
@@ -34807,6 +35025,7 @@ export namespace Prisma {
     NOT?: QuestionScalarWhereInput | QuestionScalarWhereInput[]
     id?: StringFilter<"Question"> | string
     text?: StringFilter<"Question"> | string
+    position?: IntFilter<"Question"> | number
     testId?: StringFilter<"Question"> | string
     createdAt?: DateTimeFilter<"Question"> | Date | string
     updatedAt?: DateTimeFilter<"Question"> | Date | string
@@ -34883,6 +35102,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     testAnswers?: TestAnswerCreateNestedManyWithoutSelectedOptionInput
@@ -34892,6 +35112,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     testAnswers?: TestAnswerUncheckedCreateNestedManyWithoutSelectedOptionInput
@@ -34945,6 +35166,7 @@ export namespace Prisma {
   export type TestAnswerCreateWithoutQuestionInput = {
     id?: string
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
     selectedOption?: OptionCreateNestedOneWithoutTestAnswersInput
     testAttempt: TestAttemptCreateNestedOneWithoutAnswersInput
@@ -34955,6 +35177,7 @@ export namespace Prisma {
     testAttemptId: string
     selectedOptionId?: string | null
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
@@ -34991,6 +35214,7 @@ export namespace Prisma {
     id?: StringFilter<"Option"> | string
     text?: StringFilter<"Option"> | string
     isCorrect?: BoolFilter<"Option"> | boolean
+    position?: IntFilter<"Option"> | number
     questionId?: StringFilter<"Option"> | string
     createdAt?: DateTimeFilter<"Option"> | Date | string
     updatedAt?: DateTimeFilter<"Option"> | Date | string
@@ -35062,12 +35286,14 @@ export namespace Prisma {
     questionId?: StringFilter<"TestAnswer"> | string
     selectedOptionId?: StringNullableFilter<"TestAnswer"> | string | null
     isCorrect?: BoolFilter<"TestAnswer"> | boolean
+    answerOrder?: IntFilter<"TestAnswer"> | number
     createdAt?: DateTimeFilter<"TestAnswer"> | Date | string
   }
 
   export type QuestionCreateWithoutOptionsInput = {
     id?: string
     text: string
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     test: TestCreateNestedOneWithoutQuestionsInput
@@ -35077,6 +35303,7 @@ export namespace Prisma {
   export type QuestionUncheckedCreateWithoutOptionsInput = {
     id?: string
     text: string
+    position?: number
     testId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -35091,6 +35318,7 @@ export namespace Prisma {
   export type TestAnswerCreateWithoutSelectedOptionInput = {
     id?: string
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
     question: QuestionCreateNestedOneWithoutAnswersInput
     testAttempt: TestAttemptCreateNestedOneWithoutAnswersInput
@@ -35101,6 +35329,7 @@ export namespace Prisma {
     testAttemptId: string
     questionId: string
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
@@ -35128,6 +35357,7 @@ export namespace Prisma {
   export type QuestionUpdateWithoutOptionsInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     test?: TestUpdateOneRequiredWithoutQuestionsNestedInput
@@ -35137,6 +35367,7 @@ export namespace Prisma {
   export type QuestionUncheckedUpdateWithoutOptionsInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     testId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -35979,6 +36210,7 @@ export namespace Prisma {
   export type TestAnswerCreateWithoutTestAttemptInput = {
     id?: string
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
     question: QuestionCreateNestedOneWithoutAnswersInput
     selectedOption?: OptionCreateNestedOneWithoutTestAnswersInput
@@ -35989,6 +36221,7 @@ export namespace Prisma {
     questionId: string
     selectedOptionId?: string | null
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
@@ -36429,6 +36662,7 @@ export namespace Prisma {
   export type QuestionCreateWithoutAnswersInput = {
     id?: string
     text: string
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     options?: OptionCreateNestedManyWithoutQuestionInput
@@ -36438,6 +36672,7 @@ export namespace Prisma {
   export type QuestionUncheckedCreateWithoutAnswersInput = {
     id?: string
     text: string
+    position?: number
     testId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -36453,6 +36688,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
     question: QuestionCreateNestedOneWithoutOptionsInput
@@ -36462,6 +36698,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     questionId: string
     createdAt?: Date | string
     updatedAt?: Date | string
@@ -36523,6 +36760,7 @@ export namespace Prisma {
   export type QuestionUpdateWithoutAnswersInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     options?: OptionUpdateManyWithoutQuestionNestedInput
@@ -36532,6 +36770,7 @@ export namespace Prisma {
   export type QuestionUncheckedUpdateWithoutAnswersInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     testId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -36553,6 +36792,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     question?: QuestionUpdateOneRequiredWithoutOptionsNestedInput
@@ -36562,6 +36802,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     questionId?: StringFieldUpdateOperationsInput | string
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
@@ -38169,6 +38410,7 @@ export namespace Prisma {
   export type QuestionCreateManyTestInput = {
     id?: string
     text: string
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -38191,6 +38433,7 @@ export namespace Prisma {
   export type QuestionUpdateWithoutTestInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     options?: OptionUpdateManyWithoutQuestionNestedInput
@@ -38200,6 +38443,7 @@ export namespace Prisma {
   export type QuestionUncheckedUpdateWithoutTestInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     options?: OptionUncheckedUpdateManyWithoutQuestionNestedInput
@@ -38209,6 +38453,7 @@ export namespace Prisma {
   export type QuestionUncheckedUpdateManyWithoutTestInput = {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -38264,6 +38509,7 @@ export namespace Prisma {
     id?: string
     text: string
     isCorrect?: boolean
+    position?: number
     createdAt?: Date | string
     updatedAt?: Date | string
   }
@@ -38273,6 +38519,7 @@ export namespace Prisma {
     testAttemptId: string
     selectedOptionId?: string | null
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
@@ -38280,6 +38527,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     testAnswers?: TestAnswerUpdateManyWithoutSelectedOptionNestedInput
@@ -38289,6 +38537,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
     testAnswers?: TestAnswerUncheckedUpdateManyWithoutSelectedOptionNestedInput
@@ -38298,6 +38547,7 @@ export namespace Prisma {
     id?: StringFieldUpdateOperationsInput | string
     text?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    position?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
@@ -38305,6 +38555,7 @@ export namespace Prisma {
   export type TestAnswerUpdateWithoutQuestionInput = {
     id?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     selectedOption?: OptionUpdateOneWithoutTestAnswersNestedInput
     testAttempt?: TestAttemptUpdateOneRequiredWithoutAnswersNestedInput
@@ -38315,6 +38566,7 @@ export namespace Prisma {
     testAttemptId?: StringFieldUpdateOperationsInput | string
     selectedOptionId?: NullableStringFieldUpdateOperationsInput | string | null
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -38323,6 +38575,7 @@ export namespace Prisma {
     testAttemptId?: StringFieldUpdateOperationsInput | string
     selectedOptionId?: NullableStringFieldUpdateOperationsInput | string | null
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -38331,12 +38584,14 @@ export namespace Prisma {
     testAttemptId: string
     questionId: string
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
   export type TestAnswerUpdateWithoutSelectedOptionInput = {
     id?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     question?: QuestionUpdateOneRequiredWithoutAnswersNestedInput
     testAttempt?: TestAttemptUpdateOneRequiredWithoutAnswersNestedInput
@@ -38347,6 +38602,7 @@ export namespace Prisma {
     testAttemptId?: StringFieldUpdateOperationsInput | string
     questionId?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -38355,6 +38611,7 @@ export namespace Prisma {
     testAttemptId?: StringFieldUpdateOperationsInput | string
     questionId?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -38469,12 +38726,14 @@ export namespace Prisma {
     questionId: string
     selectedOptionId?: string | null
     isCorrect: boolean
+    answerOrder?: number
     createdAt?: Date | string
   }
 
   export type TestAnswerUpdateWithoutTestAttemptInput = {
     id?: StringFieldUpdateOperationsInput | string
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
     question?: QuestionUpdateOneRequiredWithoutAnswersNestedInput
     selectedOption?: OptionUpdateOneWithoutTestAnswersNestedInput
@@ -38485,6 +38744,7 @@ export namespace Prisma {
     questionId?: StringFieldUpdateOperationsInput | string
     selectedOptionId?: NullableStringFieldUpdateOperationsInput | string | null
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
@@ -38493,6 +38753,7 @@ export namespace Prisma {
     questionId?: StringFieldUpdateOperationsInput | string
     selectedOptionId?: NullableStringFieldUpdateOperationsInput | string | null
     isCorrect?: BoolFieldUpdateOperationsInput | boolean
+    answerOrder?: IntFieldUpdateOperationsInput | number
     createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 

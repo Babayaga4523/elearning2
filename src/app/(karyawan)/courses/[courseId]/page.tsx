@@ -91,12 +91,14 @@ type CourseDetail = {
 };
 
 /* ─── Helpers ─────────────────────────────────────────────────────────── */
-function formatDeadlineLabel(deadline: Date): string {
+function formatDeadlineLabel(deadline: Date): { text: string; date: string } {
   const diffMs = deadline.getTime() - Date.now();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  if (diffDays < 0) return "Terlewat";
-  if (diffDays === 0) return "Hari ini";
-  return `${diffDays} hari`;
+  const dateStr = deadline.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+  
+  if (diffDays < 0) return { text: "Terlewat", date: dateStr };
+  if (diffDays === 0) return { text: "Hari ini", date: dateStr };
+  return { text: `${diffDays} hari lagi`, date: dateStr };
 }
 
 /* ─── Step Badge ────────────────────────────────────────────────────── */
@@ -388,7 +390,7 @@ export default async function StudentCourseDetailPage({
 
   const deadlineDays = course.deadlineDate
     ? formatDeadlineLabel(course.deadlineDate)
-    : "Tanpa batas";
+    : { text: "Tanpa batas", date: "" };
 
   const isDeadlinePast =
     !!course.deadlineDate && course.deadlineDate.getTime() < Date.now();
@@ -523,7 +525,12 @@ export default async function StudentCourseDetailPage({
                 )}
               >
                 <Calendar size={14} />
-                {deadlineDays}
+                <span>
+                  {deadlineDays.text}
+                  {deadlineDays.date && (
+                    <span className="opacity-70 font-medium"> ({deadlineDays.date})</span>
+                  )}
+                </span>
               </div>
             )}
           </div>
@@ -657,6 +664,13 @@ export default async function StudentCourseDetailPage({
                 {/* Radial + stats */}
                 <div className="flex items-center gap-4">
                   <div className="relative" style={{ width: 72, height: 72 }}>
+                    {/*
+                      Correct SVG donut formula:
+                      r=28, circumference = 2π × 28 ≈ 175.93
+                      strokeDasharray = "(progress% × circumference) circumference"
+                      At 0%  → "0 175.93"  (empty)
+                      At 100% → "175.93 175.93" (full ring)
+                    */}
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
                       <circle cx="36" cy="36" r="28" fill="none" stroke="#E4E7EC" strokeWidth="5" />
                       <circle
@@ -664,7 +678,7 @@ export default async function StudentCourseDetailPage({
                         fill="none"
                         stroke={progress === 100 ? "#12B76A" : "#E8A020"}
                         strokeWidth="5"
-                        strokeDasharray={`${progress} 100`}
+                        strokeDasharray={`${(progress / 100) * 175.93} 175.93`}
                         strokeLinecap="round"
                       />
                     </svg>
@@ -697,7 +711,19 @@ export default async function StudentCourseDetailPage({
                 {/* Stats grid */}
                 <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#F1F3F7]">
                   {[
-                    { label: "Sisa Waktu", value: deadlineDays, urgent: isDeadlineUrgent, past: isDeadlinePast },
+                    { 
+                      label: "Sisa Waktu", 
+                      value: (
+                        <>
+                          {deadlineDays.text}
+                          {deadlineDays.date && (
+                            <span className="text-xs opacity-70"> ({deadlineDays.date})</span>
+                          )}
+                        </>
+                      ), 
+                      urgent: isDeadlineUrgent, 
+                      past: isDeadlinePast 
+                    },
                     { label: "Passing Score", value: `${postTest?.passingScore ?? 0}%`, urgent: false, past: false },
                     { label: "Pre-Test", value: preTest?.attempts.length ? "Selesai" : "Belum", urgent: false, past: false },
                     { label: "Post-Test", value: postTest?.attempts.length ? "Selesai" : "Belum", urgent: false, past: false },

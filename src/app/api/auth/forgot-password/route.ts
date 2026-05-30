@@ -95,7 +95,8 @@ async function sendResetEmail(
   rawToken: string
 ): Promise<{ success: boolean; error?: string }> {
   const expiryHours = getConfiguredExpiryHours();
-  const resetLink = `${env.APP_URL}/auth/reset-password?token=${rawToken}`;
+  const appUrl = process.env.APP_URL || env.NEXTAUTH_URL;
+  const resetLink = `${appUrl}/auth/reset-password?token=${rawToken}`;
   const requestTime = new Date();
 
   const { subject, html, text } = generateForgotPasswordEmail({

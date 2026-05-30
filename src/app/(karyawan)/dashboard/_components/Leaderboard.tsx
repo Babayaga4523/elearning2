@@ -1,146 +1,131 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import { Trophy, Medal, Star, TrendingUp } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Trophy, Medal, Star } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface LeaderboardProps {
-  data: {
+  data: Array<{
     rank: number;
     name: string;
     department: string;
     score: number;
     isCurrentUser: boolean;
-  }[];
+  }>;
 }
 
+const RANK_STYLE: Record<number, {
+  badge: string;
+  icon: React.ReactNode;
+}> = {
+  1: {
+    badge: "bg-[#FEF3DC] text-[#C4861A] border-[#F5C05A]/40",
+    icon: <Trophy size={14} className="text-[#E8A020]" />,
+  },
+  2: {
+    badge: "bg-[#F1F5F9] text-[#64748B] border-[#CBD2E0]",
+    icon: <Medal size={14} className="text-[#94A3B8]" />,
+  },
+  3: {
+    badge: "bg-[#FEF3DC] text-[#92400E] border-[#FCD34D]/50",
+    icon: <Medal size={14} className="text-[#C4861A]" />,
+  },
+};
+
 export default function Leaderboard({ data }: LeaderboardProps) {
-  const getRankIcon = (rank: number) => {
-    switch (rank) {
-      case 1: return <Trophy className="h-5 w-5 text-amber-500" />;
-      case 2: return <Medal className="h-5 w-5 text-slate-400" />;
-      case 3: return <Medal className="h-5 w-5 text-amber-700" />;
-      default: return null;
-    }
-  };
+  const top5 = data.slice(0, 5);
 
-  const getRankBadgeColor = (rank: number) => {
-    switch (rank) {
-      case 1: return "bg-amber-100 text-amber-700 border-amber-200";
-      case 2: return "bg-slate-100 text-slate-700 border-slate-200";
-      case 3: return "bg-orange-100 text-orange-700 border-orange-200";
-      default: return "bg-slate-50 text-slate-600 border-slate-200";
-    }
-  };
-
-  const topUsers = data.slice(0, 5);
+  if (top5.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-10 gap-3">
+        <div className="w-12 h-12 rounded-xl bg-[#F8F9FB] flex items-center justify-center">
+          <Star size={22} className="text-[#CBD2E0]" />
+        </div>
+        <div className="text-center">
+          <p className="text-sm font-semibold text-[#475467] font-['DM_Sans']">
+            Belum ada data peringkat
+          </p>
+          <p className="text-xs text-[#94A4B8] font-['DM_Sans'] mt-0.5">
+            Selesaikan kursus untuk masuk peringkat
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <Card className="bg-white shadow-sm border-slate-200 h-full flex flex-col">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-1">
-            <CardTitle className="text-lg font-semibold text-slate-900">
-              Papan Peringkat
-            </CardTitle>
-            <CardDescription className="text-sm text-slate-600">
-              Top performer bulan ini
-            </CardDescription>
+    <div className="space-y-2">
+      {top5.map((item) => {
+        const rs = RANK_STYLE[item.rank] || {
+          badge: "bg-[#F8F9FB] text-[#475467] border-[#E4E7EC]",
+          icon: null,
+        };
+
+        const initials = (item.name || "?")
+          .split(" ")
+          .slice(0, 2)
+          .map((n) => n[0])
+          .join("")
+          .toUpperCase();
+
+        return (
+          <div
+            key={item.rank}
+            className={cn(
+              "flex items-center gap-3 px-3 py-3 rounded-xl border transition-all duration-150",
+              item.isCurrentUser
+                ? "bg-[#EFF8FF] border-[#B2DDFF]/60"
+                : "bg-white border-[#F1F5F9] hover:border-[#E4E7EC] hover:bg-[#FAFBFF]"
+            )}
+          >
+            {/* Rank badge */}
+            <div
+              className={cn(
+                "w-8 h-8 rounded-lg flex items-center justify-center font-bold shrink-0 border",
+                rs.badge
+              )}
+            >
+              {item.rank <= 3 ? (
+                rs.icon
+              ) : (
+                <span className="text-[11px] font-bold font-['DM_Sans'] text-[#64748B]">
+                  {item.rank}
+                </span>
+              )}
+            </div>
+
+            {/* Avatar */}
+            <Avatar className="h-8 w-8 shrink-0 ring-1 ring-[#E4E7EC]">
+              <AvatarFallback className="bg-[#0F1C3F] text-white text-[11px] font-bold font-['Lexend_Deca']">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-[#0F1C3F] font-['DM_Sans'] leading-tight truncate">
+                {item.name}
+              </p>
+              <p className="text-[11px] text-[#94A4B8] font-['DM_Sans'] truncate">
+                {item.department}
+              </p>
+            </div>
+
+            {/* Score */}
+            <div className="text-right shrink-0">
+              <p className="text-sm font-bold text-[#0F1C3F] font-['Lexend_Deca'] tabular-nums leading-tight">
+                {item.score.toLocaleString()}
+              </p>
+              <p className="text-[10px] text-[#94A4B8] font-['DM_Sans']">
+                poin
+              </p>
+            </div>
           </div>
-          
-          {data.length > 0 && (
-            <div className="flex items-center gap-2 text-sm shrink-0">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-slate-700">
-                {data.length} peserta
-              </span>
-            </div>
-          )}
-        </div>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex flex-col pt-0 pb-4">
-        {topUsers.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3">
-            <div className="p-4 bg-slate-100 rounded-full">
-              <Star className="h-8 w-8 text-slate-300" />
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-semibold text-slate-900">
-                Belum Ada Peringkat
-              </p>
-              <p className="text-xs text-slate-600">
-                Selesaikan kursus untuk masuk peringkat
-              </p>
-            </div>
-          </div>
-        ) : (
-          <>
-            <div className="flex-1 space-y-2">
-              {topUsers.map((user) => (
-                <div
-                  key={user.rank}
-                  className={cn(
-                    "flex items-center gap-3 p-3 rounded-lg transition-all duration-200 border",
-                    user.isCurrentUser 
-                      ? "bg-blue-50 border-blue-200 shadow-sm" 
-                      : "bg-white border-slate-100 hover:bg-slate-50"
-                  )}
-                >
-                  {/* Rank Badge */}
-                  <div className={cn(
-                    "w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm border shrink-0",
-                    getRankBadgeColor(user.rank)
-                  )}>
-                    {user.rank}
-                  </div>
-                  
-                  {/* User Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <p className="font-semibold text-sm text-slate-900 truncate">
-                        {user.name}
-                      </p>
-                      {user.isCurrentUser && (
-                        <Badge className="bg-blue-600 text-white text-xs font-medium border-0 px-1.5 py-0">
-                          Anda
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-xs text-slate-600 truncate">
-                      {user.department}
-                    </p>
-                  </div>
-                  
-                  {/* Score */}
-                  <div className="text-right shrink-0">
-                    <div className="text-base font-bold text-slate-900">
-                      {user.score.toLocaleString()}
-                    </div>
-                    <div className="text-xs text-slate-600">
-                      poin
-                    </div>
-                  </div>
-                  
-                  {/* Rank Icon */}
-                  {getRankIcon(user.rank) && (
-                    <div className="shrink-0">
-                      {getRankIcon(user.rank)}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-            
-            {/* Footer */}
-            <div className="pt-3 mt-3 border-t border-slate-200">
-              <p className="text-xs text-center text-slate-500">
-                Menampilkan top 5 dari {data.length} peserta
-              </p>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+        );
+      })}
+
+      <p className="text-center text-[11px] text-[#94A4B8] font-['DM_Sans'] pt-3 border-t border-[#F1F5F9] mt-2">
+        {data.length} peserta dalam peringkat
+      </p>
+    </div>
   );
 }

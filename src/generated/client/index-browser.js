@@ -202,6 +202,7 @@ exports.Prisma.TestScalarFieldEnum = {
 exports.Prisma.QuestionScalarFieldEnum = {
   id: 'id',
   text: 'text',
+  position: 'position',
   testId: 'testId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -211,6 +212,7 @@ exports.Prisma.OptionScalarFieldEnum = {
   id: 'id',
   text: 'text',
   isCorrect: 'isCorrect',
+  position: 'position',
   questionId: 'questionId',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
@@ -291,6 +293,7 @@ exports.Prisma.TestAnswerScalarFieldEnum = {
   questionId: 'questionId',
   selectedOptionId: 'selectedOptionId',
   isCorrect: 'isCorrect',
+  answerOrder: 'answerOrder',
   createdAt: 'createdAt'
 };
 

@@ -22,8 +22,20 @@ interface CourseCardProps {
 }
 
 export const CourseCard = ({ course }: CourseCardProps) => {
-  const isDeadlineSoon = course.deadline && 
-    (new Date(course.deadline).getTime() - new Date().getTime()) < (1000 * 60 * 60 * 24 * 3);
+  let deadlineDiff = null;
+  let isDeadlinePast = false;
+  let isDeadlineSoon = false;
+  let deadlineDateStr = "";
+  let deadlineText = "";
+
+  if (course.deadline) {
+    const d = new Date(course.deadline);
+    deadlineDiff = Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+    isDeadlinePast = deadlineDiff < 0;
+    isDeadlineSoon = !isDeadlinePast && deadlineDiff <= 3;
+    deadlineDateStr = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
+    deadlineText = isDeadlinePast ? "Terlewat" : deadlineDiff === 0 ? "Hari ini" : `${deadlineDiff} hari lagi`;
+  }
 
   return (
     <Link href={`/courses/${course.id}`} className="group relative">
@@ -83,12 +95,14 @@ export const CourseCard = ({ course }: CourseCardProps) => {
           
           {course.deadline && (
             <div className={cn(
-              "flex items-center gap-1.5 mb-4 p-1.5 rounded-xl w-fit",
-              isDeadlineSoon ? "bg-rose-50 text-rose-600" : "bg-slate-50 text-slate-500"
+              "flex items-center gap-1.5 mb-4 px-2 py-1.5 rounded-lg w-fit border",
+              isDeadlinePast ? "bg-rose-50/50 text-rose-600 border-rose-100" 
+              : isDeadlineSoon ? "bg-amber-50/50 text-amber-600 border-amber-100" 
+              : "bg-slate-50 text-slate-500 border-slate-100"
             )}>
-              <Clock className={cn("h-3 w-3", isDeadlineSoon && "animate-pulse")} />
-              <span className="text-[9px] font-black uppercase tracking-widest">
-                D-Line: {new Date(course.deadline).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}
+              <Clock className={cn("h-3 w-3", isDeadlineSoon && !isDeadlinePast && "animate-pulse")} />
+              <span className="text-[10px] font-bold">
+                {deadlineText} <span className="opacity-70 font-medium">({deadlineDateStr})</span>
               </span>
             </div>
           )}

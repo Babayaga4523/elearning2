@@ -2,12 +2,23 @@
 
 import { useState, useCallback, useMemo } from "react";
 import dynamic from "next/dynamic";
-import { CheckCircle, GraduationCap, ExternalLink, CalendarDays, Clock, Tag, Info, AlertCircle, TrendingUp, Calendar } from "lucide-react";
+import {
+  CheckCircle,
+  GraduationCap,
+  ExternalLink,
+  CalendarDays,
+  Clock,
+  Tag,
+  Info,
+  AlertCircle,
+  TrendingUp,
+  Calendar,
+  ChevronRight,
+} from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
   DialogContent,
@@ -17,17 +28,16 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { Pagination } from "@/components/admin/Pagination";
 
 const FullCalendarWrapper = dynamic(
   () => import("@/components/admin/FullCalendarWrapper"),
   {
     ssr: false,
     loading: () => (
-      <div className="h-[600px] w-full rounded-xl bg-gradient-to-br from-slate-50 to-slate-100 animate-pulse flex items-center justify-center border border-slate-200">
+      <div className="h-[520px] w-full rounded-2xl bg-slate-50 border border-slate-200 animate-pulse flex items-center justify-center">
         <div className="text-center space-y-3">
-          <CalendarDays className="h-12 w-12 text-slate-300 mx-auto" />
-          <p className="text-sm text-slate-400 font-medium">Memuat kalender...</p>
+          <CalendarDays className="h-10 w-10 text-slate-300 mx-auto" />
+          <p className="text-sm text-slate-400 font-medium">Memuat kalender…</p>
         </div>
       </div>
     ),
@@ -65,53 +75,56 @@ const COLOR_MAP: Record<EventColor, { base: string; border: string }> = {
 };
 
 const EVENT_TYPE_CONFIG = {
-  DEADLINE:   { 
-    label: "Batas Waktu",   
-    badgeClass: "bg-rose-50 text-rose-700 border-rose-200",
-    icon: AlertCircle,
-    iconBg: "bg-rose-50",
-    iconColor: "text-rose-600"
+  DEADLINE: {
+    label:     "Batas Waktu",
+    badge:     "bg-rose-50 text-rose-700 border-rose-200",
+    iconBg:    "bg-rose-100",
+    iconColor: "text-rose-600",
+    dot:       "bg-rose-500",
   },
-  COMPLETION: { 
-    label: "Modul Selesai", 
-    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    icon: CheckCircle,
-    iconBg: "bg-emerald-50",
-    iconColor: "text-emerald-600"
+  COMPLETION: {
+    label:     "Modul Selesai",
+    badge:     "bg-emerald-50 text-emerald-700 border-emerald-200",
+    iconBg:    "bg-emerald-100",
+    iconColor: "text-emerald-600",
+    dot:       "bg-emerald-500",
   },
-  TEST:       { 
-    label: "Ujian Selesai", 
-    badgeClass: "bg-blue-50 text-blue-700 border-blue-200",
-    icon: GraduationCap,
-    iconBg: "bg-blue-50",
-    iconColor: "text-blue-600"
+  TEST: {
+    label:     "Ujian Selesai",
+    badge:     "bg-blue-50 text-blue-700 border-blue-200",
+    iconBg:    "bg-blue-100",
+    iconColor: "text-blue-600",
+    dot:       "bg-blue-500",
   },
 };
 
-const STATS = [
+const STATS_CONFIG = [
   {
-    key: "upcomingDeadlines",
-    label: "Deadline Mendatang",
-    icon: Clock,
-    iconClass: "bg-gradient-to-br from-rose-500 to-rose-600",
-    bgClass: "bg-gradient-to-br from-rose-50 to-rose-100/50",
-    borderClass: "border-rose-200/50",
+    key:        "upcomingDeadlines",
+    label:      "Deadline Mendatang",
+    sublabel:   "dalam 30 hari ke depan",
+    icon:       AlertCircle,
+    accent:     "text-rose-600",
+    accentBg:   "bg-rose-50",
+    border:     "border-rose-100",
   },
   {
-    key: "modulesCompletedThisMonth",
-    label: "Modul Selesai Bulan Ini",
-    icon: CheckCircle,
-    iconClass: "bg-gradient-to-br from-emerald-500 to-emerald-600",
-    bgClass: "bg-gradient-to-br from-emerald-50 to-emerald-100/50",
-    borderClass: "border-emerald-200/50",
+    key:        "modulesCompletedThisMonth",
+    label:      "Modul Selesai",
+    sublabel:   "bulan ini",
+    icon:       CheckCircle,
+    accent:     "text-emerald-600",
+    accentBg:   "bg-emerald-50",
+    border:     "border-emerald-100",
   },
   {
-    key: "activeCourses",
-    label: "Kursus Aktif",
-    icon: TrendingUp,
-    iconClass: "bg-gradient-to-br from-blue-500 to-blue-600",
-    bgClass: "bg-gradient-to-br from-blue-50 to-blue-100/50",
-    borderClass: "border-blue-200/50",
+    key:        "activeCourses",
+    label:      "Kursus Aktif",
+    sublabel:   "sedang berjalan",
+    icon:       TrendingUp,
+    accent:     "text-blue-600",
+    accentBg:   "bg-blue-50",
+    border:     "border-blue-100",
   },
 ] as const;
 
@@ -121,24 +134,21 @@ export function KaryawanCalendarClient({
   userName,
 }: KaryawanCalendarClientProps) {
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(null);
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 50;
 
-  const fcEvents = events.map((ev) => ({
-    id: ev.id,
-    title: ev.title,
-    start: ev.date,
-    allDay: true,
-    backgroundColor: COLOR_MAP[ev.color].base,
-    borderColor: COLOR_MAP[ev.color].border,
-    extendedProps: { meta: ev.meta, href: ev.href, type: ev.type },
-  }));
-
-  const totalPages = Math.ceil(events.length / itemsPerPage);
-  const paginatedEvents = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return fcEvents.slice(startIndex, startIndex + itemsPerPage);
-  }, [fcEvents, currentPage, itemsPerPage]);
+  const fcEvents = useMemo(
+    () =>
+      events.map((ev) => ({
+        id:              ev.id,
+        title:           ev.title,
+        start:           ev.date,
+        allDay:          true,
+        backgroundColor: COLOR_MAP[ev.color].base,
+        borderColor:     COLOR_MAP[ev.color].border,
+        textColor:       "#fff",
+        extendedProps:   { meta: ev.meta, href: ev.href, type: ev.type },
+      })),
+    [events]
+  );
 
   const handleEventClick = useCallback(
     (info: any) => {
@@ -151,92 +161,81 @@ export function KaryawanCalendarClient({
 
   const firstName = userName.split(" ")[0];
 
+  // Tailward-blue palette for calendar chrome
+  const PRIMARY = "#2563EB";   // blue-600
+  const ACCENT  = "#F59E0B";    // amber in "more" link
+
+
   return (
-    <div className="min-h-screen pb-20 bg-slate-50">
-      {/* ── Hero Header ─────────────────────────────────────── */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 border-b border-slate-700/50">
-        {/* Background Pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute inset-0" style={{
-            backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
-            backgroundSize: '32px 32px'
-          }} />
-        </div>
-        
-        {/* Gradient Overlay */}
-        <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-blue-500/10 to-transparent" />
-        
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
-            {/* Left: Title & Description */}
-            <div className="space-y-4 flex-1">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-500/10 border border-blue-400/20 backdrop-blur-sm">
-                <Calendar className="h-4 w-4 text-blue-300" />
-                <span className="text-xs font-semibold text-blue-200 tracking-wide">KALENDER PEMBELAJARAN</span>
+    <div className="min-h-screen pb-24 bg-slate-50">
+
+      {/* ── Page Header ────────────────────────────────── */}
+      <div className="bg-white border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6">
+
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 text-blue-600">
+                <Calendar className="h-4 w-4" />
+                <span className="text-xs font-semibold tracking-wide uppercase text-blue-500">
+                  Kalender Pembelajaran
+                </span>
               </div>
-              
-              <div className="space-y-2">
-                <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold tracking-tight text-white">
-                  Kalender Belajarku
-                </h1>
-                <p className="text-base md:text-lg text-slate-300 max-w-2xl">
-                  Halo <span className="font-semibold text-white">{firstName}</span>, pantau jadwal dan aktivitas pelatihanmu di sini.
-                </p>
+              <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                Kalender Belajarku
+              </h1>
+              <p className="text-sm text-slate-500">
+                Pantau jadwal dan aktivitas pelatihanmu, {firstName}.
+              </p>
+            </div>
+
+            {/* Quick meta */}
+            <div className="flex items-center gap-3 text-sm text-slate-500">
+              <div className="flex items-center gap-1.5">
+                <CalendarDays className="h-4 w-4" />
+                <span>{events.length} aktivitas</span>
+              </div>
+              <span className="text-slate-300">·</span>
+              <div className="flex items-center gap-1.5 text-rose-600">
+                <Clock className="h-4 w-4" />
+                <span>{stats.upcomingDeadlines} deadline</span>
               </div>
             </div>
 
-            {/* Right: Quick Stats Summary */}
-            <div className="flex flex-col gap-3 md:items-end">
-              <div className="flex items-center gap-2 text-white/90">
-                <CalendarDays className="h-5 w-5 text-blue-300" />
-                <span className="text-sm font-medium">Total {events.length} Aktivitas</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <Badge variant="secondary" className="bg-white/10 text-white border-white/20 backdrop-blur-sm">
-                  {stats.upcomingDeadlines} Deadline
-                </Badge>
-                <Badge variant="secondary" className="bg-white/10 text-white border-white/20 backdrop-blur-sm">
-                  {stats.activeCourses} Kursus Aktif
-                </Badge>
-              </div>
-            </div>
           </div>
         </div>
       </div>
 
       {/* ── Body ───────────────────────────────────────── */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
 
-        {/* ── Stat Cards ─────────────────────────────── */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 md:gap-6">
-          {STATS.map(({ key, label, icon: Icon, iconClass, bgClass, borderClass }) => (
-            <Card 
-              key={key} 
+        {/* ── Stat Cards ──────────────────────────────── */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {STATS_CONFIG.map(({ key, label, sublabel, icon: Icon, accent, accentBg, border }) => (
+            <Card
+              key={key}
               className={cn(
-                "border-2 shadow-sm hover:shadow-lg transition-all duration-300 group cursor-default overflow-hidden relative",
-                bgClass,
-                borderClass
+                "border bg-white hover:shadow-md transition-shadow duration-200",
+                border
               )}
             >
-              {/* Subtle gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-white/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-              
-              <CardContent className="p-6 relative">
-                <div className="flex items-center gap-4">
-                  <div className={cn(
-                    "h-14 w-14 rounded-xl flex items-center justify-center shrink-0 shadow-lg group-hover:scale-110 transition-transform",
-                    iconClass
-                  )}>
-                    <Icon className="h-7 w-7 text-white" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-3xl md:text-4xl font-bold tabular-nums leading-none text-slate-900 mb-2">
-                      {stats[key as keyof typeof stats]}
-                    </p>
-                    <p className="text-xs md:text-sm text-slate-600 font-medium leading-tight">
-                      {label}
-                    </p>
-                  </div>
+              <CardContent className="p-5 flex items-center gap-4">
+                <div
+                  className={cn(
+                    "h-11 w-11 rounded-xl flex items-center justify-center shrink-0",
+                    accentBg
+                  )}
+                >
+                  <Icon className={cn("h-5 w-5", accent)} />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-2xl font-bold text-slate-900 tabular-nums leading-none">
+                    {stats[key as keyof typeof stats]}
+                  </p>
+                  <p className="text-xs text-slate-500 mt-1 leading-tight">
+                    {label}
+                    <span className="text-slate-400"> — {sublabel}</span>
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -244,154 +243,261 @@ export function KaryawanCalendarClient({
         </div>
 
         {/* ── Legend ─────────────────────────────────── */}
-        <Card className="border-2 border-slate-200 shadow-sm bg-white">
-          <CardContent className="p-4 md:p-5">
-            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-              <div className="flex items-center gap-2">
-                <Info className="h-4 w-4 text-slate-500" />
-                <span className="text-sm font-semibold text-slate-700">Keterangan:</span>
-              </div>
-              {Object.entries(EVENT_TYPE_CONFIG).map(([key, { label, badgeClass }]) => (
-                <div key={key} className="flex items-center gap-2">
-                  <Badge className={cn("text-xs font-medium px-3 py-1", badgeClass)}>
-                    {label}
-                  </Badge>
-                </div>
-              ))}
+        <div className="flex flex-wrap items-center gap-x-5 gap-y-2.5">
+          <span className="text-xs font-medium text-slate-500">Keterangan:</span>
+          {Object.entries(EVENT_TYPE_CONFIG).map(([type, cfg]) => (
+            <div key={type} className="flex items-center gap-2">
+              <span className={cn("h-2 w-2 rounded-full", cfg.dot)} />
+              <Badge className={cn("text-xs font-medium px-2.5 py-1", cfg.badge)}>
+                {cfg.label}
+              </Badge>
             </div>
-          </CardContent>
-        </Card>
+          ))}
+        </div>
 
-        {/* ── Calendar ───────────────────────────────── */}
-        <Card className="border-2 border-slate-200 shadow-lg bg-white overflow-hidden">
-          <CardHeader className="border-b bg-gradient-to-r from-slate-50 to-white px-6 py-5">
+        {/* ── Calendar ────────────────────────────────── */}
+        <Card className="border border-slate-200 shadow-sm bg-white overflow-hidden">
+          <CardHeader className="border-b border-slate-100 bg-slate-50/60 px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center shadow-md">
-                <CalendarDays className="h-5 w-5 text-white" />
+              <div
+                className="h-9 w-9 rounded-lg flex items-center justify-center shrink-0"
+                style={{ backgroundColor: `${PRIMARY}15` }}
+              >
+                <CalendarDays className="h-4.5 w-4.5" style={{ color: PRIMARY }} />
               </div>
               <div>
-                <CardTitle className="text-lg font-bold text-slate-900">Kalender Aktivitas</CardTitle>
-                <p className="text-xs text-slate-500 mt-0.5">Klik pada event untuk melihat detail</p>
+                <CardTitle className="text-base font-semibold text-slate-900">
+                  Aktivitas Pembelajaran
+                </CardTitle>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  Klik event untuk melihat detail
+                </p>
               </div>
             </div>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent className="p-5 sm:p-6">
+            {/* Inline FullCalendar CSS overrides — injected once via style tag */}
+            <style>{`
+              .fc .fc-toolbar.fc-header {
+                margin-bottom: 1rem;
+              }
+              .fc .fc-button-primary {
+                background-color: ${PRIMARY} !important;
+                border-color: ${PRIMARY} !important;
+                font-size: 0.75rem;
+                font-weight: 600;
+                padding: 0.35rem 0.75rem;
+                border-radius: 0.5rem;
+                text-transform: capitalize;
+                transition: background-color 150ms ease, transform 100ms ease;
+              }
+              .fc .fc-button-primary:hover {
+                background-color: #1d4ed8 !important;
+                border-color: #1d4ed8 !important;
+              }
+              .fc .fc-button-primary:active {
+                transform: scale(0.97);
+              }
+              .fc .fc-button-primary:disabled {
+                background-color: ${PRIMARY}80 !important;
+                border-color: ${PRIMARY}80 !important;
+              }
+              .fc .fc-button-primary:not(:disabled).fc-button-active,
+              .fc .fc-button-primary.fc-button-active {
+                background-color: #1e3a5f !important;
+                border-color: #1e3a5f !important;
+              }
+              .fc .fc-toolbar-title {
+                font-size: 1rem;
+                font-weight: 700;
+                color: #0f172a;
+              }
+              .fc .fc-col-header-cell {
+                background-color: #f8fafc;
+                font-weight: 600;
+                font-size: 0.7rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                color: #64748b;
+                padding: 0.5rem 0;
+              }
+              .fc .fc-daygrid-day-number {
+                font-size: 0.8rem;
+                color: #334155;
+                padding: 0.25rem;
+                width: 2rem;
+                height: 2rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background-color 150ms ease, color 150ms ease;
+              }
+              .fc .fc-daygrid-day.fc-day-today .fc-daygrid-day-number {
+                background-color: ${PRIMARY};
+                color: #fff;
+                font-weight: 700;
+              }
+              .fc .fc-daygrid-day:not(.fc-day-today):hover .fc-daygrid-day-number {
+                background-color: #f1f5f9;
+              }
+              .fc .fc-daygrid-day.fc-day-past .fc-daygrid-day-number {
+                color: #94a3b8;
+              }
+              .fc .fc-daygrid-event {
+                border-radius: 0.375rem;
+                border-left-width: 3px;
+                padding: 0;
+                margin: 1px 3px;
+                font-size: 0.7rem;
+                overflow: hidden;
+              }
+              .fc .fc-daygrid-event:hover {
+                opacity: 0.88;
+              }
+              .fc .fc-daygrid-event-dot {
+                display: none;
+              }
+              .fc .fc-event .fc-event-main {
+                padding: 2px 6px;
+              }
+              .fc .fc-list-event:hover td {
+                background-color: #f8fafc;
+              }
+              .fc .fc-list-event td {
+                transition: background-color 150ms ease;
+              }
+              .fc .fc-list-day-cushion {
+                background-color: #f8fafc;
+                font-weight: 600;
+                color: #334155;
+              }
+              .fc td.fc-highlight,
+              .fc .fc-daygrid-day.fc-day-highlight {
+                background-color: ${PRIMARY}0d;
+              }
+              .fc-timegrid-slot {
+                height: 2.5rem;
+              }
+              @media (prefers-reduced-motion: reduce) {
+                .fc *,
+                .fc .fc-button * {
+                  transition-duration: 0ms !important;
+                  animation-duration: 0ms !important;
+                }
+              }
+            `}</style>
+
             <FullCalendarWrapper
-              events={paginatedEvents}
+              events={fcEvents}
               onEventClick={handleEventClick}
+              primaryColor={PRIMARY}
+              accentColor={ACCENT}
             />
           </CardContent>
         </Card>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-center">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={events.length}
-              itemsPerPage={itemsPerPage}
-              itemLabel="event"
-            />
-          </div>
-        )}
-
       </div>
 
-      {/* ── Event Detail Dialog ────────────────────── */}
-      <Dialog
-        open={!!selectedEvent}
-        onOpenChange={(open) => !open && setSelectedEvent(null)}
-      >
-        <DialogContent className="sm:max-w-lg rounded-xl border-2 shadow-2xl">
-          <DialogHeader className="space-y-3">
+      {/* ── Event Detail Dialog ──────────────────────── */}
+      <Dialog open={!!selectedEvent} onOpenChange={(o) => !o && setSelectedEvent(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl border border-slate-200 shadow-xl p-0 overflow-hidden">
+
+          {/* Colored top bar */}
+          {selectedEvent && (
+            <div
+              className="h-1.5 w-full"
+              style={{
+                backgroundColor: COLOR_MAP[selectedEvent.color].base,
+              }}
+            />
+          )}
+
+          <DialogHeader className="px-6 pt-5 pb-0 gap-1">
             <div className="flex items-start gap-3">
               {selectedEvent && (
-                <div className={cn(
-                  "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 shadow-md",
-                  EVENT_TYPE_CONFIG[selectedEvent.type].iconBg
-                )}>
+                <div
+                  className={cn(
+                    "h-10 w-10 rounded-xl flex items-center justify-center shrink-0",
+                    EVENT_TYPE_CONFIG[selectedEvent.type].iconBg
+                  )}
+                >
                   {(() => {
-                    const Icon = EVENT_TYPE_CONFIG[selectedEvent.type].icon;
-                    return <Icon className={cn("h-6 w-6", EVENT_TYPE_CONFIG[selectedEvent.type].iconColor)} />;
+                    const Icon =
+                      selectedEvent.type === "DEADLINE"
+                        ? AlertCircle
+                        : selectedEvent.type === "COMPLETION"
+                        ? CheckCircle
+                        : GraduationCap;
+                    return (
+                      <Icon
+                        className={cn(
+                          "h-5 w-5",
+                          EVENT_TYPE_CONFIG[selectedEvent.type].iconColor
+                        )}
+                      />
+                    );
                   })()}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <DialogTitle className="text-xl font-bold text-slate-900 leading-tight">
-                  Detail Aktivitas
+                <DialogTitle className="text-lg font-bold text-slate-900 leading-snug">
+                  {selectedEvent?.title}
                 </DialogTitle>
-                <DialogDescription className="text-sm text-slate-500 mt-1">
-                  Informasi lengkap tentang event yang dipilih
-                </DialogDescription>
+                {selectedEvent && (
+                  <Badge
+                    className={cn(
+                      "mt-1.5 text-xs font-medium px-2 py-0.5",
+                      EVENT_TYPE_CONFIG[selectedEvent.type].badge
+                    )}
+                  >
+                    {EVENT_TYPE_CONFIG[selectedEvent.type].label}
+                  </Badge>
+                )}
               </div>
             </div>
+            <DialogDescription className="text-sm text-slate-500 mt-2">
+              {selectedEvent?.meta}
+            </DialogDescription>
           </DialogHeader>
 
           {selectedEvent && (
-            <div className="space-y-5 py-2">
-              {/* Type badge */}
-              <Badge
-                className={cn(
-                  "text-xs font-semibold px-3 py-1.5",
-                  EVENT_TYPE_CONFIG[selectedEvent.type].badgeClass
-                )}
-              >
-                {EVENT_TYPE_CONFIG[selectedEvent.type].label}
-              </Badge>
-
-              <Separator className="bg-slate-200" />
-
-              {/* Fields */}
-              <div className="space-y-4">
-                <DetailRow
-                  icon={<Info className="h-5 w-5" />}
-                  label="Deskripsi"
-                  value={selectedEvent.title}
-                  iconBg="bg-blue-50"
-                  iconColor="text-blue-600"
-                />
-                <DetailRow
-                  icon={<CalendarDays className="h-5 w-5" />}
-                  label="Tanggal"
-                  value={new Date(selectedEvent.date).toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "long",
-                    year: "numeric",
-                  })}
-                  iconBg="bg-purple-50"
-                  iconColor="text-purple-600"
-                />
-                {selectedEvent.meta && (
-                  <DetailRow
-                    icon={<Tag className="h-5 w-5" />}
-                    label="Keterangan"
-                    value={selectedEvent.meta}
-                    iconBg="bg-amber-50"
-                    iconColor="text-amber-600"
-                  />
-                )}
-              </div>
+            <div className="px-6 py-4 space-y-3">
+              <DetailField
+                icon={<CalendarDays className="h-4 w-4" />}
+                label="Tanggal"
+                value={new Date(selectedEvent.date).toLocaleDateString("id-ID", {
+                  day:   "numeric",
+                  month: "long",
+                  year:  "numeric",
+                })}
+              />
             </div>
           )}
 
-          <DialogFooter className="gap-3 sm:gap-3 pt-4 mt-2 border-t">
+          <DialogFooter className="px-6 pb-5 pt-2 gap-2 border-t border-slate-100">
             <Button
               variant="outline"
               onClick={() => setSelectedEvent(null)}
-              className="flex-1 sm:flex-none rounded-lg border-2 hover:bg-slate-50"
+              className="flex-1 rounded-xl border-slate-300 text-slate-700 hover:bg-slate-50 hover:text-slate-900 transition-colors"
             >
               Tutup
             </Button>
             {selectedEvent?.href && (
-              <Button 
-                asChild 
-                className="flex-1 sm:flex-none gap-2 rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 shadow-md"
+              <Button
+                asChild
+                className="flex-1 gap-2 rounded-xl font-medium shadow-sm"
+                style={{
+                  backgroundColor: PRIMARY,
+                  transition: "background-color 150ms ease, transform 100ms ease",
+                }}
               >
-                <Link href={selectedEvent.href} onClick={() => setSelectedEvent(null)}>
+                <Link
+                  href={selectedEvent.href}
+                  onClick={() => setSelectedEvent(null)}
+                >
                   Buka Kursus
-                  <ExternalLink className="h-4 w-4" />
+                  <ChevronRight className="h-4 w-4" />
                 </Link>
               </Button>
             )}
@@ -402,36 +508,27 @@ export function KaryawanCalendarClient({
   );
 }
 
-// ─── DetailRow ────────────────────────────────────────────────────────────────
+// ─── DetailField ────────────────────────────────────────────────────────────────
 
-function DetailRow({
+function DetailField({
   icon,
   label,
   value,
-  iconBg,
-  iconColor,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
-  iconBg: string;
-  iconColor: string;
 }) {
   return (
-    <div className="flex items-start gap-4 p-4 rounded-lg bg-slate-50 border border-slate-200 hover:border-slate-300 transition-colors">
-      <div className={cn(
-        "mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-lg shadow-sm",
-        iconBg
-      )}>
-        <div className={iconColor}>
-          {icon}
-        </div>
-      </div>
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+      <div className="text-slate-400 shrink-0">{icon}</div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
+        <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">
           {label}
         </p>
-        <p className="text-sm font-medium text-slate-900 leading-relaxed break-words">{value}</p>
+        <p className="text-sm font-semibold text-slate-800 leading-snug">
+          {value}
+        </p>
       </div>
     </div>
   );
