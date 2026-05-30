@@ -73,7 +73,7 @@ export default function Leaderboard({ data }: LeaderboardProps) {
             className={cn(
               "flex items-center gap-3 px-3 py-3 rounded-xl border transition-all duration-150",
               item.isCurrentUser
-                ? "bg-[#EFF8FF] border-[#B2DDFF]/60"
+                ? "bg-[#E8EDF7]/40 border-l-4 border-l-[#E8A020] border-t border-r border-b border-[#CBD2E0]/50"
                 : "bg-white border-[#F1F5F9] hover:border-[#E4E7EC] hover:bg-[#FAFBFF]"
             )}
           >

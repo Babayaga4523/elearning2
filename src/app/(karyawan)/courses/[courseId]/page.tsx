@@ -75,6 +75,7 @@ type Enrollment = {
   id: string;
   status: string;
   rejectionNote: string | null;
+  deadline?: Date | string | null;
 };
 
 type CourseDetail = {
@@ -195,33 +196,39 @@ function LearningStepCard({
   const typeLabel = type === "VIDEO" ? "Video" : "Dokumen";
   const TypeIcon = type === "VIDEO" ? PlayCircle : FileText;
 
+  const borderAccent = done 
+    ? "border-l-4 border-l-[#12B76A]" 
+    : locked 
+    ? "border-l-4 border-l-transparent" 
+    : "border-l-4 border-l-[#E8A020]";
+
   const inner = (
     <div
       className={cn(
-        "rounded-xl border transition-all duration-200",
-        "hover:border-[#C4861A] hover:shadow-md",
+        "rounded-xl border border-[#E4E7EC] bg-white transition-all duration-300",
+        "shadow-sm active:scale-[0.99]",
         !locked && href
-          ? "bg-white border-[#E4E7EC] cursor-pointer"
-          : "bg-[#F8F9FB] border-[#E4E7EC] opacity-70"
+          ? "hover:border-[#E8A020]/50 hover:shadow-md cursor-pointer"
+          : "opacity-75 cursor-not-allowed bg-[#F8F9FB]/50"
       )}
     >
-      <CardContent className="p-4">
+      <div className={cn("p-4 rounded-xl", borderAccent)}>
         <div className="flex items-start gap-4">
           {/* Number / icon circle */}
           <div
             className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-bold text-sm font-['Lexend_Deca'] transition-colors",
+              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-sm font-['Lexend_Deca'] border shadow-sm transition-all duration-300",
               done
-                ? "bg-[#ECFDF3] text-[#027A48]"
+                ? "bg-[#ECFDF3] border-[#6CE9A6] text-[#027A48]"
                 : locked
-                ? "bg-[#F1F3F7] text-[#98A2B3]"
-                : "bg-[#0F1C3F] text-white"
+                ? "bg-[#F8F9FB] border-[#E4E7EC] text-[#98A2B3]"
+                : "bg-[#0F1C3F] border-transparent text-white"
             )}
           >
             {done ? (
-              <CheckCircle2 size={18} />
+              <CheckCircle2 size={16} />
             ) : locked ? (
-              <Lock size={15} />
+              <Lock size={14} />
             ) : (
               <span>{number}</span>
             )}
@@ -231,40 +238,40 @@ function LearningStepCard({
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
               {/* Type badge */}
-              <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#F8F9FB] border border-[#E4E7EC] text-[10px] font-semibold text-[#475467] font-['DM_Sans']">
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#F8F9FB] border border-[#E4E7EC] text-[10px] font-bold text-[#64748B] font-['DM_Sans'] uppercase tracking-wider">
                 <TypeIcon size={10} />
                 {typeLabel}
               </span>
               <StepBadge type={type as any} done={done} locked={locked} testStatus={testStatus} />
             </div>
 
-            <h4 className="text-sm font-semibold text-[#101828] font-['DM_Sans'] leading-snug mb-1.5 line-clamp-2">
+            <h4 className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] leading-snug mb-1.5 line-clamp-2">
               {title}
             </h4>
 
             {/* Test info */}
             {testInfo && (
               <div className="space-y-1.5 mt-2">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#475467] font-['DM_Sans']">
-                  <div className="flex items-center gap-1">
-                    <Clock size={11} className="text-[#98A2B3]" />
-                    <span className="font-medium">{testInfo.duration} menit</span>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[#64748B] font-['DM_Sans'] font-semibold">
+                  <div className="flex items-center gap-1.5">
+                    <Clock size={12} className="text-[#98A2B3]" />
+                    <span>{testInfo.duration} menit</span>
                   </div>
-                  <div className="flex items-center gap-1">
-                    <FileCheck2 size={11} className="text-[#98A2B3]" />
-                    <span className="font-medium">KKM: {testInfo.passingScore}%</span>
+                  <div className="flex items-center gap-1.5">
+                    <FileCheck2 size={12} className="text-[#98A2B3]" />
+                    <span>KKM: <span className="text-[#C4861A]">{testInfo.passingScore}%</span></span>
                   </div>
-                  <div>
-                    <span className="font-medium">Percobaan:</span>{" "}
+                  <div className="flex items-center gap-1.5">
+                    <span>Percobaan:</span>{" "}
                     {testInfo.maxAttempts === 0 ? (
-                      <span className="text-[#027A48] font-semibold">Unlimited</span>
+                      <span className="text-[#027A48] font-bold">Tak Terbatas</span>
                     ) : (
                       <span
                         className={cn(
-                          "font-semibold",
+                          "font-bold",
                           testInfo.attemptCount >= testInfo.maxAttempts
-                            ? "text-[#B42318]"
-                            : "text-[#175CD3]"
+                            ? "text-[#B42318] bg-[#FEF3F2] px-1.5 py-0.5 rounded"
+                            : "text-[#175CD3] bg-[#EFF8FF] px-1.5 py-0.5 rounded"
                         )}
                       >
                         {testInfo.attemptCount}/{testInfo.maxAttempts}
@@ -273,7 +280,7 @@ function LearningStepCard({
                   </div>
                 </div>
                 {(testInfo.randomizeQuestions || testInfo.randomizeOptions) && (
-                  <div className="inline-flex items-center gap-1 text-[10px] text-[#C4861A] font-semibold font-['DM_Sans']">
+                  <div className="inline-flex items-center gap-1 text-[10px] text-[#C4861A] font-bold font-['DM_Sans'] uppercase tracking-wide bg-[#FEF3DC]/60 border border-[#F5C05A]/30 rounded-md px-2 py-0.5">
                     🔀{" "}
                     {testInfo.randomizeQuestions && testInfo.randomizeOptions
                       ? "Soal & Opsi Acak"
@@ -287,12 +294,12 @@ function LearningStepCard({
 
             {/* Module info */}
             {moduleInfo && (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#475467] font-['DM_Sans'] mt-2">
-                <div className="flex items-center gap-1">
-                  <Clock size={11} className="text-[#98A2B3]" />
-                  <span className="font-medium">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#64748B] font-['DM_Sans'] font-semibold mt-2">
+                <div className="flex items-center gap-1.5">
+                  <Clock size={12} className="text-[#98A2B3]" />
+                  <span>
                     {moduleInfo.duration > 0
-                      ? `~${moduleInfo.duration} menit`
+                      ? `Estimasi ~${moduleInfo.duration} menit`
                       : "Durasi fleksibel"}
                   </span>
                 </div>
@@ -301,8 +308,8 @@ function LearningStepCard({
 
             {/* Lock reason */}
             {lockReason && (
-              <p className="text-xs text-[#B54708] mt-2 font-['DM_Sans'] flex items-center gap-1.5">
-                <Lock size={11} />
+              <p className="text-xs font-semibold text-[#B54708] bg-[#FFFAEB] border border-[#FEC84B]/40 rounded-lg px-2.5 py-1.5 mt-2.5 w-fit font-['DM_Sans'] flex items-center gap-1.5">
+                <Lock size={12} className="shrink-0" />
                 {lockReason}
               </p>
             )}
@@ -310,10 +317,10 @@ function LearningStepCard({
 
           {/* Arrow */}
           {!locked && href && (
-            <ChevronRight size={18} className="shrink-0 text-[#98A2B3] mt-1" />
+            <ChevronRight size={18} className="shrink-0 text-[#98A2B3] mt-1 group-hover:text-[#E8A020] group-hover:translate-x-0.5 transition-all duration-200" />
           )}
         </div>
-      </CardContent>
+      </div>
     </div>
   );
 
@@ -388,12 +395,16 @@ export default async function StudentCourseDetailPage({
   const isPending = enrollment?.status === "PENDING";
   const isRejected = enrollment?.status === "REJECTED";
 
-  const deadlineDays = course.deadlineDate
-    ? formatDeadlineLabel(course.deadlineDate)
+  const actualDeadline = enrollment?.deadline
+    ? new Date(enrollment.deadline)
+    : (course.deadlineDate ? new Date(course.deadlineDate) : null);
+
+  const deadlineDays = actualDeadline
+    ? formatDeadlineLabel(actualDeadline)
     : { text: "Tanpa batas", date: "" };
 
   const isDeadlinePast =
-    !!course.deadlineDate && course.deadlineDate.getTime() < Date.now();
+    !!actualDeadline && actualDeadline.getTime() < Date.now();
 
   const isAllModulesCompleted =
     totalModules > 0 && completedModules === totalModules;
@@ -440,11 +451,11 @@ export default async function StudentCourseDetailPage({
 
   /* Deadline severity */
   const isDeadlineUrgent =
-    course.deadlineDate &&
+    actualDeadline &&
     !isDeadlinePast &&
     (() => {
       const diff = Math.ceil(
-        (course.deadlineDate!.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
+        (actualDeadline.getTime() - Date.now()) / (1000 * 60 * 60 * 24)
       );
       return diff <= 3;
     })();
@@ -456,13 +467,22 @@ export default async function StudentCourseDetailPage({
     >
       {/* ═══ Hero Header ════════════════════════════════════════════════ */}
       <header
-        className="relative overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${t.navy} 0%, #1A3060 100%)` }}
+        className="relative overflow-hidden border-b border-[#1A2D5A]"
+        style={{ background: `linear-gradient(135deg, ${t.navy} 0%, #12224A 50%, #1A3060 100%)` }}
       >
         {/* Glow orbs */}
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-20%] w-[400px] h-[400px] rounded-full bg-[#E8A020] blur-[140px] mix-blend-screen" />
+          <div className="absolute left-[-10%] bottom-[-20%] w-[250px] h-[250px] rounded-full bg-[#2E90FA] blur-[100px] mix-blend-screen" />
+        </div>
+        {/* Subtle grid overlay */}
         <div
-          className="absolute -right-24 -top-24 w-96 h-96 rounded-full opacity-10 pointer-events-none"
-          style={{ background: `radial-gradient(circle, ${t.gold} 0%, transparent 70%)` }}
+          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
         />
 
         <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
@@ -470,65 +490,69 @@ export default async function StudentCourseDetailPage({
           <div className="flex items-center gap-2 mb-6 flex-wrap">
             <Link
               href={isAdmin ? `/admin/courses/${course.id}` : "/courses"}
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-white/60 hover:text-white transition-colors font-['DM_Sans']"
+              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-all font-['DM_Sans'] bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/10 outline-none"
             >
-              <ArrowLeft size={15} />
-              {isAdmin ? "Kembali ke Edit" : "Katalog"}
+              <ArrowLeft size={13} />
+              {isAdmin ? "Edit Mode" : "Katalog"}
             </Link>
             <span className="text-white/30">·</span>
             {course.category && (
-              <span className="px-3 py-1 rounded-full bg-white/10 border border-white/20 text-xs font-semibold text-white/80">
+              <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs font-bold text-white/80 uppercase tracking-wide">
                 {course.category.name}
               </span>
             )}
             {!isEnrolled && !isAdmin && (
-              <span className="px-3 py-1 rounded-full bg-yellow-500/20 text-yellow-200 text-xs font-semibold">
-                <Lock size={11} className="inline mr-1" />
-                Pratinjau
+              <span className="px-3 py-1.5 rounded-xl bg-[#FEF3DC]/20 border border-[#F5C05A]/30 text-[#F5C05A] text-xs font-bold uppercase tracking-wide flex items-center gap-1.5">
+                <Lock size={12} className="inline mr-1" />
+                Mode Pratinjau
               </span>
             )}
           </div>
 
           {/* Title + meta */}
-          <div className="space-y-3 max-w-3xl">
-            <h1 className="text-2xl md:text-3xl font-bold text-white font-['Lexend_Deca'] leading-tight tracking-tight">
+          <div className="space-y-3.5 max-w-3xl">
+            <h1 className="text-2xl md:text-3xl font-extrabold text-white font-['Lexend_Deca'] leading-tight tracking-tight">
               {course.title}
             </h1>
             {course.description && (
-              <p className="text-sm text-white/60 font-['DM_Sans'] leading-relaxed max-w-2xl">
+              <p className="text-sm font-medium text-white/60 font-['DM_Sans'] leading-relaxed max-w-2xl">
                 {course.description}
               </p>
             )}
           </div>
 
           {/* Quick stats row */}
-          <div className="flex flex-wrap gap-5 mt-6 text-xs text-white/60 font-['DM_Sans']">
-            <div className="flex items-center gap-1.5">
-              <BookOpen size={14} className="text-white/40" />
-              <span><span className="font-semibold text-white">{totalModules}</span> Modul</span>
+          <div className="flex flex-wrap gap-5 mt-6 text-xs text-white/70 font-['DM_Sans'] font-semibold">
+            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+              <BookOpen size={14} className="text-[#E8A020]" />
+              <span><span className="font-extrabold text-white">{totalModules}</span> Modul</span>
             </div>
-            <div className="flex items-center gap-1.5">
-              <FileCheck2 size={14} className="text-white/40" />
-              <span><span className="font-semibold text-white">{course.tests.length}</span> Ujian</span>
+            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+              <FileCheck2 size={14} className="text-[#2E90FA]" />
+              <span><span className="font-extrabold text-white">{course.tests.length}</span> Ujian</span>
             </div>
             {postTest?.passingScore && (
-              <div className="flex items-center gap-1.5">
-                <span className="font-semibold text-white">{postTest.passingScore}%</span>
+              <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
+                <span className="font-extrabold text-white">{postTest.passingScore}%</span>
                 <span>Passing Score</span>
               </div>
             )}
-            {course.deadlineDate && (
+            {actualDeadline && (
               <div
                 className={cn(
-                  "flex items-center gap-1.5 font-semibold",
-                  isDeadlinePast ? "text-[#FDA29B]" : isDeadlineUrgent ? "text-[#FEC84B]" : "text-white/60"
+                  "flex items-center gap-1.5 font-extrabold bg-white/5 border px-3 py-1.5 rounded-lg",
+                  isDeadlinePast 
+                    ? "text-[#FDA29B] border-[#FDA29B]/30" 
+                    : isDeadlineUrgent 
+                    ? "text-[#FEC84B] border-[#FEC84B]/30" 
+                    : "text-white/70 border-white/10"
                 )}
               >
                 <Calendar size={14} />
                 <span>
                   {deadlineDays.text}
                   {deadlineDays.date && (
-                    <span className="opacity-70 font-medium"> ({deadlineDays.date})</span>
+                    <span className="opacity-70 font-semibold"> ({deadlineDays.date})</span>
                   )}
                 </span>
               </div>
@@ -655,61 +679,60 @@ export default async function StudentCourseDetailPage({
           {/* ─── Right: Sidebar ──────────────────────────────────────── */}
           <aside className="space-y-5 lg:sticky lg:top-24">
             {/* Progress Card */}
-            <Card className="bg-white rounded-2xl border border-[#E4E7EC] overflow-hidden shadow-sm">
-              <CardContent className="p-6 space-y-5">
-                <h3 className="text-sm font-semibold text-[#101828] font-['Lexend_Deca']">
-                  Progres Anda
+            <Card className="bg-white rounded-2xl border border-[#E4E7EC] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
+              <CardContent className="p-6 space-y-6">
+                <h3 className="text-sm font-bold text-[#0F1C3F] font-['Lexend_Deca'] uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#0F1C3F] to-[#1A2D5A]">
+                  Progres Belajar Anda
                 </h3>
 
-                {/* Radial + stats */}
-                <div className="flex items-center gap-4">
-                  <div className="relative" style={{ width: 72, height: 72 }}>
-                    {/*
-                      Correct SVG donut formula:
-                      r=28, circumference = 2π × 28 ≈ 175.93
-                      strokeDasharray = "(progress% × circumference) circumference"
-                      At 0%  → "0 175.93"  (empty)
-                      At 100% → "175.93 175.93" (full ring)
-                    */}
+                {/* Radial Donut + Stats block */}
+                <div className="flex items-center gap-4 bg-[#F8F9FB] border border-[#E4E7EC]/40 p-4 rounded-xl shadow-inner">
+                  <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
-                      <circle cx="36" cy="36" r="28" fill="none" stroke="#E4E7EC" strokeWidth="5" />
+                      <circle cx="36" cy="36" r="28" fill="none" stroke="#E4E7EC" strokeWidth="5.5" />
                       <circle
                         cx="36" cy="36" r="28"
                         fill="none"
                         stroke={progress === 100 ? "#12B76A" : "#E8A020"}
-                        strokeWidth="5"
+                        strokeWidth="5.5"
                         strokeDasharray={`${(progress / 100) * 175.93} 175.93`}
                         strokeLinecap="round"
+                        className="transition-all duration-700"
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-lg font-bold text-[#101828] font-['Lexend_Deca'] leading-none">
+                      <span className="text-base font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none">
                         {progress}%
                       </span>
                     </div>
                   </div>
-                  <div>
-                    <p className="text-2xl font-bold text-[#101828] font-['Lexend_Deca'] leading-none">
+                  <div className="space-y-1">
+                    <p className="text-2xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none tracking-tight tabular-nums">
                       {completedModules}/{totalModules}
                     </p>
-                    <p className="text-xs text-[#475467] font-['DM_Sans'] mt-0.5">
+                    <p className="text-xs font-bold text-[#64748B] font-['DM_Sans'] uppercase tracking-wider">
                       modul selesai
                     </p>
                   </div>
                 </div>
 
-                {/* Progress bar */}
+                {/* Flat Progress bar */}
                 <div className="space-y-1.5">
-                  <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden">
+                  <div className="h-2 bg-[#F1F3F7] rounded-full overflow-hidden border border-[#E4E7EC]/10">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-[#E8A020] to-[#F5C05A] transition-all duration-500"
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        progress === 100 
+                          ? "bg-gradient-to-r from-[#12B76A] to-[#027A48]"
+                          : "bg-gradient-to-r from-[#E8A020] to-[#F5C05A]"
+                      )}
                       style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 gap-4 pt-4 border-t border-[#F1F3F7]">
+                <div className="grid grid-cols-2 gap-4 pt-4.5 border-t border-[#F1F3F7] text-xs font-semibold">
                   {[
                     { 
                       label: "Sisa Waktu", 
@@ -717,24 +740,24 @@ export default async function StudentCourseDetailPage({
                         <>
                           {deadlineDays.text}
                           {deadlineDays.date && (
-                            <span className="text-xs opacity-70"> ({deadlineDays.date})</span>
+                            <span className="text-[10px] opacity-75 font-semibold block mt-0.5"> ({deadlineDays.date})</span>
                           )}
                         </>
                       ), 
                       urgent: isDeadlineUrgent, 
                       past: isDeadlinePast 
                     },
-                    { label: "Passing Score", value: `${postTest?.passingScore ?? 0}%`, urgent: false, past: false },
+                    { label: "Passing Score", value: `${postTest?.passingScore ?? 0}% KKM`, urgent: false, past: false },
                     { label: "Pre-Test", value: preTest?.attempts.length ? "Selesai" : "Belum", urgent: false, past: false },
                     { label: "Post-Test", value: postTest?.attempts.length ? "Selesai" : "Belum", urgent: false, past: false },
-                  ].map((stat) => (
-                    <div key={stat.label}>
-                      <p className="text-[10px] text-[#98A2B3] font-['DM_Sans'] uppercase tracking-wider mb-0.5">
+                  ].map((stat, i) => (
+                    <div key={i} className="space-y-0.5">
+                      <p className="text-[9px] text-[#98A2B3] font-['DM_Sans'] uppercase tracking-widest font-bold">
                         {stat.label}
                       </p>
                       <p
                         className={cn(
-                          "text-sm font-semibold font-['DM_Sans']",
+                          "font-bold font-['DM_Sans'] text-sm tracking-tight",
                           stat.urgent ? "text-[#B54708]" : stat.past ? "text-[#B42318]" : "text-[#101828]"
                         )}
                       >
@@ -744,49 +767,49 @@ export default async function StudentCourseDetailPage({
                   ))}
                 </div>
 
-                {/* CTA */}
-                <div className="pt-4 border-t border-[#F1F3F7]">
+                {/* Action CTA Buttons */}
+                <div className="pt-4.5 border-t border-[#F1F3F7]">
                   {!enrollment || isRejected ? (
                     <div className="space-y-3">
                       {isRejected && enrollment?.rejectionNote && (
-                        <div className="p-3 rounded-xl bg-[#FEF3F2] border border-[#FDA29B]">
-                          <p className="text-xs font-semibold text-[#B42318] mb-1">Pendaftaran Ditolak</p>
-                          <p className="text-xs text-[#B42318]/70">{enrollment.rejectionNote}</p>
+                        <div className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FDA29B]/50 shadow-sm animate-pulse-slow">
+                          <p className="text-xs font-bold text-[#B42318] mb-1">Pendaftaran Ditolak</p>
+                          <p className="text-xs font-medium text-[#B42318]/80 leading-relaxed">{enrollment.rejectionNote}</p>
                         </div>
                       )}
                       <EnrollButton courseId={course.id} />
                     </div>
                   ) : isPending ? (
-                    <div className="p-4 rounded-xl bg-[#FFFAEB] border border-[#FEC84B] text-center">
-                      <Clock className="h-5 w-5 text-[#F79009] mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-[#B54708]">Menunggu Persetujuan</p>
-                      <p className="text-xs text-[#B54708]/70 mt-1">Admin akan segera memproses</p>
+                    <div className="p-4.5 rounded-xl bg-[#FFFAEB] border border-[#FEC84B]/40 text-center shadow-sm">
+                      <Clock className="h-5 w-5 text-[#F79009] mx-auto mb-2 animate-pulse" />
+                      <p className="text-sm font-bold text-[#B54708]">Menunggu Persetujuan</p>
+                      <p className="text-xs font-medium text-[#B54708]/80 mt-1 leading-normal">Permohonan sedang diproses oleh Admin</p>
                     </div>
                   ) : isDeadlinePast ? (
-                    <div className="p-4 rounded-xl bg-[#FEF3F2] border border-[#FDA29B] text-center">
+                    <div className="p-4.5 rounded-xl bg-[#FEF3F2] border border-[#FDA29B]/40 text-center shadow-sm">
                       <AlertCircle className="h-5 w-5 text-[#B42318] mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-[#B42318]">Kursus Non-Aktif</p>
-                      <p className="text-xs text-[#B42318]/70 mt-1">Deadline terlewat</p>
+                      <p className="text-sm font-bold text-[#B42318]">Kursus Non-Aktif</p>
+                      <p className="text-xs font-medium text-[#B42318]/80 mt-1 leading-normal">Batas waktu pembelajaran telah lewat</p>
                     </div>
                   ) : isCompleted ? (
-                    <div className="p-4 rounded-xl bg-[#ECFDF3] border border-[#6CE9A6] text-center">
+                    <div className="p-4.5 rounded-xl bg-[#ECFDF3] border border-[#6CE9A6]/40 text-center shadow-sm">
                       <CheckCircle2 className="h-5 w-5 text-[#027A48] mx-auto mb-2" />
-                      <p className="text-sm font-semibold text-[#027A48]">Kursus Selesai!</p>
-                      <Link href="/performance">
-                        <Button variant="outline" className="mt-3 w-full text-sm">
+                      <p className="text-sm font-bold text-[#027A48]">Selamat! Kursus Selesai</p>
+                      <Link href="/performance" className="block mt-3 w-full">
+                        <Button variant="outline" className="w-full text-xs font-bold uppercase tracking-wider rounded-xl py-2.5 border-slate-300 hover:bg-[#F8F9FB] active:scale-[0.98] transition-all">
                           Lihat Performa
                         </Button>
                       </Link>
                     </div>
                   ) : nextModuleId ? (
-                    <Button asChild className="w-full bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white font-semibold rounded-xl font-['DM_Sans'] transition-all shadow-[0_4px_14px_rgba(232,160,32,0.3)]">
+                    <Button asChild className="w-full bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-xs font-bold uppercase tracking-wider py-3 rounded-xl font-['DM_Sans'] transition-all shadow-lg shadow-[#E8A020]/20 border border-transparent outline-none">
                       <Link href={`/courses/${course.id}/modules/${nextModuleId}`}>
-                        <PlayCircle size={15} className="mr-2" />
+                        <PlayCircle size={14} className="mr-1.5 fill-current" />
                         Lanjutkan Belajar
                       </Link>
                     </Button>
                   ) : (
-                    <Button disabled className="w-full rounded-xl font-['DM_Sans']">
+                    <Button disabled className="w-full rounded-xl py-3 text-xs font-bold uppercase tracking-wider font-['DM_Sans'] bg-slate-100 text-slate-400 cursor-not-allowed">
                       Materi Belum Tersedia
                     </Button>
                   )}

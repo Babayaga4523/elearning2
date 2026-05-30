@@ -57,6 +57,7 @@ interface DashboardClientProps {
 }
 
 /* ─── KPI Stat Card ────────────────────────────────────────────── */
+/* ─── KPI Stat Card ────────────────────────────────────────────── */
 function StatCard({
   label,
   value,
@@ -72,25 +73,25 @@ function StatCard({
 }) {
   const styles = {
     gold: {
-      bg: "from-[#E8A020]/5 via-[#FEF3DC]/10 to-transparent",
+      bg: "bg-white hover:bg-gradient-to-br hover:from-white hover:to-[#FEF3DC]/10",
       icon: "text-[#C4861A]",
-      iconBg: "bg-[#FEF3DC]",
+      iconBg: "bg-[#FEF3DC]/70",
+      border: "border-l-4 border-l-[#E8A020] border-t border-r border-b border-[#E4E7EC]",
       text: "text-[#C4861A]",
-      bar: "bg-gradient-to-r from-[#E8A020] to-[#C4861A]",
     },
     green: {
-      bg: "from-[#12B76A]/5 via-[#ECFDF3]/10 to-transparent",
+      bg: "bg-white hover:bg-gradient-to-br hover:from-white hover:to-[#ECFDF3]/10",
       icon: "text-[#027A48]",
-      iconBg: "bg-[#ECFDF3]",
+      iconBg: "bg-[#ECFDF3]/70",
+      border: "border-l-4 border-l-[#12B76A] border-t border-r border-b border-[#E4E7EC]",
       text: "text-[#027A48]",
-      bar: "bg-gradient-to-r from-[#12B76A] to-[#027A48]",
     },
     navy: {
-      bg: "from-[#0F1C3F]/5 via-[#E8EDF7]/10 to-transparent",
+      bg: "bg-white hover:bg-gradient-to-br hover:from-white hover:to-[#E8EDF7]/10",
       icon: "text-[#0F1C3F]",
-      iconBg: "bg-[#E8EDF7]",
+      iconBg: "bg-[#E8EDF7]/70",
+      border: "border-l-4 border-l-[#0F1C3F] border-t border-r border-b border-[#E4E7EC]",
       text: "text-[#0F1C3F]",
-      bar: "bg-gradient-to-r from-[#0F1C3F] to-[#1A2D5A]",
     },
   };
   const s = styles[accent];
@@ -98,27 +99,23 @@ function StatCard({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl bg-gradient-to-br p-6",
-        "border border-[#E4E7EC]/60",
-        "hover:shadow-lg hover:shadow-[#0F1C3F]/5 hover:-translate-y-0.5",
+        "relative overflow-hidden rounded-2xl p-6",
+        "shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-[0.98]",
         "transition-all duration-300 cursor-default",
-        s.bg
+        s.bg,
+        s.border
       )}
-      style={{ backdropFilter: "blur(8px)" }}
     >
-      {/* Top accent line */}
-      <div className={cn("absolute top-0 left-0 right-0 h-0.5 rounded-t-2xl", s.bar)} />
-
-      <div className="flex items-start justify-between gap-4">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold text-[#475467] font-['DM_Sans'] tracking-wide">
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-1.5">
+          <p className="text-xs font-bold text-[#64748B] font-['DM_Sans'] tracking-widest uppercase">
             {label}
           </p>
-          <p className="text-4xl font-bold text-[#0F1C3F] font-['Lexend_Deca'] leading-none tabular-nums">
+          <p className="text-3xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none tabular-nums">
             {value}
           </p>
           {description && (
-            <p className="text-xs text-[#94A4B8] font-['DM_Sans']">
+            <p className="text-[11px] font-medium text-[#94A3B8] font-['DM_Sans']">
               {description}
             </p>
           )}
@@ -126,11 +123,11 @@ function StatCard({
 
         <div
           className={cn(
-            "w-12 h-12 rounded-xl flex items-center justify-center shrink-0 shadow-sm",
+            "w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border border-[#E4E7EC]/40 shadow-sm",
             s.iconBg
           )}
         >
-          <Icon size={22} className={s.icon} />
+          <Icon size={20} className={s.icon} />
         </div>
       </div>
     </div>
@@ -153,30 +150,30 @@ function AlertBanner({
 
   const style = isExpired
     ? {
-        bg: "bg-gradient-to-r from-[#FEF3F2] to-[#FEF3F2]/50",
-        border: "border-[#FDA29B]/60",
-        accent: "bg-[#F04438]",
+        bg: "bg-white border-[#FDA29B]/80",
+        border: "border-l-4 border-l-[#F04438]",
+        accent: "#F04438",
         label: "Deadline Terlewat",
-        text: "text-[#B42318]",
+        text: "text-[#B42318] bg-[#FEF3F2]",
         btn: "bg-[#B42318] hover:bg-[#991B1B] text-white",
         icon: AlertTriangle,
       }
     : isToday
     ? {
-        bg: "bg-gradient-to-r from-[#FFFAEB] to-[#FFFAEB]/50",
-        border: "border-[#FEC84B]/60",
-        accent: "bg-[#F79009]",
-        label: "Hari Ini",
-        text: "text-[#B45309]",
+        bg: "bg-white border-[#FEC84B]/80",
+        border: "border-l-4 border-l-[#F79009]",
+        accent: "#F79009",
+        label: "Deadline Hari Ini",
+        text: "text-[#B45309] bg-[#FFFAEB]",
         btn: "bg-[#F79009] hover:bg-[#DC6803] text-white",
         icon: Clock,
       }
     : {
-        bg: "bg-gradient-to-r from-[#EFF8FF] to-[#EFF8FF]/50",
-        border: "border-[#B2DDFF]/60",
-        accent: "bg-[#2E90FA]",
-        label: `${alert.daysRemaining} hari lagi`,
-        text: "text-[#175CD3]",
+        bg: "bg-white border-[#B2DDFF]/80",
+        border: "border-l-4 border-l-[#2E90FA]",
+        accent: "#2E90FA",
+        label: `Deadline ${alert.daysRemaining} hari lagi`,
+        text: "text-[#175CD3] bg-[#EFF8FF]",
         btn: "bg-[#2E90FA] hover:bg-[#1570EF] text-white",
         icon: Clock,
       };
@@ -187,25 +184,24 @@ function AlertBanner({
     <div
       className={cn(
         "flex flex-col sm:flex-row sm:items-center justify-between gap-4",
-        "rounded-2xl border px-5 py-4",
-        "transition-all duration-200 hover:shadow-md",
+        "rounded-2xl border px-5 py-4 bg-white shadow-sm",
+        "transition-all duration-200 hover:shadow-md hover:border-slate-300",
         style.bg,
         style.border
       )}
-      style={{ borderWidth: 1 }}
     >
       <div className="flex items-center gap-4 flex-1 min-w-0">
         <div
-          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-          style={{ backgroundColor: `${style.accent}20` }}
+          className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[#E4E7EC]/40"
+          style={{ backgroundColor: `${style.accent}12` }}
         >
           <Icon size={18} style={{ color: style.accent }} />
         </div>
 
         <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-0.5">
+          <div className="flex items-center gap-2 mb-1">
             <span
-              className={cn("text-xs font-bold uppercase tracking-wider font-['DM_Sans']", style.text)}
+              className={cn("inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider font-['DM_Sans']", style.text)}
             >
               {style.label}
             </span>
@@ -216,7 +212,7 @@ function AlertBanner({
               </span>
             )}
           </div>
-          <p className="text-sm font-semibold text-[#0F1C3F] font-['DM_Sans'] truncate leading-tight">
+          <p className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] truncate leading-tight">
             {alert.title}
           </p>
         </div>
@@ -225,9 +221,9 @@ function AlertBanner({
       <Link href={`/courses/${alert.courseId}`} className="shrink-0">
         <button
           className={cn(
-            "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold font-['DM_Sans']",
+            "inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold font-['DM_Sans'] uppercase tracking-wider",
             "transition-all duration-150 active:scale-[0.97]",
-            "shadow-sm",
+            "shadow-sm border border-transparent outline-none",
             style.btn
           )}
         >
@@ -239,6 +235,7 @@ function AlertBanner({
   );
 }
 
+/* ─── Course Progress Card ─────────────────────────────────────── */
 /* ─── Course Progress Card ─────────────────────────────────────── */
 function CourseCard({
   course,
@@ -252,50 +249,56 @@ function CourseCard({
       : 0;
 
   const isDone = pct >= 100;
-  const isActive = pct > 0 && pct < 100;
 
   return (
     <Link
       href={`/courses/${course.id}`}
-      className="group block rounded-2xl border border-[#E4E7EC]/80 bg-white hover:bg-[#FAFBFF] p-5 hover:border-[#E8A020]/40 hover:shadow-lg hover:shadow-[#0F1C3F]/4 transition-all duration-250"
+      className="group block rounded-2xl border border-[#E4E7EC] bg-white p-5 hover:border-[#E8A020]/50 hover:shadow-md active:scale-[0.98] transition-all duration-300"
     >
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex-1 min-w-0">
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#EFF8FF] border border-[#B2DDFF]/60 text-[11px] font-semibold text-[#175CD3] font-['DM_Sans'] mb-2">
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-lg bg-[#EFF8FF] border border-[#B2DDFF]/50 text-[10px] font-bold text-[#175CD3] font-['DM_Sans'] mb-2 uppercase tracking-wide">
             <BookOpen size={10} />
             {course.category || "General"}
           </span>
-          <h4 className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] leading-snug line-clamp-2 group-hover:text-[#C4861A] transition-colors">
+          <h4 className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] leading-snug line-clamp-2 group-hover:text-[#C4861A] transition-colors duration-200">
             {course.title}
           </h4>
-          <p className="text-xs text-[#64748B] font-['DM_Sans'] mt-1">
-            {course.completedModules} / {course.totalModules} modul
-          </p>
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
+            <p className="text-xs font-semibold text-[#64748B] font-['DM_Sans']">
+              {course.completedModules} / {course.totalModules} modul
+            </p>
+            {course.deadline && course.deadline !== "-" && (
+              <p className="text-[10px] font-bold text-rose-600 bg-rose-50 border border-rose-100 rounded-md px-1.5 py-0.5">
+                ⏰ Deadline: {course.deadline}
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Status icon */}
         <div
           className={cn(
-            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-200",
+            "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border border-[#E4E7EC]/40 transition-all duration-300 shadow-sm",
             isDone
               ? "bg-[#ECFDF3] text-[#027A48] group-hover:bg-[#027A48] group-hover:text-white"
               : "bg-[#FEF3DC] text-[#C4861A] group-hover:bg-[#E8A020] group-hover:text-white"
           )}
         >
-          {isDone ? <CheckCircle2 size={18} /> : <Play size={16} className="ml-0.5" />}
+          {isDone ? <CheckCircle2 size={16} /> : <Play size={14} className="ml-0.5 fill-current" />}
         </div>
       </div>
 
       {/* Progress */}
-      <div className="space-y-2">
+      <div className="space-y-1.5">
         <div className="flex justify-between text-xs font-['DM_Sans']">
-          <span className="font-semibold text-[#0F1C3F]">{pct}%</span>
-          <span className="text-[#94A4B8]">
-            {Math.max(5, (course.totalModules - course.completedModules) * 15)} menit lagi
+          <span className="font-bold text-[#0F1C3F]">{pct}% selesai</span>
+          <span className="text-[#94A4B8] font-medium">
+            {Math.max(5, (course.totalModules - course.completedModules) * 12)} menit lagi
           </span>
         </div>
-        <div className="h-1.5 bg-[#F1F5F9] rounded-full overflow-hidden">
+        <div className="h-2 bg-[#F1F5F9] rounded-full overflow-hidden border border-[#E4E7EC]/10">
           <div
             className={cn(
               "h-full rounded-full transition-all duration-700",
@@ -319,18 +322,18 @@ function RecommendationCard({ rec, index }: { rec: any; index: number }) {
   return (
     <Link
       href={`/courses/${rec.id}`}
-      className="group flex items-center gap-4 p-4 rounded-2xl border border-[#E4E7EC]/60 bg-white hover:bg-[#F8F9FB] hover:border-[#E8A020]/40 transition-all duration-200"
+      className="group flex items-center gap-4 p-4 rounded-2xl border border-[#E4E7EC] bg-white hover:bg-[#F8F9FB] hover:border-[#E8A020]/50 active:scale-[0.98] transition-all duration-300"
     >
       <div
-        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[#0F1C3F] group-hover:bg-[#E8A020] group-hover:text-white transition-all duration-200 bg-[#EFF8FF]"
+        className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-[#0F1C3F] group-hover:bg-[#E8A020] group-hover:text-white transition-all duration-300 bg-[#EFF8FF] border border-[#E4E7EC]/40"
       >
         <Icon size={18} />
       </div>
       <div className="flex-1 min-w-0">
-        <h4 className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] line-clamp-2 leading-snug group-hover:text-[#C4861A] transition-colors">
+        <h4 className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] line-clamp-2 leading-snug group-hover:text-[#C4861A] transition-colors duration-200">
           {rec.title}
         </h4>
-        <p className="text-xs text-[#94A4B8] font-['DM_Sans'] mt-0.5">
+        <p className="text-xs font-semibold text-[#94A4B8] font-['DM_Sans'] mt-0.5">
           {rec.category || "General"}
         </p>
       </div>
@@ -405,87 +408,88 @@ export default function DashboardClient({
       <div className="max-w-[1320px] mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
 
         {/* ── Greeting Hero ──────────────────────────────────────────────── */}
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1C3F] via-[#1A2D5A] to-[#243868] p-8 lg:p-10">
-          {/* Decorative elements */}
-          <div className="absolute inset-0 opacity-5 pointer-events-none">
-            <div className="absolute right-0 top-0 w-96 h-96 rounded-full bg-[#E8A020] blur-[120px]" />
-            <div className="absolute left-1/2 bottom-0 w-64 h-64 rounded-full bg-[#2E90FA] blur-[100px]" />
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0F1C3F] via-[#12224A] to-[#1A2D5A] p-8 lg:p-10 border border-[#1A2D5A] shadow-lg shadow-[#0F1C3F]/10">
+          {/* Glowing orbs */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute right-[-10%] top-[-20%] w-[450px] h-[450px] rounded-full bg-[#E8A020] blur-[150px] mix-blend-screen" />
+            <div className="absolute left-[30%] bottom-[-30%] w-[350px] h-[350px] rounded-full bg-[#2E90FA] blur-[120px] mix-blend-screen animate-pulse" />
           </div>
-          {/* Grid pattern */}
+          {/* Subtle Grid pattern overlay */}
           <div
-            className="absolute inset-0 opacity-[0.03] pointer-events-none"
+            className="absolute inset-0 opacity-[0.05] pointer-events-none mix-blend-overlay"
             style={{
               backgroundImage:
-                "linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)",
-              backgroundSize: "40px 40px",
+                "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)",
+              backgroundSize: "24px 24px",
             }}
           />
 
-          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-            {/* Text */}
-            <div className="space-y-2 max-w-xl">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-[10px] font-bold uppercase tracking-widest text-[#E8A020] mb-1">
-                <Sparkles size={10} />
-                E-Learning Portal
+          <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+            {/* Text & Primary Actions */}
+            <div className="space-y-3.5 max-w-xl">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 border border-white/10 text-[9px] font-extrabold uppercase tracking-widest text-[#E8A020]">
+                <Sparkles size={10} className="animate-spin-slow" />
+                BNI Finance E-Learning Portal
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white font-['Lexend_Deca'] leading-tight">
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white font-['Lexend_Deca'] leading-tight tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-white to-white/90">
                 {greeting}, {firstName}
               </h1>
-              <p className="text-sm text-white/50 font-['DM_Sans']">
-                {user.department || "BNI Finance"} ·{" "}
-                {resumeData ? "Lanjutkan perjalanan belajar Anda" : "Mulai petualangan belajar Anda"}
+              <p className="text-sm font-medium text-white/60 font-['DM_Sans'] leading-relaxed">
+                Divisi: <span className="text-[#E8A020] font-bold">{user.department || "BNI Finance"}</span> ·{" "}
+                {resumeData ? "Lanjutkan perjalanan belajar Anda hari ini." : "Silakan jelajahi katalog untuk memulai."}
               </p>
 
-              {/* CTA */}
-              <div className="flex flex-wrap gap-3 pt-3">
+              {/* CTA Buttons */}
+              <div className="flex flex-wrap gap-3.5 pt-2">
                 {resumeData ? (
                   <Link href={resumeData.href}>
-                    <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-sm font-semibold rounded-xl font-['DM_Sans'] shadow-lg shadow-[#E8A020]/25 transition-all duration-150">
-                      <Play size={15} />
+                    <button className="inline-flex items-center gap-2 px-5 py-3 bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-xs font-bold uppercase tracking-wider rounded-xl font-['DM_Sans'] shadow-lg shadow-[#E8A020]/25 transition-all duration-150 border border-transparent outline-none">
+                      <Play size={12} className="fill-current" />
                       Lanjutkan Belajar
                     </button>
                   </Link>
                 ) : (
                   <Link href="/courses">
-                    <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-sm font-semibold rounded-xl font-['DM_Sans'] shadow-lg shadow-[#E8A020]/25 transition-all duration-150">
-                      <BookOpen size={15} />
+                    <button className="inline-flex items-center gap-2 px-5 py-3 bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-xs font-bold uppercase tracking-wider rounded-xl font-['DM_Sans'] shadow-lg shadow-[#E8A020]/25 transition-all duration-150 border border-transparent outline-none">
+                      <BookOpen size={12} />
                       Mulai Belajar
                     </button>
                   </Link>
                 )}
                 <Link href="/performance">
-                  <button className="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-white/20 active:scale-[0.97] border border-white/20 text-white text-sm font-semibold rounded-xl font-['DM_Sans'] transition-all duration-150">
-                    <TrendingUp size={15} />
+                  <button className="inline-flex items-center gap-2 px-5 py-3 bg-white/10 hover:bg-white/15 active:scale-[0.97] border border-white/20 hover:border-white/30 text-white text-xs font-bold uppercase tracking-wider rounded-xl font-['DM_Sans'] transition-all duration-150 outline-none">
+                    <TrendingUp size={12} />
                     Lihat Performa
                   </button>
                 </Link>
               </div>
             </div>
 
-            {/* Avg Score Radial */}
-            <div className="flex items-center gap-4 shrink-0 bg-white/10 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4">
+            {/* Avg Score Glass Radial */}
+            <div className="flex items-center gap-4 shrink-0 bg-white/[0.07] backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-4 shadow-xl shadow-black/10">
               <div className="relative" style={{ width: 72, height: 72 }}>
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
-                  <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.1)" strokeWidth="5" />
+                  <circle cx="36" cy="36" r="28" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="5.5" />
                   <circle
                     cx="36" cy="36" r="28"
                     fill="none"
                     stroke="#E8A020"
-                    strokeWidth="5"
+                    strokeWidth="5.5"
                     strokeDasharray={`${(avgScore / 100) * 175.93} 175.93`}
                     strokeLinecap="round"
+                    className="transition-all duration-1000"
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-xl font-bold text-white font-['Lexend_Deca'] leading-none">{avgScore}</span>
-                  <span className="text-[10px] text-white/50 font-['DM_Sans']">%</span>
+                  <span className="text-xl font-extrabold text-white font-['Lexend_Deca'] leading-none tracking-tight">{avgScore}</span>
+                  <span className="text-[9px] font-bold text-[#E8A020] font-['DM_Sans'] mt-0.5">%</span>
                 </div>
               </div>
-              <div>
-                <p className="text-[10px] font-semibold text-white/50 uppercase tracking-widest font-['DM_Sans']">
-                  Avg Score
+              <div className="space-y-0.5">
+                <p className="text-[10px] font-bold text-[#E8A020] uppercase tracking-widest font-['DM_Sans']">
+                  Avg Post-Test
                 </p>
-                <p className="text-sm font-semibold text-white font-['DM_Sans']">Post-Test</p>
+                <p className="text-sm font-extrabold text-white font-['DM_Sans'] tracking-tight">Performa Anda</p>
               </div>
             </div>
           </div>

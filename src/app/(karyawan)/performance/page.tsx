@@ -55,6 +55,7 @@ function MetricCard({
   iconColor,
   progress,
   progressLabel,
+  topBorder = "border-t-[#E4E7EC]"
 }: {
   label: string;
   value: string | number;
@@ -64,31 +65,36 @@ function MetricCard({
   iconColor: string;
   progress?: number;
   progressLabel?: string;
+  topBorder?: string;
 }) {
   return (
     <div
-      className="bg-white rounded-2xl border border-[#E4E7EC] p-5 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
+      className={cn(
+        "bg-white rounded-2xl border border-[#E4E7EC] border-t-4 p-5",
+        "shadow-sm hover:shadow-md hover:-translate-y-1 active:scale-[0.98] transition-all duration-300 cursor-default",
+        topBorder
+      )}
     >
       <div className="flex items-start justify-between mb-3">
-        <span className="text-xs font-semibold text-[#98A2B3] uppercase tracking-widest font-['DM_Sans']">
+        <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-widest font-['DM_Sans']">
           {label}
         </span>
         <div
           className={cn(
-            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0",
+            "w-8 h-8 rounded-lg flex items-center justify-center shrink-0 border border-[#E4E7EC]/10 shadow-sm",
             iconBg
           )}
         >
-          <Icon size={16} className={iconColor} />
+          <Icon size={15} className={iconColor} />
         </div>
       </div>
 
-      <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-3xl font-bold text-[#101828] font-['Lexend_Deca'] leading-none tracking-tight tabular-nums">
+      <div className="flex items-baseline gap-1.5 mb-1">
+        <span className="text-3xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none tracking-tight tabular-nums">
           {value}
         </span>
         {sub && (
-          <span className="text-xs text-[#475467] font-['DM_Sans'] font-medium">
+          <span className="text-[11px] text-[#64748B] font-['DM_Sans'] font-bold uppercase tracking-wide">
             {sub}
           </span>
         )}
@@ -96,14 +102,14 @@ function MetricCard({
 
       {progress !== undefined && (
         <>
-          <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden mt-3">
+          <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden mt-3 border border-[#E4E7EC]/10">
             <div
               className="h-full rounded-full bg-gradient-to-r from-[#E8A020] to-[#F5C05A] transition-all duration-500"
               style={{ width: `${progress}%` }}
             />
           </div>
           {progressLabel && (
-            <p className="text-right text-[11px] text-[#98A2B3] mt-1 font-['DM_Sans']">
+            <p className="text-right text-[10px] font-bold text-[#94A3B8] mt-1 font-['DM_Sans'] uppercase tracking-wider">
               {progressLabel}
             </p>
           )}
@@ -206,35 +212,37 @@ export default async function PerformancePage() {
 
         {/* ═══ Hero Header ════════════════════════════════════════════════ */}
         <header
-          className="rounded-2xl overflow-hidden relative"
+          className="rounded-3xl overflow-hidden relative border border-[#1A2D5A]"
           style={{
-            background: `linear-gradient(135deg, ${t.navy} 0%, ${t.navyMid} 60%, #1e3a5f 100%)`,
+            background: `linear-gradient(135deg, ${t.navy} 0%, ${t.navyMid} 50%, #1e3a5f 100%)`,
           }}
         >
-          {/* Ambient glows */}
+          {/* Glowing orbs */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none">
+            <div className="absolute right-[-10%] top-[-20%] w-[400px] h-[400px] rounded-full bg-[#E8A020] blur-[140px] mix-blend-screen" />
+            <div className="absolute left-[-10%] bottom-[-20%] w-[250px] h-[250px] rounded-full bg-[#2E90FA] blur-[100px] mix-blend-screen animate-pulse" />
+          </div>
+          {/* Subtle grid overlay */}
           <div
-            className="absolute -right-20 -top-20 w-80 h-80 rounded-full opacity-10 pointer-events-none"
+            className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
             style={{
-              background: `radial-gradient(circle, ${t.gold} 0%, transparent 70%)`,
+              backgroundImage:
+                "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)",
+              backgroundSize: "24px 24px",
             }}
-          />
-          <div
-            className="absolute -left-10 -bottom-10 w-48 h-48 rounded-full opacity-5 pointer-events-none"
-            style={{ background: `radial-gradient(circle, #2E90FA 0%, transparent 70%)` }}
           />
 
           <div className="relative z-10 px-8 py-8 md:px-10 md:py-9 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-            <div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[10px] font-semibold uppercase tracking-widest text-white/70 mb-3">
-                <Sparkles size={10} />
-                Performa Belajar
+            <div className="space-y-2">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 border border-white/20 text-[9px] font-extrabold uppercase tracking-widest text-white/80">
+                <Sparkles size={10} className="animate-spin-slow" />
+                Statistik Belajar Anda
               </div>
-              <h1 className="text-2xl md:text-3xl font-bold text-white font-['Lexend_Deca'] leading-tight tracking-tight mb-2">
-                Analisis Pembelajaran
+              <h1 className="text-3xl md:text-4xl font-extrabold text-white font-['Lexend_Deca'] leading-tight tracking-tight">
+                Analisis Performa
               </h1>
-              <p className="text-sm text-white/60 font-['DM_Sans'] max-w-xl leading-relaxed">
-                Lacak kemajuan pembelajaran, analisis hasil ujian, dan temukan area
-                untuk peningkatan karir Anda.
+              <p className="text-sm font-medium text-white/60 font-['DM_Sans'] max-w-xl leading-relaxed">
+                Lacak kemajuan pembelajaran personal Anda, analisis hasil ujian KKM, dan download transkrip kelulusan kursus BNI Finance Anda.
               </p>
             </div>
             <div className="shrink-0">
@@ -251,6 +259,7 @@ export default async function PerformancePage() {
             icon={BookOpen}
             iconBg="bg-[#EFF8FF]"
             iconColor="text-[#175CD3]"
+            topBorder="border-t-[#175CD3]"
           />
           <MetricCard
             label="Kursus Selesai"
@@ -260,6 +269,7 @@ export default async function PerformancePage() {
             iconColor="text-[#027A48]"
             progress={completionPct}
             progressLabel={`${completionPct}% selesai`}
+            topBorder="border-t-[#12B76A]"
           />
           <MetricCard
             label="Post-Test Diambil"
@@ -268,6 +278,7 @@ export default async function PerformancePage() {
             icon={ClipboardList}
             iconBg="bg-[#FFFAEB]"
             iconColor="text-[#B54708]"
+            topBorder="border-t-[#F79009]"
           />
           <MetricCard
             label="Tingkat Kelulusan"
@@ -276,6 +287,7 @@ export default async function PerformancePage() {
             icon={Medal}
             iconBg="bg-[#FEF3DC]"
             iconColor="text-[#C4861A]"
+            topBorder="border-t-[#E8A020]"
           />
         </section>
 

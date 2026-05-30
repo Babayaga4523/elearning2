@@ -114,7 +114,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
 
   return (
     <>
-      <nav className="sticky top-0 z-50 bg-white border-b border-[#E4E7EC]/80 backdrop-blur-xl">
+      <nav className="sticky top-0 z-50 bg-white/80 border-b border-[#E4E7EC]/80 backdrop-blur-xl supports-[backdrop-filter]:bg-white/70">
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-[68px]">
 
@@ -126,7 +126,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
                   alt="BNI Finance"
                   width={172}
                   height={42}
-                  className="h-9 w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
+                  className="h-[42px] w-auto object-contain transition-transform duration-300 group-hover:scale-[1.02]"
                   priority
                 />
               </div>
@@ -155,7 +155,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
               {/* Desktop User Menu */}
               <div className="hidden sm:block">
                 <DropdownMenu>
-                  <DropdownMenuTrigger className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-[#E4E7EC] bg-white hover:bg-[#F8F9FB] transition-all duration-200 group shadow-sm">
+                  <DropdownMenuTrigger className="flex items-center gap-2.5 px-3 py-2 rounded-xl border border-[#E4E7EC] bg-white hover:bg-[#F8F9FB] active:scale-[0.98] transition-all duration-200 group shadow-sm outline-none">
                     <Avatar className="h-8 w-8 ring-2 ring-[#E4E7EC]">
                       <AvatarImage
                         src={
@@ -173,7 +173,7 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
                       <p className="text-sm font-bold text-[#0F1C3F] leading-tight">
                         {user?.name || "Karyawan"}
                       </p>
-                      <p className="text-[11px] text-[#94A3B8] leading-tight mt-0.5">
+                      <p className="text-[11px] text-[#94A3B8] leading-tight mt-0.5 font-medium">
                         {user?.department || "BNI Finance"}
                       </p>
                     </div>
@@ -183,22 +183,22 @@ export const Navbar = ({ user }: NavbarProps = {}) => {
                     />
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent align="end" className="w-60 mt-2 py-1.5">
+                  <DropdownMenuContent align="end" className="w-60 mt-2 py-1.5 border border-[#E4E7EC] shadow-xl shadow-[#0F1C3F]/5 rounded-2xl animate-[shimmer_0.2s_ease-out]">
                     <DropdownMenuLabel className="px-3 py-2">
                       <p className="text-sm font-bold text-[#0F1C3F]">{user?.name || "Karyawan"}</p>
                       <p className="text-xs text-[#94A3B8] mt-0.5">{user?.email}</p>
                     </DropdownMenuLabel>
-                    <DropdownMenuSeparator className="my-1.5" />
-                    <DropdownMenuItem asChild className="py-2.5 px-3 cursor-pointer">
-                      <Link href="/profile" className="flex items-center gap-2.5 text-sm">
-                        <User size={15} className="text-[#64748B]" />
+                    <DropdownMenuSeparator className="my-1.5 bg-[#E4E7EC]/60" />
+                    <DropdownMenuItem asChild className="py-2.5 px-3 cursor-pointer rounded-lg hover:bg-[#F8F9FB] transition-colors">
+                      <Link href="/profile" className="flex items-center gap-2.5 text-sm font-semibold text-[#475467] hover:text-[#0F1C3F]">
+                        <User size={15} className="text-[#94A3B8]" />
                         <span>Profil Saya</span>
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator className="my-1.5" />
+                    <DropdownMenuSeparator className="my-1.5 bg-[#E4E7EC]/60" />
                     <DropdownMenuItem
                       onClick={() => signOut()}
-                      className="py-2.5 px-3 text-rose-600 cursor-pointer hover:bg-rose-50"
+                      className="py-2.5 px-3 text-rose-600 cursor-pointer rounded-lg hover:bg-rose-50/60 font-semibold flex items-center gap-2.5 text-sm"
                     >
                       <LogOut size={15} />
                       <span>Keluar</span>

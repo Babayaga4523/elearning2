@@ -38,32 +38,42 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 /* ─── Course Analysis Row ─────────────────────────────────────────────── */
 function CourseAnalysisRow({ course }: { course: CourseAnalysisItem }) {
   const status = STATUS_CONFIG[course.status] ?? STATUS_CONFIG.IN_PROGRESS;
+  
+  const borderAccent = course.status === "COMPLETED" 
+    ? "border-l-4 border-l-[#12B76A]" 
+    : course.status === "FAILED" 
+    ? "border-l-4 border-l-[#F04438]" 
+    : "border-l-4 border-l-[#E8A020]";
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-[#E4E7EC] hover:border-[#C4861A] hover:shadow-sm transition-all duration-200 bg-white">
+    <div className={cn(
+      "flex flex-col sm:flex-row sm:items-center gap-4 p-4 rounded-xl border border-[#E4E7EC] active:scale-[0.99] transition-all duration-300 bg-white",
+      borderAccent
+    )}>
       {/* Left: title + badges */}
       <div className="flex-1 min-w-0 space-y-2">
         <div className="flex items-center gap-2 flex-wrap">
           <Badge
             variant="outline"
-            className="text-[10px] font-semibold font-['DM_Sans'] text-[#475467] border-[#E4E7EC] bg-[#F8F9FB]"
+            className="text-[10px] font-bold font-['DM_Sans'] text-[#64748B] border-[#E4E7EC] bg-[#F8F9FB] uppercase tracking-wide px-2 py-0.5"
           >
             {course.category}
           </Badge>
           <Badge
             className={cn(
-              "text-[10px] font-semibold font-['DM_Sans'] border",
+              "text-[10px] font-bold font-['DM_Sans'] border uppercase tracking-wide px-2 py-0.5",
               status.className
             )}
           >
             {status.label}
           </Badge>
         </div>
-        <p className="text-sm font-semibold text-[#101828] font-['DM_Sans'] leading-snug line-clamp-1">
+        <p className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] leading-snug line-clamp-1">
           {course.title}
         </p>
         {course.lastAttempt && (
-          <p className="text-[11px] text-[#98A2B3] font-['DM_Sans']">
+          <p className="text-[10px] font-bold text-[#94A3B8] font-['DM_Sans']">
+            Aktivitas Terakhir: {" "}
             {new Date(course.lastAttempt).toLocaleDateString("id-ID", {
               day: "numeric",
               month: "short",
@@ -78,14 +88,14 @@ function CourseAnalysisRow({ course }: { course: CourseAnalysisItem }) {
 
       {/* Progress */}
       <div className="sm:w-36 space-y-1.5">
-        <div className="flex justify-between text-xs text-[#475467] font-['DM_Sans']">
-          <span>Progress</span>
-          <span className="font-semibold text-[#101828]">{course.progress}%</span>
+        <div className="flex justify-between text-xs text-[#64748B] font-['DM_Sans']">
+          <span className="font-bold">Progress</span>
+          <span className="font-extrabold text-[#101828]">{course.progress}%</span>
         </div>
-        <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden">
+        <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden border border-[#E4E7EC]/10">
           <div
             className={cn(
-              "h-full rounded-full transition-all",
+              "h-full rounded-full transition-all duration-500",
               course.progress === 100
                 ? "bg-gradient-to-r from-[#12B76A] to-[#027A48]"
                 : "bg-gradient-to-r from-[#E8A020] to-[#F5C05A]"
@@ -101,13 +111,13 @@ function CourseAnalysisRow({ course }: { course: CourseAnalysisItem }) {
       {/* Scores */}
       <div className="flex items-center gap-3">
         {/* Pre score */}
-        <div className="text-center min-w-[52px]">
-          <p className="text-[10px] text-[#98A2B3] font-['DM_Sans'] mb-1 uppercase tracking-wider">
-            Pre
+        <div className="text-center min-w-[56px]">
+          <p className="text-[9px] font-bold text-[#98A2B3] font-['DM_Sans'] mb-1 uppercase tracking-widest">
+            Pre-Test
           </p>
           <div
             className={cn(
-              "px-2.5 py-1.5 rounded-lg border text-sm font-bold font-['Lexend_Deca'] leading-none",
+              "px-2.5 py-1.5 rounded-xl border text-xs font-extrabold font-['Lexend_Deca'] leading-none text-center shadow-sm",
               course.preScore !== null
                 ? course.preScore >= 70
                   ? "bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6]"
@@ -120,16 +130,16 @@ function CourseAnalysisRow({ course }: { course: CourseAnalysisItem }) {
         </div>
 
         {/* Arrow */}
-        <span className="text-[#98A2B3] text-xs">→</span>
+        <span className="text-[#98A2B3] text-xs font-bold">→</span>
 
         {/* Post score */}
-        <div className="text-center min-w-[52px]">
-          <p className="text-[10px] text-[#98A2B3] font-['DM_Sans'] mb-1 uppercase tracking-wider">
-            Post
+        <div className="text-center min-w-[56px]">
+          <p className="text-[9px] font-bold text-[#98A2B3] font-['DM_Sans'] mb-1 uppercase tracking-widest">
+            Post-Test
           </p>
           <div
             className={cn(
-              "px-2.5 py-1.5 rounded-lg border text-sm font-bold font-['Lexend_Deca'] leading-none",
+              "px-2.5 py-1.5 rounded-xl border text-xs font-extrabold font-['Lexend_Deca'] leading-none text-center shadow-sm",
               course.postScore !== null
                 ? course.postScore >= 70
                   ? "bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6]"
