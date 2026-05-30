@@ -137,11 +137,12 @@ export async function getPerformanceData() {
     }));
 
   // 7. Recent Activity (Top 5)
-  const recentActivity = allAttempts.slice(0, 5).map(a => ({
+  // Note: a.test.course is selected in the query (lines 64-68) — TypeScript only infers partial type
+  const recentActivity = allAttempts.slice(0, 5).map((a) => ({
     id: a.id,
     testTitle: a.test.title,
     courseId: a.test.courseId,
-    courseTitle: (a.test as any).course.title,
+    courseTitle: (a.test as unknown as { course: { title: string } }).course.title,
     score: a.score,
     passed: a.passed,
     date: a.createdAt

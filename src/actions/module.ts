@@ -65,8 +65,14 @@ export async function completeModule(moduleId: string, isCompleted: boolean) {
     },
   });
 
-  // Auto-complete enrollment if all modules done AND Post-Test passed (if exists)
-  // Skip for admins in preview mode (no enrollment to complete)
+  // ──────────────────────────────────────────────────────────────────────────────
+  // Business Rule: Enrollment COMPLETED requires:
+  //   1. ALL published modules in the course are completed (isCompleted = true)
+  //   2. Post-Test exists AND user has passed it (score >= passingScore)
+  //
+  // Note: Pre-Test does NOT affect enrollment completion status.
+  // Note: If a course has NO Post-Test, enrollment COMPLETED after all modules done.
+  // ──────────────────────────────────────────────────────────────────────────────
   if (isCompleted && enrollment) {
     const courseModules = await db.module.findMany({
       where: { courseId: m.courseId, isPublished: true },
@@ -175,13 +181,26 @@ export async function createModule(courseId: string, data: { title: string; posi
   return m;
 }
 
-export async function updateModule(id: string, values: any) {
+export async function updateModule(id: string, values: Record<string, unknown>) {
   const session = await requireAdmin();
   if ("success" in session) throw new Error(session.error);
 
+  // Whitelist: only allow specific fields to be updated via this action
+  const allowedFields = [
+    "title", "description", "position", "isPublished", "isFree",
+    "duration", "type", "url", "pdfUrl", "sharepointUrl", "videoUrl",
+    "fileSize", "originalFilename",
+  ];
+  const sanitized: Record<string, unknown> = {};
+  for (const key of allowedFields) {
+    if (key in values) {
+      sanitized[key] = values[key];
+    }
+  }
+
   const m = await db.module.update({
     where: { id },
-    data: { ...values },
+    data: sanitized,
   });
 
   revalidatePath(`/admin/courses/${m.courseId}`);

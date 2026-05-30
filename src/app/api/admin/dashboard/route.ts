@@ -31,8 +31,8 @@ export async function GET() {
       activeCoursesResult,
       allCoursesResult,
       enrollmentStats,
-      avgScoreResult,
-      strugglingUsersCount,
+      allSubmittedAttempts,
+      strugglingUsersEnrollments,
       monthlyEnrollments,
       statusDistribution,
       recentActivity,
@@ -53,14 +53,15 @@ export async function GET() {
         _count: { id: true },
       }),
 
-      // Average score from completed test attempts
-      db.testAttempt.aggregate({
-        where: { status: "SUBMITTED" },
-        _avg: { score: true },
+      // All submitted test attempts (for best-score-per-test avg)
+      db.testAttempt.findMany({
+        where: { status: "SUBMITTED", score: { not: null } },
+        select: { testId: true, score: true },
       }),
 
-      // Struggling users count (progress < 50% after 7+ days)
-      db.enrollment.count({
+      // Struggling users: enrollment IN_PROGRESS > 7 days (grouped by userId to count unique users)
+      db.enrollment.groupBy({
+        by: ["userId"],
         where: {
           status: "IN_PROGRESS",
           createdAt: { lte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) },
@@ -127,12 +128,28 @@ export async function GET() {
     const pendingEnrollments = Number(enrollmentCountMap["PENDING"] ?? 0);
     const rejectedEnrollments = Number(enrollmentCountMap["REJECTED"] ?? 0);
 
+    // ─── Calculate avgScore: best-score-per-test (same formula as Karyawan dashboard) ───
+    // Group all submitted attempts by testId, take the highest score per test, then average those
+    const testBestScores = new Map<string, number>();
+    for (const attempt of allSubmittedAttempts) {
+      const existing = testBestScores.get(attempt.testId);
+      if (!existing || (attempt.score ?? 0) > existing) {
+        testBestScores.set(attempt.testId, attempt.score ?? 0);
+      }
+    }
+    const bestScoreValues = Array.from(testBestScores.values());
+    const avgScore =
+      bestScoreValues.length > 0
+        ? Math.round(bestScoreValues.reduce((sum, s) => sum + s, 0) / bestScoreValues.length)
+        : 0;
+
+    // ─── Calculate struggling users: count unique users (not enrollments) ───
+    const strugglingUsers = strugglingUsersEnrollments.length;
+
     const completionRate =
       totalEnrollments > 0
         ? Math.round((completedEnrollments / totalEnrollments) * 100)
         : 0;
-
-    const avgScore = Math.round(avgScoreResult._avg.score ?? 0);
 
     // ─── Parse monthly enrollments ───
     const monthlyData = (monthlyEnrollments as unknown as Array<{
@@ -241,7 +258,7 @@ export async function GET() {
         pendingEnrollments,
         completionRate,
         avgScore,
-        strugglingUsers: strugglingUsersCount,
+        strugglingUsers,
         enrollmentTrend,
         monthlyEnrollments: monthlyData.length > 0 ? monthlyData : getDefaultMonthlyData(),
         statusDistribution: statusDistributionData,
