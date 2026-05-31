@@ -1,0 +1,1 @@
+import { PrismaClient } from '@prisma/client'; const prisma = new PrismaClient(); async function main() { const user = await prisma.user.findFirst({ where: { name: { contains: 'Andi' } } }); console.log(user?.id); if(user){ const attempts = await prisma.testAttempt.findMany({ where: { userId: user.id }}); console.log(attempts); } } main().finally(()=>prisma.$disconnect());

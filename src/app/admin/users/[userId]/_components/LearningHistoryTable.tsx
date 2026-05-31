@@ -39,6 +39,7 @@ export interface LearningHistoryTableProps {
     postScore: number | null;
     postTestPassed: boolean | null;
     course: { title: string };
+    courseTitle?: string; // For modal compatibility
     modules?: any[];
     testAttempts?: any[];
   }[];

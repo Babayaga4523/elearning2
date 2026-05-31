@@ -14,8 +14,6 @@ import {
   FileCheck2,
   PlayCircle,
   Calendar,
-  Users,
-  Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { EnrollButton } from "@/components/courses/enroll-button";
@@ -23,26 +21,7 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { TestStepWithModal } from "@/components/courses/test-step-with-modal";
-
-/* ════════════════════════════════════════════════════════════════════════
-   DESIGN TOKENS — World-Class Design System
-═══════════════════════════════════════════════════════════════════════ */
-const t = {
-  navy: "#0F1C3F",
-  gold: "#E8A020",
-  surface: "#F8F9FB",
-  border: "#E4E7EC",
-  text: "#101828",
-  textSecondary: "#475467",
-  textTertiary: "#98A2B3",
-  success: { bg: "#ECFDF3", text: "#027A48", border: "#6CE9A6", icon: "#12B76A" },
-  warning: { bg: "#FFFAEB", text: "#B54708", border: "#FEC84B", icon: "#F79009" },
-  danger: { bg: "#FEF3F2", text: "#B42318", border: "#FDA29B", icon: "#F04438" },
-  info: { bg: "#EFF8FF", text: "#175CD3", border: "#B2DDFF", icon: "#2E90FA" },
-  navyDark: { bg: "#E8EDF7", text: "#0F1C3F", border: "#CBD2E0" },
-};
 
 /* ─── Types ──────────────────────────────────────────────────────────── */
 type UserProgress = { isCompleted: boolean };
@@ -96,7 +75,7 @@ function formatDeadlineLabel(deadline: Date): { text: string; date: string } {
   const diffMs = deadline.getTime() - Date.now();
   const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
   const dateStr = deadline.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' });
-  
+
   if (diffDays < 0) return { text: "Terlewat", date: dateStr };
   if (diffDays === 0) return { text: "Hari ini", date: dateStr };
   return { text: `${diffDays} hari lagi`, date: dateStr };
@@ -116,7 +95,7 @@ function StepBadge({
 }) {
   if (done && !testStatus) {
     return (
-      <Badge className="bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6] text-[10px] font-semibold">
+      <Badge className="bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6] text-[10px] font-medium">
         <CheckCircle2 size={10} className="mr-1" />
         Selesai
       </Badge>
@@ -124,7 +103,7 @@ function StepBadge({
   }
   if (testStatus === "LULUS") {
     return (
-      <Badge className="bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6] text-[10px] font-semibold">
+      <Badge className="bg-[#ECFDF3] text-[#027A48] border-[#6CE9A6] text-[10px] font-medium">
         <CheckCircle2 size={10} className="mr-1" />
         Lulus
       </Badge>
@@ -132,14 +111,14 @@ function StepBadge({
   }
   if (testStatus === "GAGAL") {
     return (
-      <Badge className="bg-[#FEF3F2] text-[#B42318] border-[#FDA29B] text-[10px] font-semibold">
+      <Badge className="bg-[#FEF3F2] text-[#B42318] border-[#FDA29B] text-[10px] font-medium">
         Gagal
       </Badge>
     );
   }
   if (locked) {
     return (
-      <Badge className="bg-[#F1F3F7] text-[#475467] border-[#E4E7EC] text-[10px] font-semibold">
+      <Badge className="bg-[#F1F3F7] text-[#475467] border-[#E4E7EC] text-[10px] font-medium">
         <Lock size={10} className="mr-1" />
         Terkunci
       </Badge>
@@ -147,14 +126,14 @@ function StepBadge({
   }
   if (type === "PRE") {
     return (
-      <Badge className="bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF] text-[10px] font-semibold">
+      <Badge className="bg-[#EFF8FF] text-[#175CD3] border-[#B2DDFF] text-[10px] font-medium">
         Pre-Test
       </Badge>
     );
   }
   if (type === "POST") {
     return (
-      <Badge className="bg-[#FEF3DC] text-[#C4861A] border-[#F5C05A] text-[10px] font-semibold">
+      <Badge className="bg-[#FEF3DC] text-[#C4861A] border-[#F5C05A] text-[10px] font-medium">
         Post-Test
       </Badge>
     );
@@ -196,39 +175,40 @@ function LearningStepCard({
   const typeLabel = type === "VIDEO" ? "Video" : "Dokumen";
   const TypeIcon = type === "VIDEO" ? PlayCircle : FileText;
 
-  const borderAccent = done 
-    ? "border-l-4 border-l-[#12B76A]" 
-    : locked 
-    ? "border-l-4 border-l-transparent" 
-    : "border-l-4 border-l-[#E8A020]";
+  const borderAccent = done
+    ? "border-l-[#12B76A]"
+    : locked
+    ? "border-l-transparent"
+    : "border-l-[#E8A020]";
 
   const inner = (
-    <div
+<div
       className={cn(
-        "rounded-xl border border-[#E4E7EC] bg-white transition-all duration-300",
-        "shadow-sm active:scale-[0.99]",
+        "rounded-lg border border-[#E4E7EC] bg-white transition-all duration-200",
+        "border-l-4",
+        borderAccent,
         !locked && href
-          ? "hover:border-[#E8A020]/50 hover:shadow-md cursor-pointer"
+          ? "hover:border-[#E8A020]/50 hover:shadow-sm cursor-pointer"
           : "opacity-75 cursor-not-allowed bg-[#F8F9FB]/50"
       )}
     >
-      <div className={cn("p-4 rounded-xl", borderAccent)}>
-        <div className="flex items-start gap-4">
+      <div className="p-4">
+        <div className="flex items-start gap-3">
           {/* Number / icon circle */}
           <div
             className={cn(
-              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 font-extrabold text-sm font-['Lexend_Deca'] border shadow-sm transition-all duration-300",
+              "w-9 h-9 rounded-lg flex items-center justify-center shrink-0 font-semibold text-sm font-['Lexend_Deca']",
               done
-                ? "bg-[#ECFDF3] border-[#6CE9A6] text-[#027A48]"
+                ? "bg-[#ECFDF3] text-[#027A48]"
                 : locked
-                ? "bg-[#F8F9FB] border-[#E4E7EC] text-[#98A2B3]"
-                : "bg-[#0F1C3F] border-transparent text-white"
+                ? "bg-[#F8F9FB] text-[#98A2B3]"
+                : "bg-[#0F1C3F] text-white"
             )}
           >
             {done ? (
-              <CheckCircle2 size={16} />
+              <CheckCircle2 size={14} />
             ) : locked ? (
-              <Lock size={14} />
+              <Lock size={12} />
             ) : (
               <span>{number}</span>
             )}
@@ -236,42 +216,41 @@ function LearningStepCard({
 
           {/* Content */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
-              {/* Type badge */}
-              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md bg-[#F8F9FB] border border-[#E4E7EC] text-[10px] font-bold text-[#64748B] font-['DM_Sans'] uppercase tracking-wider">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F8F9FB] border border-[#E4E7EC] text-[10px] font-medium text-[#64748B] uppercase tracking-wide">
                 <TypeIcon size={10} />
                 {typeLabel}
               </span>
               <StepBadge type={type as any} done={done} locked={locked} testStatus={testStatus} />
             </div>
 
-            <h4 className="text-sm font-bold text-[#0F1C3F] font-['DM_Sans'] leading-snug mb-1.5 line-clamp-2">
+            <h4 className="text-sm font-medium text-[#0F1C3F] leading-snug mb-1 line-clamp-2">
               {title}
             </h4>
 
             {/* Test info */}
             {testInfo && (
-              <div className="space-y-1.5 mt-2">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] text-[#64748B] font-['DM_Sans'] font-semibold">
-                  <div className="flex items-center gap-1.5">
-                    <Clock size={12} className="text-[#98A2B3]" />
+              <div className="space-y-1 mt-2">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[#64748B]">
+                  <div className="flex items-center gap-1">
+                    <Clock size={11} className="text-[#98A2B3]" />
                     <span>{testInfo.duration} menit</span>
                   </div>
-                  <div className="flex items-center gap-1.5">
-                    <FileCheck2 size={12} className="text-[#98A2B3]" />
-                    <span>KKM: <span className="text-[#C4861A]">{testInfo.passingScore}%</span></span>
+                  <div className="flex items-center gap-1">
+                    <FileCheck2 size={11} className="text-[#98A2B3]" />
+                    <span>KKM: <span className="text-[#C4861A] font-medium">{testInfo.passingScore}%</span></span>
                   </div>
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     <span>Percobaan:</span>{" "}
                     {testInfo.maxAttempts === 0 ? (
-                      <span className="text-[#027A48] font-bold">Tak Terbatas</span>
+                      <span className="text-[#027A48] font-medium">Tak Terbatas</span>
                     ) : (
                       <span
                         className={cn(
-                          "font-bold",
+                          "font-medium",
                           testInfo.attemptCount >= testInfo.maxAttempts
-                            ? "text-[#B42318] bg-[#FEF3F2] px-1.5 py-0.5 rounded"
-                            : "text-[#175CD3] bg-[#EFF8FF] px-1.5 py-0.5 rounded"
+                            ? "text-[#B42318]"
+                            : "text-[#175CD3]"
                         )}
                       >
                         {testInfo.attemptCount}/{testInfo.maxAttempts}
@@ -280,7 +259,7 @@ function LearningStepCard({
                   </div>
                 </div>
                 {(testInfo.randomizeQuestions || testInfo.randomizeOptions) && (
-                  <div className="inline-flex items-center gap-1 text-[10px] text-[#C4861A] font-bold font-['DM_Sans'] uppercase tracking-wide bg-[#FEF3DC]/60 border border-[#F5C05A]/30 rounded-md px-2 py-0.5">
+                  <div className="inline-flex items-center gap-1 text-[10px] text-[#C4861A] font-medium uppercase tracking-wide bg-[#FEF3DC]/60 border border-[#F5C05A]/30 rounded px-1.5 py-0.5">
                     🔀{" "}
                     {testInfo.randomizeQuestions && testInfo.randomizeOptions
                       ? "Soal & Opsi Acak"
@@ -294,9 +273,9 @@ function LearningStepCard({
 
             {/* Module info */}
             {moduleInfo && (
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-[#64748B] font-['DM_Sans'] font-semibold mt-2">
-                <div className="flex items-center gap-1.5">
-                  <Clock size={12} className="text-[#98A2B3]" />
+              <div className="flex items-center gap-x-3 gap-y-1 text-[11px] text-[#64748B] mt-1.5">
+                <div className="flex items-center gap-1">
+                  <Clock size={11} className="text-[#98A2B3]" />
                   <span>
                     {moduleInfo.duration > 0
                       ? `Estimasi ~${moduleInfo.duration} menit`
@@ -308,8 +287,8 @@ function LearningStepCard({
 
             {/* Lock reason */}
             {lockReason && (
-              <p className="text-xs font-semibold text-[#B54708] bg-[#FFFAEB] border border-[#FEC84B]/40 rounded-lg px-2.5 py-1.5 mt-2.5 w-fit font-['DM_Sans'] flex items-center gap-1.5">
-                <Lock size={12} className="shrink-0" />
+              <p className="text-xs font-medium text-[#B54708] bg-[#FFFAEB] border border-[#FEC84B]/40 rounded px-2 py-1 mt-2 flex items-center gap-1 w-fit">
+                <Lock size={10} className="shrink-0" />
                 {lockReason}
               </p>
             )}
@@ -317,7 +296,7 @@ function LearningStepCard({
 
           {/* Arrow */}
           {!locked && href && (
-            <ChevronRight size={18} className="shrink-0 text-[#98A2B3] mt-1 group-hover:text-[#E8A020] group-hover:translate-x-0.5 transition-all duration-200" />
+            <ChevronRight size={16} className="shrink-0 text-[#98A2B3] mt-1 transition-colors" />
           )}
         </div>
       </div>
@@ -359,13 +338,13 @@ export default async function StudentCourseDetailPage({
         include: {
           attempts: { where: { userId }, orderBy: { createdAt: "desc" } },
           _count: {
-            select: { 
-              attempts: { 
-                where: { 
-                  userId, 
-                  status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] } 
-                } 
-              } 
+            select: {
+              attempts: {
+                where: {
+                  userId,
+                  status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] }
+                }
+              }
             },
           },
         },
@@ -377,12 +356,11 @@ export default async function StudentCourseDetailPage({
   if (!course) return notFound();
 
   const enrollment = course.enrollments[0] ?? null;
-  const isParticipant = !!enrollment;
   const isEnrolled =
     enrollment &&
     (enrollment.status === "IN_PROGRESS" || enrollment.status === "COMPLETED");
 
-  if (!isAdmin && !course.isVisible && !isParticipant) {
+  if (!isAdmin && !course.isVisible && !enrollment) {
     return notFound();
   }
 
@@ -456,7 +434,6 @@ export default async function StudentCourseDetailPage({
   const postPassedKKM =
     postBestScore !== null && postBestScore >= (postTest?.passingScore ?? 70);
 
-  /* Deadline severity */
   const isDeadlineUrgent =
     actualDeadline &&
     !isDeadlinePast &&
@@ -468,21 +445,18 @@ export default async function StudentCourseDetailPage({
     })();
 
   return (
-    <div
-      className="min-h-screen bg-[#F8F9FB]"
-      style={{ fontFamily: "'DM Sans', sans-serif" }}
-    >
-      {/* ═══ Hero Header ════════════════════════════════════════════════ */}
+    <div className="min-h-screen bg-[#F8F9FB]">
+      {/* ═══ Page Header ════════════════════════════════════════════════ */}
       <header
-        className="relative overflow-hidden border-b border-[#1A2D5A]"
-        style={{ background: `linear-gradient(135deg, ${t.navy} 0%, #12224A 50%, #1A3060 100%)` }}
+        className="relative pt-8 pb-10 lg:pt-10 lg:pb-12 overflow-hidden border-b border-[#1A2D5A]"
+        style={{
+          background: `linear-gradient(135deg, #0F1C3F 0%, #12224A 50%, #1A3060 100%)`,
+        }}
       >
-        {/* Glow orbs */}
         <div className="absolute inset-0 opacity-20 pointer-events-none">
           <div className="absolute right-[-10%] top-[-20%] w-[400px] h-[400px] rounded-full bg-[#E8A020] blur-[140px] mix-blend-screen" />
           <div className="absolute left-[-10%] bottom-[-20%] w-[250px] h-[250px] rounded-full bg-[#2E90FA] blur-[100px] mix-blend-screen" />
         </div>
-        {/* Subtle grid overlay */}
         <div
           className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
           style={{
@@ -492,76 +466,71 @@ export default async function StudentCourseDetailPage({
           }}
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10">
-          {/* Back + Badges row */}
-          <div className="flex items-center gap-2 mb-6 flex-wrap">
-            <Link
-              href={isAdmin ? `/admin/courses/${course.id}` : "/courses"}
-              className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-white/70 hover:text-white transition-all font-['DM_Sans'] bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/10 outline-none"
-            >
-              <ArrowLeft size={13} />
+        <div className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumb */}
+          <nav className="flex items-center gap-1.5 text-xs text-white/70 mb-5">
+            <Link href={isAdmin ? `/admin/courses/${course.id}` : "/courses"} className="hover:text-white transition-colors flex items-center gap-1">
+              <ArrowLeft size={12} />
               {isAdmin ? "Edit Mode" : "Katalog"}
             </Link>
-            <span className="text-white/30">·</span>
-            {course.category && (
-              <span className="px-3 py-1.5 rounded-xl bg-white/10 border border-white/20 text-xs font-bold text-white/80 uppercase tracking-wide">
-                {course.category.name}
-              </span>
-            )}
-            {!isEnrolled && !isAdmin && (
-              <span className="px-3 py-1.5 rounded-xl bg-[#FEF3DC]/20 border border-[#F5C05A]/30 text-[#F5C05A] text-xs font-bold uppercase tracking-wide flex items-center gap-1.5">
-                <Lock size={12} className="inline mr-1" />
-                Mode Pratinjau
-              </span>
-            )}
-          </div>
+            <ChevronRight size={12} />
+            <span className="text-white font-medium line-clamp-1">{course.title}</span>
+          </nav>
 
-          {/* Title + meta */}
-          <div className="space-y-3.5 max-w-3xl">
-            <h1 className="text-2xl md:text-3xl font-extrabold text-white font-['Lexend_Deca'] leading-tight tracking-tight">
-              {course.title}
-            </h1>
-            {course.description && (
-              <p className="text-sm font-medium text-white/60 font-['DM_Sans'] leading-relaxed max-w-2xl">
-                {course.description}
-              </p>
-            )}
-          </div>
-
-          {/* Quick stats row */}
-          <div className="flex flex-wrap gap-5 mt-6 text-xs text-white/70 font-['DM_Sans'] font-semibold">
-            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
-              <BookOpen size={14} className="text-[#E8A020]" />
-              <span><span className="font-extrabold text-white">{totalModules}</span> Modul</span>
-            </div>
-            <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
-              <FileCheck2 size={14} className="text-[#2E90FA]" />
-              <span><span className="font-extrabold text-white">{course.tests.length}</span> Ujian</span>
-            </div>
-            {postTest?.passingScore && (
-              <div className="flex items-center gap-1.5 bg-white/5 border border-white/10 px-3 py-1.5 rounded-lg">
-                <span className="font-extrabold text-white">{postTest.passingScore}%</span>
-                <span>Passing Score</span>
-              </div>
-            )}
-            {actualDeadline && (
-              <div
-                className={cn(
-                  "flex items-center gap-1.5 font-extrabold bg-white/5 border px-3 py-1.5 rounded-lg",
-                  isDeadlinePast 
-                    ? "text-[#FDA29B] border-[#FDA29B]/30" 
-                    : isDeadlineUrgent 
-                    ? "text-[#FEC84B] border-[#FEC84B]/30" 
-                    : "text-white/70 border-white/10"
+          {/* Title Row */}
+          <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+            <div className="space-y-3 flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                {course.category && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-medium uppercase tracking-wide border border-white/20">
+                    {course.category.name}
+                  </span>
                 )}
-              >
-                <Calendar size={14} />
-                <span>
-                  {deadlineDays.text}
-                  {deadlineDays.date && (
-                    <span className="opacity-70 font-semibold"> ({deadlineDays.date})</span>
-                  )}
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-medium uppercase tracking-wide border border-white/20">
+                  <BookOpen size={10} />
+                  {totalModules} Modul
                 </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white text-[10px] font-medium uppercase tracking-wide border border-white/20">
+                  <FileCheck2 size={10} />
+                  {course.tests.length} Ujian
+                </span>
+                {postTest?.passingScore && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FEF3DC] text-[#C4861A] text-[10px] font-medium uppercase tracking-wide border border-[#F5C05A]">
+                    Target: {postTest.passingScore}%
+                  </span>
+                )}
+                {!isEnrolled && !isAdmin && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/10 text-white/70 text-[10px] font-medium uppercase tracking-wide border border-white/20">
+                    <Lock size={8} />
+                    Preview
+                  </span>
+                )}
+              </div>
+              <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-white font-['Lexend_Deca'] leading-tight">
+                {course.title}
+              </h1>
+              {course.description && (
+                <p className="text-sm text-white/80 leading-relaxed max-w-2xl line-clamp-2">
+                  {course.description}
+                </p>
+              )}
+            </div>
+
+            {/* Deadline Badge */}
+            {actualDeadline && (
+              <div className={cn(
+                "flex items-center gap-2 px-3 py-1.5 rounded-lg border shrink-0",
+                isDeadlinePast
+                  ? "bg-[#FEF3F2] border-[#FDA29B] text-[#B42318]"
+                  : isDeadlineUrgent
+                  ? "bg-[#FFFAEB] border-[#FEC84B] text-[#B54708]"
+                  : "bg-white/10 border-white/20 text-white"
+              )}>
+                <Calendar size={13} />
+                <div className="text-xs font-medium">
+                  <span className="font-semibold">{deadlineDays.text}</span>
+                  {deadlineDays.date && <span className="opacity-70 ml-1">({deadlineDays.date})</span>}
+                </div>
               </div>
             )}
           </div>
@@ -569,21 +538,21 @@ export default async function StudentCourseDetailPage({
       </header>
 
       {/* ═══ Main Content ════════════════════════════════════════════════ */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
           {/* ─── Left: Curriculum ─────────────────────────────────────── */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="space-y-1">
-              <h2 className="text-lg font-semibold text-[#101828] font-['Lexend_Deca'] mb-0.5">
+          <div className="lg:col-span-2 space-y-4">
+            <div>
+              <h2 className="text-sm font-semibold text-[#0F1C3F] font-['Lexend_Deca']">
                 Jalur Pembelajaran
               </h2>
-              <p className="text-sm text-[#475467] font-['DM_Sans']">
-                Selesaikan setiap tahap secara berurutan untuk menyelesaikan kursus
+              <p className="text-xs text-[#475467] mt-0.5">
+                Selesaikan setiap tahap untuk menyelesaikan kursus
               </p>
             </div>
 
-            <div className="space-y-5">
+            <div className="space-y-3">
               {/* Pre-Test */}
               {preTest && (
                 <TestStepWithModal
@@ -686,87 +655,78 @@ export default async function StudentCourseDetailPage({
           </div>
 
           {/* ─── Right: Sidebar ──────────────────────────────────────── */}
-          <aside className="space-y-5 lg:sticky lg:top-24">
+          <aside className="space-y-4 lg:sticky lg:top-20">
             {/* Progress Card */}
-            <Card className="bg-white rounded-2xl border border-[#E4E7EC] overflow-hidden shadow-sm hover:shadow-md transition-all duration-300">
-              <CardContent className="p-6 space-y-6">
-                <h3 className="text-sm font-bold text-[#0F1C3F] font-['Lexend_Deca'] uppercase tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-[#0F1C3F] to-[#1A2D5A]">
-                  Progres Belajar Anda
+            <Card className="bg-white rounded-lg border border-[#E4E7EC]">
+              <CardContent className="p-4 space-y-4">
+                <h3 className="text-sm font-semibold text-[#0F1C3F]">
+                  Progres Belajar
                 </h3>
 
                 {/* Radial Donut + Stats block */}
-                <div className="flex items-center gap-4 bg-[#F8F9FB] border border-[#E4E7EC]/40 p-4 rounded-xl shadow-inner">
-                  <div className="relative shrink-0" style={{ width: 72, height: 72 }}>
+                <div className="flex items-center gap-3 bg-[#F8F9FB] border border-[#E4E7EC]/50 p-3 rounded-lg">
+                  <div className="relative shrink-0" style={{ width: 56, height: 56 }}>
                     <svg className="w-full h-full -rotate-90" viewBox="0 0 72 72">
-                      <circle cx="36" cy="36" r="28" fill="none" stroke="#E4E7EC" strokeWidth="5.5" />
+                      <circle cx="36" cy="36" r="28" fill="none" stroke="#E4E7EC" strokeWidth="5" />
                       <circle
                         cx="36" cy="36" r="28"
                         fill="none"
                         stroke={progress === 100 ? "#12B76A" : "#E8A020"}
-                        strokeWidth="5.5"
+                        strokeWidth="5"
                         strokeDasharray={`${(progress / 100) * 175.93} 175.93`}
                         strokeLinecap="round"
                         className="transition-all duration-700"
                       />
                     </svg>
                     <div className="absolute inset-0 flex flex-col items-center justify-center">
-                      <span className="text-base font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none">
+                      <span className="text-xs font-semibold text-[#0F1C3F] leading-none">
                         {progress}%
                       </span>
                     </div>
                   </div>
-                  <div className="space-y-1">
-                    <p className="text-2xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none tracking-tight tabular-nums">
+                  <div className="space-y-0.5">
+                    <p className="text-lg font-semibold text-[#0F1C3F] leading-none">
                       {completedModules}/{totalModules}
                     </p>
-                    <p className="text-xs font-bold text-[#64748B] font-['DM_Sans'] uppercase tracking-wider">
+                    <p className="text-[10px] text-[#64748B] uppercase tracking-wide">
                       modul selesai
                     </p>
                   </div>
                 </div>
 
                 {/* Flat Progress bar */}
-                <div className="space-y-1.5">
-                  <div className="h-2 bg-[#F1F3F7] rounded-full overflow-hidden border border-[#E4E7EC]/10">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        progress === 100 
-                          ? "bg-gradient-to-r from-[#12B76A] to-[#027A48]"
-                          : "bg-gradient-to-r from-[#E8A020] to-[#F5C05A]"
-                      )}
-                      style={{ width: `${progress}%` }}
-                    />
-                  </div>
+                <div className="h-1.5 bg-[#F1F3F7] rounded-full overflow-hidden">
+                  <div
+                    className={cn(
+                      "h-full rounded-full transition-all duration-500",
+                      progress === 100
+                        ? "bg-[#12B76A]"
+                        : "bg-[#E8A020]"
+                    )}
+                    style={{ width: `${progress}%` }}
+                  />
                 </div>
 
                 {/* Stats grid */}
-                <div className="grid grid-cols-2 gap-4 pt-4.5 border-t border-[#F1F3F7] text-xs font-semibold">
+                <div className="grid grid-cols-2 gap-2 pt-3 border-t border-[#F1F3F7] text-xs">
                   {[
-                    { 
-                      label: "Sisa Waktu", 
-                      value: (
-                        <>
-                          {deadlineDays.text}
-                          {deadlineDays.date && (
-                            <span className="text-[10px] opacity-75 font-semibold block mt-0.5"> ({deadlineDays.date})</span>
-                          )}
-                        </>
-                      ), 
-                      urgent: isDeadlineUrgent, 
-                      past: isDeadlinePast 
+                    {
+                      label: "Sisa Waktu",
+                      value: deadlineDays.text || "∞",
+                      urgent: isDeadlineUrgent,
+                      past: isDeadlinePast
                     },
-                    { label: "Passing Score", value: `${postTest?.passingScore ?? 0}% KKM`, urgent: false, past: false },
-                    { label: "Pre-Test", value: preTest?.attempts.length ? "Selesai" : "Belum", urgent: false, past: false },
-                    { label: "Post-Test", value: postTest?.attempts.length ? "Selesai" : "Belum", urgent: false, past: false },
+                    { label: "KKM", value: `${postTest?.passingScore ?? 0}%`, urgent: false, past: false },
+                    { label: "Pre-Test", value: preTest?.attempts.length ? "✓" : "—", urgent: false, past: false },
+                    { label: "Post-Test", value: postTest?.attempts.length ? "✓" : "—", urgent: false, past: false },
                   ].map((stat, i) => (
                     <div key={i} className="space-y-0.5">
-                      <p className="text-[9px] text-[#98A2B3] font-['DM_Sans'] uppercase tracking-widest font-bold">
+                      <p className="text-[10px] text-[#98A2B3] uppercase tracking-wide">
                         {stat.label}
                       </p>
                       <p
                         className={cn(
-                          "font-bold font-['DM_Sans'] text-sm tracking-tight",
+                          "font-medium text-sm",
                           stat.urgent ? "text-[#B54708]" : stat.past ? "text-[#B42318]" : "text-[#101828]"
                         )}
                       >
@@ -777,48 +737,46 @@ export default async function StudentCourseDetailPage({
                 </div>
 
                 {/* Action CTA Buttons */}
-                <div className="pt-4.5 border-t border-[#F1F3F7]">
+                <div className="pt-3 border-t border-[#F1F3F7]">
                   {!enrollment || isRejected ? (
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       {isRejected && enrollment?.rejectionNote && (
-                        <div className="p-3.5 rounded-xl bg-[#FEF3F2] border border-[#FDA29B]/50 shadow-sm animate-pulse-slow">
-                          <p className="text-xs font-bold text-[#B42318] mb-1">Pendaftaran Ditolak</p>
-                          <p className="text-xs font-medium text-[#B42318]/80 leading-relaxed">{enrollment.rejectionNote}</p>
+                        <div className="p-2.5 rounded-lg bg-[#FEF3F2] border border-[#FDA29B]/50">
+                          <p className="text-xs font-medium text-[#B42318]">Pendaftaran Ditolak</p>
+                          <p className="text-xs text-[#B42318]/80 mt-0.5">{enrollment.rejectionNote}</p>
                         </div>
                       )}
                       <EnrollButton courseId={course.id} />
                     </div>
                   ) : isPending ? (
-                    <div className="p-4.5 rounded-xl bg-[#FFFAEB] border border-[#FEC84B]/40 text-center shadow-sm">
-                      <Clock className="h-5 w-5 text-[#F79009] mx-auto mb-2 animate-pulse" />
-                      <p className="text-sm font-bold text-[#B54708]">Menunggu Persetujuan</p>
-                      <p className="text-xs font-medium text-[#B54708]/80 mt-1 leading-normal">Permohonan sedang diproses oleh Admin</p>
+                    <div className="p-3 rounded-lg bg-[#FFFAEB] border border-[#FEC84B]/40 text-center">
+                      <Clock className="h-4 w-4 text-[#F79009] mx-auto mb-1" />
+                      <p className="text-xs font-medium text-[#B54708]">Menunggu Persetujuan</p>
                     </div>
                   ) : isDeadlinePast ? (
-                    <div className="p-4.5 rounded-xl bg-[#FEF3F2] border border-[#FDA29B]/40 text-center shadow-sm">
-                      <AlertCircle className="h-5 w-5 text-[#B42318] mx-auto mb-2" />
-                      <p className="text-sm font-bold text-[#B42318]">Kursus Non-Aktif</p>
-                      <p className="text-xs font-medium text-[#B42318]/80 mt-1 leading-normal">Batas waktu pembelajaran telah lewat</p>
+                    <div className="p-3 rounded-lg bg-[#FEF3F2] border border-[#FDA29B]/40 text-center">
+                      <AlertCircle className="h-4 w-4 text-[#B42318] mx-auto mb-1" />
+                      <p className="text-xs font-medium text-[#B42318]">Kursus Non-Aktif</p>
                     </div>
                   ) : isCompleted ? (
-                    <div className="p-4.5 rounded-xl bg-[#ECFDF3] border border-[#6CE9A6]/40 text-center shadow-sm">
-                      <CheckCircle2 className="h-5 w-5 text-[#027A48] mx-auto mb-2" />
-                      <p className="text-sm font-bold text-[#027A48]">Selamat! Kursus Selesai</p>
-                      <Link href="/performance" className="block mt-3 w-full">
-                        <Button variant="outline" className="w-full text-xs font-bold uppercase tracking-wider rounded-xl py-2.5 border-slate-300 hover:bg-[#F8F9FB] active:scale-[0.98] transition-all">
+                    <div className="p-3 rounded-lg bg-[#ECFDF3] border border-[#6CE9A6]/40 text-center">
+                      <CheckCircle2 className="h-4 w-4 text-[#027A48] mx-auto mb-1" />
+                      <p className="text-xs font-medium text-[#027A48]">Kursus Selesai!</p>
+                      <Link href="/performance" className="block mt-2">
+                        <Button variant="outline" className="w-full text-xs font-medium rounded-lg">
                           Lihat Performa
                         </Button>
                       </Link>
                     </div>
                   ) : nextModuleId ? (
-                    <Button asChild className="w-full bg-[#E8A020] hover:bg-[#C4861A] active:scale-[0.97] text-white text-xs font-bold uppercase tracking-wider py-3 rounded-xl font-['DM_Sans'] transition-all shadow-lg shadow-[#E8A020]/20 border border-transparent outline-none">
+                    <Button asChild className="w-full bg-[#E8A020] hover:bg-[#C4861A] text-white text-xs font-medium py-2 rounded-lg transition-all border-0">
                       <Link href={`/courses/${course.id}/modules/${nextModuleId}`}>
-                        <PlayCircle size={14} className="mr-1.5 fill-current" />
+                        <PlayCircle size={12} className="mr-1.5 fill-current" />
                         Lanjutkan Belajar
                       </Link>
                     </Button>
                   ) : (
-                    <Button disabled className="w-full rounded-xl py-3 text-xs font-bold uppercase tracking-wider font-['DM_Sans'] bg-slate-100 text-slate-400 cursor-not-allowed">
+                    <Button disabled className="w-full rounded-lg py-2 text-xs font-medium bg-[#F1F3F7] text-[#98A2B3] cursor-not-allowed border-0">
                       Materi Belum Tersedia
                     </Button>
                   )}
@@ -827,24 +785,21 @@ export default async function StudentCourseDetailPage({
             </Card>
 
             {/* Help Card */}
-            <Card className="bg-white rounded-2xl border border-[#E4E7EC] shadow-sm">
-              <CardContent className="p-5">
-                <div className="flex items-start gap-3 mb-4">
-                  <div className="w-10 h-10 rounded-xl bg-[#EFF8FF] flex items-center justify-center shrink-0">
-                    <AlertCircle size={18} className="text-[#175CD3]" />
+            <Card className="bg-white rounded-lg border border-[#E4E7EC]">
+              <CardContent className="p-3">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-md bg-[#EFF8FF] flex items-center justify-center shrink-0">
+                    <AlertCircle size={14} className="text-[#175CD3]" />
                   </div>
-                  <div>
-                    <h4 className="text-sm font-semibold text-[#101828] font-['DM_Sans'] mb-0.5">
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-xs font-medium text-[#101828]">
                       Butuh Bantuan?
                     </h4>
-                    <p className="text-xs text-[#475467] font-['DM_Sans']">
-                      Hubungi tim Training HC jika ada kendala
+                    <p className="text-[11px] text-[#475467]">
+                      Hubungi tim Training HC
                     </p>
                   </div>
                 </div>
-                <Button variant="outline" className="w-full text-sm font-semibold rounded-xl font-['DM_Sans']">
-                  Hubungi Support
-                </Button>
               </CardContent>
             </Card>
           </aside>

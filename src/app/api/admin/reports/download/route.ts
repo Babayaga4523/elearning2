@@ -31,7 +31,9 @@ export async function GET(req: Request) {
   }
 
   try {
-    const workbook = await generateDepartmentExcel(sanitizedDept);
+    // Pass the original 'department' string to query the database correctly, 
+    // and only use 'sanitizedDept' for the filename
+    const workbook = await generateDepartmentExcel(department);
     const buffer = await workbook.xlsx.writeBuffer();
 
     return new Response(buffer, {
