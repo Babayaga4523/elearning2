@@ -1,16 +1,10 @@
-import { headers } from "next/headers";
+import { NextResponse } from "next/server";
+import { db } from "@/lib/db";
 
 export async function GET() {
-  const headersList = headers();
-  const authHeader = headersList.get("authorization");
-
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  return Response.json({ 
-    status: "ok",
-    timestamp: new Date().toISOString(),
-    service: "elearning-app"
+  const attempt = await db.testAttempt.findFirst({
+    orderBy: { createdAt: "desc" },
+    include: { answers: true }
   });
+  return NextResponse.json(attempt);
 }

@@ -81,7 +81,7 @@ export default async function ProfilePage() {
       _count: {
         select: {
           testAttempts: {
-            where: { status: "SUBMITTED" }
+            where: { status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] } }
           }
         }
       }

@@ -55,7 +55,7 @@ export async function GET() {
 
       // All submitted test attempts (for best-score-per-test avg)
       db.testAttempt.findMany({
-        where: { status: "SUBMITTED", score: { not: null } },
+        where: { status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] }, score: { not: null } },
         select: { testId: true, score: true },
       }),
 

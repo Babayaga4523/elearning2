@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Timer,
@@ -42,6 +42,7 @@ interface TestClientProps {
   maxAttempts: number;
   startedAt?: string;
   userId: string;
+  attemptId: string;
 }
 
 export function TestClient({
@@ -49,7 +50,8 @@ export function TestClient({
   courseId,
   attemptNumber,
   userId,
-  startedAt
+  startedAt,
+  attemptId
 }: TestClientProps) {
   const router = useRouter();
 
@@ -67,6 +69,7 @@ export function TestClient({
 
   // Storage Key
   const STORAGE_KEY = `elearning_${userId}_${test.id}_${attemptNumber}_progress`;
+  const ACTIVE_ATTEMPT_KEY = `active_attempt_${test.id}_${userId}`;
 
   const [isReady, setIsReady] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -75,7 +78,21 @@ export function TestClient({
   const [shuffledQuestions, setShuffledQuestions] = useState<any[]>(() => [...test.questions]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSubmitDialog, setShowSubmitDialog] = useState(false);
+  const [showExitModal, setShowExitModal] = useState(false);
   const [timeLeft, setTimeLeft] = useState(test.duration * 60);
+
+  // Refs to always hold the latest values — needed for timer/auto-submit closures
+  const answersRef = useRef<Record<string, string>>(answers);
+  const shuffledQuestionsRef = useRef<any[]>(shuffledQuestions);
+  const isSubmittingRef = useRef(false);
+  const currentQuestionIndexRef = useRef(currentQuestionIndex);
+  const markedQuestionsRef = useRef(markedQuestions);
+
+  // Note: we update answersRef synchronously inside setAnswers to avoid 1-render delays
+  useEffect(() => { shuffledQuestionsRef.current = shuffledQuestions; }, [shuffledQuestions]);
+  useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
+  useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
+  useEffect(() => { markedQuestionsRef.current = markedQuestions; }, [markedQuestions]);
   const [showSidebar, setShowSidebar] = useState(true);
   // Offline States
   const [isOnline, setIsOnline] = useState(true);
@@ -87,7 +104,10 @@ export function TestClient({
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.answers) setAnswers(parsed.answers);
+        if (parsed.answers) {
+          setAnswers(parsed.answers);
+          answersRef.current = parsed.answers;
+        }
         if (typeof parsed.currentIndex === "number") setCurrentQuestionIndex(parsed.currentIndex);
         if (parsed.shuffledQuestions) setShuffledQuestions(parsed.shuffledQuestions);
         if (parsed.markedQuestions) setMarkedQuestions(new Set(parsed.markedQuestions));
@@ -111,10 +131,145 @@ export function TestClient({
       localStorage.removeItem(STORAGE_KEY);
     }
 
+    localStorage.setItem(ACTIVE_ATTEMPT_KEY, attemptId);
+    window.history.pushState(null, "", window.location.href);
+
     setIsReady(true);
   }, []);
 
-  // Timer Logic
+  // Intercept back button
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      // Prevent the user from navigating back immediately
+      window.history.pushState(null, "", window.location.href);
+      setShowExitModal(true);
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  // ── Reliable answer retrieval: merge state + ref + localStorage ──
+  // Guarantees answers are NEVER lost, even in stale closures or race conditions
+  // IMPORTANT: ref values take PRIORITY over localStorage (ref is more recent)
+  const getReliableAnswers = useCallback((): Record<string, string> => {
+    // Source 1: ref (always latest in async contexts) — use first for recent data
+    const fromRef = answersRef.current || {};
+    // Source 2: localStorage (persisted every state change) — use as fallback
+    let fromStorage: Record<string, string> = {};
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.answers && typeof parsed.answers === 'object') {
+          fromStorage = parsed.answers;
+        }
+      }
+    } catch { /* ignore parse errors */ }
+
+    // Merge: ref overwrites storage (ref is more recent since answersRef.current
+    // is updated synchronously in handleSelectOption before localStorage write)
+    const merged = { ...fromStorage, ...fromRef };
+
+    return merged;
+  }, [STORAGE_KEY]);
+
+  const getReliableQuestions = useCallback((): any[] => {
+    const fromRef = shuffledQuestionsRef.current;
+    if (fromRef && fromRef.length > 0) return fromRef;
+
+    // Fallback: localStorage
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.shuffledQuestions?.length > 0) return parsed.shuffledQuestions;
+      }
+    } catch { /* ignore */ }
+
+    return test.questions;
+  }, [STORAGE_KEY, test.questions]);
+
+  // Stable auto-submit function — reads from refs + localStorage fallback
+  const handleAutoSubmit = useCallback(async () => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
+    setShowSubmitDialog(false);
+    const loadingToast = toast.loading("Waktu habis! Mengirim jawaban...");
+
+    // DEBUG: Log initial state at the very start
+    console.log("[AUTO_SUBMIT] === START ===");
+    console.log("[AUTO_SUBMIT] answersRef.current:", JSON.stringify(answersRef.current));
+    console.log("[AUTO_SUBMIT] currentQuestionIndexRef:", currentQuestionIndexRef.current);
+    console.log("[AUTO_SUBMIT] shuffledQuestions.length:", shuffledQuestionsRef.current?.length);
+
+    // Read raw localStorage for debugging
+    try {
+      const rawStorage = localStorage.getItem(STORAGE_KEY);
+      console.log("[AUTO_SUBMIT] localStorage raw:", rawStorage);
+      if (rawStorage) {
+        const parsed = JSON.parse(rawStorage);
+        console.log("[AUTO_SUBMIT] localStorage parsed answers count:", Object.keys(parsed.answers || {}).length);
+        console.log("[AUTO_SUBMIT] localStorage parsed answers:", parsed.answers);
+      }
+    } catch (e) {
+      console.log("[AUTO_SUBMIT] localStorage read failed:", e);
+    }
+
+    try {
+      // SAFETY NET: Force-sync current React state to localStorage BEFORE reading
+      // This ensures we capture ALL answers, including any that might not be in ref yet
+      // due to React state batching or rapid user interactions
+      const currentAnswers = answersRef.current;
+      try {
+        const currentData = {
+          answers: currentAnswers,
+          currentIndex: currentQuestionIndexRef.current,
+          shuffledQuestions: shuffledQuestionsRef.current,
+          markedQuestions: Array.from(markedQuestionsRef.current),
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(currentData));
+      } catch (e) {
+        console.warn("[AUTO_SUBMIT] localStorage sync failed:", e);
+      }
+
+      // Now read from BOTH ref and localStorage, preferring ref (more recent)
+      const reliableAnswers = getReliableAnswers();
+      const reliableQuestions = getReliableQuestions();
+
+      // DEBUG: Log answer count for troubleshooting
+      const answerKeys = Object.keys(reliableAnswers);
+      console.log(`[AUTO_SUBMIT] Ref has ${answerKeys.length} answers, Questions: ${reliableQuestions.length}`, {
+        answerKeys,
+        answers: reliableAnswers
+      });
+
+      const formattedAnswers = reliableQuestions.map((q: any) => ({
+        questionId: q.id,
+        optionId: reliableAnswers[q.id] ?? null,
+      }));
+
+      console.log(`[AUTO_SUBMIT] Formatted ${formattedAnswers.filter(f => f.optionId).length} answers for submission`);
+
+      const result = await submitTest(test.id, formattedAnswers, { attemptId, isForceSubmit: true });
+
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(ACTIVE_ATTEMPT_KEY);
+
+      toast.success("Waktu habis. Jawaban yang sudah diisi berhasil dikirim.", { id: loadingToast });
+      router.push(`/courses/${courseId}/tests/${test.id}/result?attemptId=${result.id}`);
+      router.refresh();
+    } catch (error: any) {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
+      console.error("[AUTO_SUBMIT_ERROR]", error);
+      toast.error(error?.message || "Gagal mengirim jawaban otomatis.", { id: loadingToast, duration: 5000 });
+    }
+  }, [attemptId, courseId, test.id, STORAGE_KEY, ACTIVE_ATTEMPT_KEY, router, getReliableAnswers, getReliableQuestions]);
+
+  // Timer Logic — uses stable handleAutoSubmit (reads from refs, never stale)
   useEffect(() => {
     if (!isReady) return;
 
@@ -133,7 +288,7 @@ export function TestClient({
     setTimeLeft(initialRemaining);
 
     if (initialRemaining <= 0) {
-      handleSubmit();
+      handleAutoSubmit();
       return;
     }
 
@@ -143,27 +298,30 @@ export function TestClient({
       
       if (currentRemaining <= 0) {
         clearInterval(timer);
-        handleSubmit();
+        handleAutoSubmit();
       }
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isReady, startedAt]);
+  }, [isReady, startedAt, handleAutoSubmit]);
 
   // Auto-Save Logic
   useEffect(() => {
-    if (!isReady || isSubmitting) return;
+    if (!isReady || isSubmittingRef.current) return;
 
     const dataToSave = {
       answers,
-      currentIndex: currentQuestionIndex,
-      shuffledQuestions,
-      markedQuestions: Array.from(markedQuestions),
+      currentIndex: currentQuestionIndexRef.current,
+      shuffledQuestions: shuffledQuestionsRef.current,
+      markedQuestions: Array.from(markedQuestionsRef.current),
       updatedAt: new Date().toISOString()
     };
-    
+
+    // DEBUG: Log what auto-save is writing
+    console.log(`[AUTO_SAVE] Saving ${Object.keys(dataToSave.answers).length} answers:`, Object.keys(dataToSave.answers));
+
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
-  }, [answers, currentQuestionIndex, shuffledQuestions, markedQuestions, isReady, isSubmitting]);
+  }, [answers, isReady]);
 
   // Keyboard Navigation
   useEffect(() => {
@@ -232,10 +390,40 @@ export function TestClient({
   const totalQuestions = shuffledQuestions.length;
 
   const handleSelectOption = (questionId: string, optionId: string) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [questionId]: optionId,
-    }));
+    if (isSubmittingRef.current) return;
+
+    setAnswers((prev) => {
+      const nextAnswers = {
+        ...prev,
+        [questionId]: optionId,
+      };
+
+      // 1. Synchronously update ref so auto-submit NEVER misses an answer
+      answersRef.current = nextAnswers;
+
+      // DEBUG: Log answer selection
+      console.log(`[SELECT] Q:${questionId.slice(0,8)} → O:${optionId.slice(0,8)}, total answers: ${Object.keys(nextAnswers).length}`);
+
+      // 2. Synchronously write to localStorage to prevent debounce race conditions
+      // Use refs for currentQuestionIndex and markedQuestions to avoid stale closures
+      try {
+        const dataToSave = {
+          answers: nextAnswers,
+          currentIndex: currentQuestionIndexRef.current,
+          shuffledQuestions: shuffledQuestionsRef.current,
+          markedQuestions: Array.from(markedQuestionsRef.current),
+          updatedAt: new Date().toISOString()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+        // DEBUG: Verify localStorage write
+        const verify = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        console.log(`[LOCALSTORAGE] Written ${Object.keys(verify.answers || {}).length} answers`);
+      } catch (err) {
+        console.error("Failed to save to localStorage synchronously:", err);
+      }
+
+      return nextAnswers;
+    });
   };
 
   const toggleMark = (index: number) => {
@@ -250,7 +438,7 @@ export function TestClient({
     });
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isForceSubmit = false) => {
     if (isSubmitting) return;
 
     // Check if offline before submitting
@@ -264,19 +452,26 @@ export function TestClient({
     const loadingToast = toast.loading("Mengirim jawaban...");
 
     try {
-      // Preserve order: map shuffledQuestions sequentially, not arbitrary Object.keys order
+      // Use reliable answers: merge state + ref + localStorage for safety
+      const reliableAnswers = getReliableAnswers();
       const formattedAnswers = shuffledQuestions
         .map((q: any) => ({
           questionId: q.id,
-          optionId: answers[q.id] ?? null,
+          optionId: reliableAnswers[q.id] ?? null,
         }));
 
-      const result = await submitTest(test.id, formattedAnswers);
+      const result = await submitTest(test.id, formattedAnswers, { attemptId, isForceSubmit });
       
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(ACTIVE_ATTEMPT_KEY);
       
-      toast.success("Ujian berhasil dikirim!", { id: loadingToast });
-      router.push(`/courses/${courseId}/tests/${test.id}/result?attemptId=${result.id}`);
+      toast.success(isForceSubmit ? "Ujian diakhiri. Progress tersimpan." : "Ujian berhasil dikirim!", { id: loadingToast });
+      
+      if (isForceSubmit) {
+        router.push(`/courses/${courseId}`);
+      } else {
+        router.push(`/courses/${courseId}/tests/${test.id}/result?attemptId=${result.id}`);
+      }
       router.refresh();
     } catch (error: any) {
       setIsSubmitting(false);
@@ -294,6 +489,7 @@ export function TestClient({
       }
 
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(ACTIVE_ATTEMPT_KEY);
 
       const errorMessage = error?.message || error?.toString() || "";
 
@@ -760,7 +956,7 @@ export function TestClient({
             <Button variant="outline" size="sm" onClick={() => setShowSubmitDialog(false)}>
               Batal
             </Button>
-            <Button size="sm" onClick={handleSubmit} disabled={isSubmitting || !isOnline}>
+            <Button size="sm" onClick={() => handleSubmit(false)} disabled={isSubmitting || !isOnline}>
               {isSubmitting ? (
                 <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> Mengirim...</>
               ) : !isOnline ? (
@@ -768,6 +964,27 @@ export function TestClient({
               ) : (
                 <>Ya, Submit Sekarang</>
               )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Exit Confirmation Dialog */}
+      <Dialog open={showExitModal} onOpenChange={setShowExitModal}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-base">Yakin ingin keluar dari test?</DialogTitle>
+            <DialogDescription className="text-sm text-foreground">
+              Percobaan ini akan tetap dihitung meskipun kamu keluar sekarang.<br/>
+              Jawaban yang sudah diisi akan tersimpan sesuai progress terakhir.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-0 mt-4">
+            <Button variant="outline" size="sm" onClick={() => handleSubmit(true)} disabled={isSubmitting}>
+              Keluar
+            </Button>
+            <Button size="sm" onClick={() => setShowExitModal(false)} disabled={isSubmitting}>
+              Lanjutkan Test
             </Button>
           </DialogFooter>
         </DialogContent>

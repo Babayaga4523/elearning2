@@ -32,7 +32,7 @@ export async function GET(
         },
         testAttempts: {
           where: {
-            status: "SUBMITTED",
+            status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
           },
           orderBy: {
             createdAt: "desc",

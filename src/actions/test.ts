@@ -162,7 +162,8 @@ export async function deleteTest(id: string) {
  */
 export async function submitTest(
   testId: string,
-  answersData: { questionId: string; optionId: string }[]
+  answersData: { questionId: string; optionId: string | null }[],
+  options?: { attemptId?: string; isForceSubmit?: boolean }
 ) {
   const session = await auth();
 
@@ -209,12 +210,29 @@ export async function submitTest(
     }
   }
 
-  // 2. Count actual SUBMITTED attempts from TestAttempt table
+  // 2. Find active attempt
+  const attemptId = options?.attemptId;
+  let activeAttempt = null;
+  if (attemptId) {
+    activeAttempt = await db.testAttempt.findUnique({ where: { id: attemptId } });
+  } else {
+    // Fallback: get the latest ONGOING attempt
+    activeAttempt = await db.testAttempt.findFirst({
+      where: { userId, testId, status: "ONGOING" },
+      orderBy: { startedAt: "desc" }
+    });
+  }
+
+  if (!activeAttempt) {
+    throw new Error("INVALID_ATTEMPT: No active attempt found to submit.");
+  }
+
+  // Count actual SUBMITTED attempts from TestAttempt table to check max attempts
   const actualAttemptCount = await db.testAttempt.count({
     where: {
       userId,
       testId: testId,
-      status: "SUBMITTED",
+      status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
     },
   });
 
@@ -234,9 +252,11 @@ export async function submitTest(
   const timeSpent = Math.floor((Date.now() - startedAt.getTime()) / 1000);
   const durationSeconds = test.duration * 60;
   const TOLERANCE_SECONDS = 15;
+  let isTimeExceeded = false;
 
   if (timeSpent > durationSeconds + TOLERANCE_SECONDS) {
-    throw new Error("WAKTU_HABIS");
+    // Prevent discarding the attempt; mark it for FORCE_SUBMITTED instead
+    isTimeExceeded = true;
   }
 
   if (test.course.deadlineDate && new Date(test.course.deadlineDate).getTime() < Date.now()) {
@@ -244,6 +264,11 @@ export async function submitTest(
   }
 
   // 5. Calculate Score
+  console.log("[SUBMIT_TEST] answersData received:", JSON.stringify(answersData));
+  console.log("[SUBMIT_TEST] Total answers received:", answersData.length);
+  console.log("[SUBMIT_TEST] test.questions count:", test.questions.length);
+  console.log("[SUBMIT_TEST] test.questions IDs:", test.questions.map(q => q.id));
+
   let correctCount = 0;
   for (const question of test.questions) {
     const userAnswer = answersData.find((a) => a.questionId === question.id);
@@ -283,19 +308,17 @@ export async function submitTest(
   }
 
   // 8. Execute Transaction
+  const finalStatus = (options?.isForceSubmit || isTimeExceeded) ? "FORCE_SUBMITTED" : "SUBMITTED";
+
   const attempt = await db.$transaction(async (tx) => {
-    // Create TestAttempt
-    const testAttempt = await tx.testAttempt.create({
+    // Update existing TestAttempt
+    const testAttempt = await tx.testAttempt.update({
+      where: { id: activeAttempt.id },
       data: {
-        userId,
-        testId: testId,
-        enrollmentId: enrollment?.id ?? null,
-        attemptNumber: nextAttemptNumber,
         score,
         passed: finalPassed,
-        status: "SUBMITTED",
+        status: finalStatus,
         timeSpent,
-        startedAt,
         completedAt: new Date(),
       },
     });
@@ -315,6 +338,13 @@ export async function submitTest(
       }),
     });
 
+    // Verify answers were saved
+    const savedAnswers = await tx.testAnswer.findMany({
+      where: { testAttemptId: testAttempt.id },
+    });
+    console.log("[SUBMIT_TEST] Answers saved to DB:", savedAnswers.length);
+    console.log("[SUBMIT_TEST] Saved answers:", JSON.stringify(savedAnswers));
+
     // Update Enrollment (only if enrollment exists and update is needed)
     if (enrollment && Object.keys(enrollmentUpdate).length > 0) {
       await tx.enrollment.update({
@@ -328,7 +358,7 @@ export async function submitTest(
       await tx.testSession.update({
         where: { id: testSession.id },
         data: {
-          status: "SUBMITTED",
+          status: finalStatus,
           score,
           submittedAt: new Date(),
         },
@@ -403,7 +433,7 @@ export async function canRetakePostTest(courseId: string) {
     where: {
       userId,
       testId: postTest.id,
-      status: "SUBMITTED",
+      status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
     },
   });
 
@@ -449,6 +479,8 @@ export async function getTestAttemptDetail(attemptId: string) {
 
   if (!session) throw new Error("Unauthorized");
 
+  console.log("[GET_ATTEMPT_DETAIL] Fetching attemptId:", attemptId);
+
   const attempt = await db.testAttempt.findUnique({
     where: { id: attemptId },
     include: {
@@ -466,6 +498,13 @@ export async function getTestAttemptDetail(attemptId: string) {
       },
     },
   });
+
+  console.log("[GET_ATTEMPT_DETAIL] Attempt found:", attempt ? "YES" : "NO");
+  console.log("[GET_ATTEMPT_DETAIL] Answers count:", attempt?.answers?.length);
+  console.log("[GET_ATTEMPT_DETAIL] Test.questions count:", attempt?.test?.questions?.length);
+  console.log("[GET_ATTEMPT_DETAIL] Test:", attempt?.test ? { id: attempt.test.id, title: attempt.test.title, questionsCount: attempt.test.questions?.length } : null);
+  console.log("[GET_ATTEMPT_DETAIL] First 3 answers:", attempt?.answers?.slice(0, 3));
+  console.log("[GET_ATTEMPT_DETAIL] First 3 questions:", attempt?.test?.questions?.slice(0, 3).map((q: any) => ({ id: q.id, text: q.text?.slice(0, 50) })));
 
   if (!attempt) return null;
 

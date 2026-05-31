@@ -12,12 +12,40 @@ import {
   ChevronRight,
   RotateCcw,
   BookOpen,
+  FileCheck2,
+  Check,
+  X,
+  PlayCircle,
+  BarChart3,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { getTestAttemptDetail } from "@/actions/test";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
 
 export const metadata = {
   title: "Hasil Ujian | E-Learning BNI Finance",
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   DESIGN TOKENS — World-Class Design System
+═══════════════════════════════════════════════════════════════════════ */
+const t = {
+  navy: "#0F1C3F",
+  gold: "#E8A020",
+  surface: "#F8F9FB",
+  border: "#E4E7EC",
+  text: "#101828",
+  textSecondary: "#475467",
+  textTertiary: "#98A2B3",
+  success: { bg: "#ECFDF3", text: "#027A48", border: "#6CE9A6", icon: "#12B76A" },
+  warning: { bg: "#FFFAEB", text: "#B54708", border: "#FEC84B", icon: "#F79009" },
+  danger: { bg: "#FEF3F2", text: "#B42318", border: "#FDA29B", icon: "#F04438" },
+  info: { bg: "#EFF8FF", text: "#175CD3", border: "#B2DDFF", icon: "#2E90FA" },
+  navyDark: { bg: "#E8EDF7", text: "#0F1C3F", border: "#CBD2E0" },
 };
 
 function formatDuration(secs: number): string {
@@ -56,11 +84,11 @@ export default async function TestResultPage({
   const wrongCount = totalQ - correctCount;
 
   const attemptCount = await db.testAttempt.count({
-    where: { userId: session.user.id, testId: attempt.testId, status: "SUBMITTED" },
+    where: { userId: session.user.id, testId: attempt.testId, status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] } },
   });
 
   const allAttempts = await db.testAttempt.findMany({
-    where: { userId: session.user.id, testId: attempt.testId, status: "SUBMITTED" },
+    where: { userId: session.user.id, testId: attempt.testId, status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] } },
     select: { score: true, passed: true },
     orderBy: { score: "desc" },
   });
@@ -84,333 +112,317 @@ export default async function TestResultPage({
       ? formatDuration(attempt.timeSpent)
       : "—";
 
-  // Sort answers by answerOrder — the order user worked through the test
+  // Sort answers by answerOrder
   const sortedAnswers = [...attempt.answers].sort(
     (a, b) => (a.answerOrder ?? 0) - (b.answerOrder ?? 0)
   );
 
-  // Color tokens
-  const pass = {
-    ring: "emerald-500",
-    ringBg: "bg-emerald-500",
-    surface: "bg-emerald-50",
-    border: "border-emerald-200",
-    text: "text-emerald-700",
-    badge: "bg-emerald-100 text-emerald-700 border-emerald-200",
-    badgeWrong: "bg-red-50 text-red-700 border-red-200",
-    badgeCorrect: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  };
-  const fail = {
-    ring: "amber-500",
-    ringBg: "bg-amber-500",
-    surface: "bg-amber-50",
-    border: "border-amber-200",
-    text: "text-amber-700",
-    badge: "bg-amber-100 text-amber-700 border-amber-200",
-    badgeWrong: "bg-red-50 text-red-700 border-red-200",
-    badgeCorrect: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  };
-  const c = isPassed ? pass : fail;
-
+  // Score ring configuration
   const circumference = 2 * Math.PI * 44;
   const offset = circumference * (1 - score / 100);
 
   return (
-    <div className="min-h-screen bg-slate-50 pb-24">
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(12px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes drawRing {
-          from { stroke-dashoffset: ${circumference}; }
-          to   { stroke-dashoffset: ${offset}; }
-        }
-        @keyframes countUp {
-          from { opacity: 0; transform: translateY(4px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .q-card {
-          opacity: 0;
-          animation: fadeUp 280ms ease-out forwards;
-        }
-        .q-card:nth-child(1)  { animation-delay: 0ms; }
-        .q-card:nth-child(2)  { animation-delay: 60ms; }
-        .q-card:nth-child(3)  { animation-delay: 120ms; }
-        .q-card:nth-child(4)  { animation-delay: 180ms; }
-        .q-card:nth-child(5)  { animation-delay: 240ms; }
-        .q-card:nth-child(n+6){ animation-delay: 300ms; }
-
-        .ring-track {
-          stroke-dasharray: ${circumference};
-          stroke-dashoffset: ${circumference};
-          animation: drawRing 1200ms cubic-bezier(0.23, 1, 0.32, 1) forwards;
-        }
-
-        .btn-primary {
-          transition: transform 120ms ease-out, background-color 150ms ease;
-        }
-        .btn-primary:active {
-          transform: scale(0.97);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .q-card { animation: none; opacity: 1; }
-          .ring-track { animation: none; stroke-dashoffset: ${offset}; }
-        }
-      `}</style>
-
-      {/* ── Page Header ─────────────────────────────────────── */}
-      <div className="bg-white border-b border-slate-200 shadow-sm">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <Link
-                href={`/courses/${params.courseId}`}
-                className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Kembali ke Kursus
-              </Link>
-              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                {attempt.test.title}
-              </h1>
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                  {testType === "PRE" ? "Pre-Test" : "Post-Test"}
-                </span>
-                <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-                  Percobaan #{attemptCount}
-                </span>
-                {hasBestScore && isCurrentBest && (
-                  <span className="inline-flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                    <Trophy className="h-3 w-3" />
-                    Skor Terbaik
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
+    <div
+      className="min-h-screen bg-[#F8F9FB] selection:bg-[#0F1C3F]/10 pb-20"
+      style={{ fontFamily: "'DM Sans', sans-serif" }}
+    >
+      {/* ═══ Hero Header ════════════════════════════════════════════════ */}
+      <header
+        className="relative pt-8 pb-12 lg:pt-12 lg:pb-16 overflow-hidden border-b border-[#1A2D5A]"
+        style={{
+          background: `linear-gradient(135deg, ${t.navy} 0%, #12224A 50%, #1A3060 100%)`,
+        }}
+      >
+        <div className="absolute inset-0 opacity-20 pointer-events-none">
+          <div className="absolute right-[-10%] top-[-20%] w-[400px] h-[400px] rounded-full bg-[#E8A020] blur-[140px] mix-blend-screen" />
+          <div className="absolute left-[-10%] bottom-[-20%] w-[250px] h-[250px] rounded-full bg-[#2E90FA] blur-[100px] mix-blend-screen" />
         </div>
-      </div>
-
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-
-        {/* ── Score Card ─────────────────────────────────────── */}
         <div
-          className={`
-            bg-white rounded-2xl border-2 shadow-sm overflow-hidden
-            ${isPassed ? "border-emerald-200" : "border-amber-200"}
-          `}
-        >
-          {/* Top color bar */}
-          <div className={`h-1.5 w-full ${isPassed ? "bg-emerald-500" : "bg-amber-500"}`} />
+          className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay"
+          style={{
+            backgroundImage:
+              "linear-gradient(rgba(255,255,255,0.15) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.15) 1px, transparent 1px)",
+            backgroundSize: "24px 24px",
+          }}
+        />
 
-          <div className="p-6 sm:p-8 flex flex-col md:flex-row gap-8 items-center">
+        <div className="relative z-10 max-w-[1000px] mx-auto px-5 sm:px-6">
+          <Link
+            href={`/courses/${params.courseId}`}
+            className="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-white/70 hover:text-white transition-all font-['DM_Sans'] bg-white/10 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/10 outline-none mb-6"
+          >
+            <ArrowLeft size={13} />
+            Kembali ke Kursus
+          </Link>
 
-            {/* Ring */}
-            <div className="relative shrink-0">
-              <svg
-                className="w-36 h-36 sm:w-44 sm:h-44 transform -rotate-90"
-                viewBox="0 0 100 100"
-                aria-hidden="true"
-              >
-                {/* Track */}
-                <circle
-                  cx="50" cy="50" r="44"
-                  fill="none"
-                  stroke={isPassed ? "#d1fae5" : "#fef3c7"}
-                  strokeWidth="9"
-                />
-                {/* Progress */}
-                <circle
-                  cx="50" cy="50" r="44"
-                  fill="none"
-                  stroke={isPassed ? "#10b981" : "#f59e0b"}
-                  strokeWidth="9"
-                  strokeLinecap="round"
-                  className="ring-track"
-                />
-              </svg>
-
-              {/* Center text */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                  Skor
+          <div className="space-y-4">
+            <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold text-white font-['Lexend_Deca'] leading-tight tracking-tight">
+              {attempt.test.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#EFF8FF] text-[#175CD3] text-[10px] font-bold uppercase tracking-wider">
+                {testType === "PRE" ? "Pre-Test" : "Post-Test"}
+              </span>
+              <span className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 text-white/90 text-[10px] font-bold uppercase tracking-wider border border-white/20">
+                Percobaan {attemptCount}
+              </span>
+              {hasBestScore && isCurrentBest && (
+                <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFFAEB] text-[#B54708] text-[10px] font-bold uppercase tracking-wider border border-[#FEC84B]/40">
+                  <Trophy size={12} className="inline mr-1" />
+                  Skor Terbaik
                 </span>
-                <span className="text-4xl sm:text-5xl font-bold text-slate-900 leading-none">
-                  {score}%
-                </span>
-                {hasBestScore && !isCurrentBest && (
-                  <span className="text-xs font-semibold text-amber-600 mt-1">
-                    terbaik {bestScore}%
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Result info */}
-            <div className="flex-1 w-full space-y-5">
-              {/* Status badge */}
-              <div className="flex items-center gap-3">
-                <div
-                  className={`
-                    h-10 w-10 rounded-xl flex items-center justify-center shrink-0
-                    ${isPassed ? "bg-emerald-100" : "bg-amber-100"}
-                  `}
-                >
-                  {isPassed ? (
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600" />
-                  ) : (
-                    <XCircle className="h-5 w-5 text-amber-600" />
-                  )}
-                </div>
-                <div>
-                  <p className={`text-xl font-bold ${isPassed ? "text-emerald-700" : "text-amber-700"}`}>
-                    {isPassed ? "Lulus!" : "Belum Lulus"}
-                  </p>
-                  <p className="text-sm text-slate-500">
-                    {isPassed
-                      ? "Selamat! Anda telah memenuhi batas kelulusan."
-                      : `Belum mencapai batas kelulusan (${passingScore}%). Coba lagi!`}
-                  </p>
-                </div>
-              </div>
-
-              {/* Meta row */}
-              <div className="flex flex-wrap gap-4 text-xs font-medium text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <Target className="h-3.5 w-3.5 text-slate-400" />
-                  Batas lulus: {passingScore}%
-                </span>
-                {hasBestScore && (
-                  <span className="flex items-center gap-1.5">
-                    <Trophy className="h-3.5 w-3.5 text-amber-400" />
-                    Tertinggi: {bestScore}%
-                  </span>
-                )}
-                <span className="flex items-center gap-1.5">
-                  <RotateCcw className="h-3.5 w-3.5 text-slate-400" />
-                  Sisa尝试: {effectiveMaxAttempts === 0 ? "Tak terbatas" : remainingAttempts}
-                </span>
-              </div>
-
-              {/* CTA */}
-              <div className="flex flex-wrap gap-3">
-                {canTryAgain ? (
-                  <>
-                    <Link
-                      href={`/courses/${params.courseId}/tests/${params.testId}`}
-                      className={`
-                        btn-primary inline-flex items-center gap-2
-                        text-sm font-semibold px-5 py-2.5 rounded-xl
-                        text-white shadow-sm
-                        ${isPassed ? "bg-emerald-600 hover:bg-emerald-700" : "bg-blue-600 hover:bg-blue-700"}
-                      `}
-                    >
-                      {isPassed ? "Tingkatkan Nilai" : "Ulangi Ujian"}
-                      <ChevronRight className="h-4 w-4" />
-                    </Link>
-                    <Link
-                      href={`/courses/${params.courseId}`}
-                      className="inline-flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
-                    >
-                      <BookOpen className="h-4 w-4" />
-                      Kembali ke Kursus
-                    </Link>
-                  </>
-                ) : (
-                  <Link
-                    href={`/courses/${params.courseId}`}
-                    className="btn-primary inline-flex items-center gap-2 text-sm font-semibold px-5 py-2.5 rounded-xl text-white shadow-sm bg-slate-700 hover:bg-slate-800"
-                  >
-                    Kembali ke Kursus
-                    <ChevronRight className="h-4 w-4" />
-                  </Link>
-                )}
-                <a
-                  href="#review"
-                  className="inline-flex items-center gap-2 text-sm font-medium px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 hover:bg-slate-50 transition-colors"
-                >
-                  Review Jawaban
-                </a>
-              </div>
+              )}
             </div>
           </div>
         </div>
+      </header>
+
+      {/* ═══ Main Content ════════════════════════════════════════════════ */}
+      <div className="relative z-20 max-w-[1000px] mx-auto px-5 sm:px-6 -mt-8 space-y-6">
+        
+        {/* ── Score Card ─────────────────────────────────────── */}
+        <Card className={cn(
+          "rounded-2xl border overflow-hidden shadow-[0_8px_30px_rgb(0,0,0,0.04)]",
+          isPassed
+            ? "border-[#6CE9A6]/50 bg-white"
+            : "border-[#FEC84B]/50 bg-white"
+        )}>
+          <div className={cn(
+            "h-1.5 w-full",
+            isPassed ? "bg-gradient-to-r from-[#12B76A] to-[#027A48]" : "bg-gradient-to-r from-[#F79009] to-[#B54708]"
+          )} />
+          <CardContent className="p-6 sm:p-8">
+            <div className="flex flex-col md:flex-row gap-8 lg:gap-12 items-center">
+              {/* Score Ring */}
+              <div className="relative shrink-0">
+                <svg
+                  className="w-40 h-40 transform -rotate-90"
+                  viewBox="0 0 100 100"
+                  aria-hidden="true"
+                >
+                  {/* Track */}
+                  <circle
+                    cx="50" cy="50" r="44"
+                    fill="none"
+                    stroke={isPassed ? "#D1FAE5" : "#FEF3C7"}
+                    strokeWidth="8"
+                  />
+                  {/* Progress */}
+                  <circle
+                    cx="50" cy="50" r="44"
+                    fill="none"
+                    stroke={isPassed ? "#12B76A" : "#F79009"}
+                    strokeWidth="8"
+                    strokeLinecap="round"
+                    strokeDasharray={circumference}
+                    strokeDashoffset={offset}
+                    className="transition-all duration-1000 ease-out"
+                  />
+                </svg>
+
+                {/* Center text */}
+                <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
+                  <span className="text-[10px] font-bold text-[#98A2B3] uppercase tracking-widest mb-1">
+                    Skor Akhir
+                  </span>
+                  <span className="text-5xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] leading-none">
+                    {score}<span className="text-2xl">%</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Result info */}
+              <div className="flex-1 w-full text-center md:text-left space-y-5">
+                <div className="flex flex-col md:flex-row items-center md:items-start gap-4">
+                  <div
+                    className={cn(
+                      "h-12 w-12 rounded-xl flex items-center justify-center shrink-0 border",
+                      isPassed ? "bg-[#ECFDF3] border-[#A6F4C5]" : "bg-[#FEF3F2] border-[#FECDCA]"
+                    )}
+                  >
+                    {isPassed ? (
+                      <CheckCircle2 className="h-6 w-6 text-[#12B76A]" />
+                    ) : (
+                      <XCircle className="h-6 w-6 text-[#F04438]" />
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca']">
+                      {isPassed ? "Selamat! Anda Lulus." : "Anda Belum Lulus."}
+                    </h3>
+                    <p className="text-[#475467] text-sm mt-1">
+                      {isPassed 
+                        ? `Anda telah melewati ambang batas kelulusan sebesar ${passingScore}%.`
+                        : `Skor Anda di bawah ambang batas kelulusan (${passingScore}%). Silakan coba lagi.`}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Meta pills */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F8F9FB] border border-[#E4E7EC] text-xs font-semibold text-[#475467]">
+                    <Target size={14} className="text-[#64748B]" />
+                    Batas Lulus: {passingScore}%
+                  </div>
+                  {hasBestScore && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FFFAEB] border border-[#FEC84B]/40 text-xs font-semibold text-[#B54708]">
+                      <Trophy size={14} className="text-[#E8A020]" />
+                      Tertinggi: {bestScore}%
+                    </div>
+                  )}
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F8F9FB] border border-[#E4E7EC] text-xs font-semibold text-[#475467]">
+                    <RotateCcw size={14} className="text-[#64748B]" />
+                    Sisa Percobaan: {effectiveMaxAttempts === 0 ? "Tak Terbatas" : remainingAttempts}
+                  </div>
+                </div>
+
+                {/* CTAs */}
+                <div className="flex flex-wrap items-center justify-center md:justify-start gap-3 pt-2">
+                  {canTryAgain ? (
+                    <>
+                      <Button
+                        asChild
+                        className={cn(
+                          "h-10 px-5 rounded-xl text-sm font-bold transition-all border-0 shadow-sm",
+                          isPassed
+                            ? "bg-[#12B76A] hover:bg-[#027A48] text-white"
+                            : "bg-[#0F1C3F] hover:bg-[#1A3060] text-white"
+                        )}
+                      >
+                        <Link href={`/courses/${params.courseId}/tests/${params.testId}`}>
+                          {isPassed ? "Tingkatkan Nilai" : "Ulangi Ujian"}
+                          <ChevronRight size={14} className="ml-1" />
+                        </Link>
+                      </Button>
+                      <Button
+                        asChild
+                        variant="outline"
+                        className="h-10 px-5 rounded-xl text-sm font-semibold border-[#E4E7EC] text-[#475467] hover:bg-[#F8F9FB] transition-all"
+                      >
+                        <Link href={`/courses/${params.courseId}`}>
+                          <BookOpen size={14} className="mr-1.5" />
+                          Kembali ke Kursus
+                        </Link>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      asChild
+                      className="h-10 px-5 rounded-xl text-sm font-bold bg-[#0F1C3F] hover:bg-[#1A3060] text-white shadow-sm transition-all"
+                    >
+                      <Link href={`/courses/${params.courseId}`}>
+                        Kembali ke Kursus
+                        <ChevronRight size={14} className="ml-1" />
+                      </Link>
+                    </Button>
+                  )}
+                  <a
+                    href="#review"
+                    className="inline-flex items-center justify-center h-10 px-5 rounded-xl border border-[#E4E7EC] bg-white text-[#475467] text-sm font-semibold hover:bg-[#F8F9FB] transition-all"
+                  >
+                    <FileCheck2 size={14} className="mr-1.5" />
+                    Review Jawaban
+                  </a>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* ── Stats Grid ─────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          {[
-            {
-              icon: <Target className="h-5 w-5" />,
-              value: `${correctCount} / ${totalQ}`,
-              label: "Jawaban Benar",
-              accent: "text-emerald-600",
-              bg: "bg-emerald-50",
-              border: "border-emerald-100",
-            },
-            {
-              icon: <XCircle className="h-5 w-5" />,
-              value: wrongCount.toString(),
-              label: "Jawaban Salah",
-              accent: "text-red-600",
-              bg: "bg-red-50",
-              border: "border-red-100",
-            },
-            {
-              icon: <Clock className="h-5 w-5" />,
-              value: duration,
-              label: "Waktu Pengerjaan",
-              accent: "text-blue-600",
-              bg: "bg-blue-50",
-              border: "border-blue-100",
-            },
-            {
-              icon: <CalendarDays className="h-5 w-5" />,
-              value: attempt.completedAt
-                ? new Date(attempt.completedAt).toLocaleDateString("id-ID", {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                  })
-                : "—",
-              label: "Tanggal Selesai",
-              accent: "text-purple-600",
-              bg: "bg-purple-50",
-              border: "border-purple-100",
-            },
-          ].map(({ icon, value, label, accent, bg, border }) => (
-            <div
-              key={label}
-              className={`bg-white rounded-xl border ${border} p-4 sm:p-5 flex items-center gap-3`}
-            >
-              <div className={`h-10 w-10 rounded-lg ${bg} flex items-center justify-center shrink-0 ${accent}`}>
-                {icon}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <Card className="rounded-2xl border border-[#E4E7EC] bg-white shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#ECFDF3] border border-[#A6F4C5] flex items-center justify-center shrink-0">
+                <CheckCircle2 className="h-5 w-5 text-[#12B76A]" />
               </div>
-              <div className="min-w-0">
-                <p className={`text-xl font-bold ${accent} tabular-nums leading-none`}>{value}</p>
-                <p className="text-xs text-slate-500 mt-1 leading-tight">{label}</p>
+              <div>
+                <p className="text-xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] tabular-nums leading-none">
+                  {correctCount}/{totalQ}
+                </p>
+                <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider mt-1">
+                  Benar
+                </p>
               </div>
-            </div>
-          ))}
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-[#E4E7EC] bg-white shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#FEF3F2] border border-[#FECDCA] flex items-center justify-center shrink-0">
+                <XCircle className="h-5 w-5 text-[#F04438]" />
+              </div>
+              <div>
+                <p className="text-xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] tabular-nums leading-none">
+                  {wrongCount}
+                </p>
+                <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider mt-1">
+                  Salah
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-[#E4E7EC] bg-white shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#F8F9FB] border border-[#E4E7EC] flex items-center justify-center shrink-0">
+                <Clock className="h-5 w-5 text-[#64748B]" />
+              </div>
+              <div>
+                <p className="text-xl font-extrabold text-[#0F1C3F] font-['Lexend_Deca'] tabular-nums leading-none">
+                  {duration}
+                </p>
+                <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider mt-1">
+                  Waktu
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="rounded-2xl border border-[#E4E7EC] bg-white shadow-sm">
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-[#F8F9FB] border border-[#E4E7EC] flex items-center justify-center shrink-0">
+                <CalendarDays className="h-5 w-5 text-[#64748B]" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-[#0F1C3F] font-['Lexend_Deca'] leading-tight">
+                  {attempt.completedAt
+                    ? new Date(attempt.completedAt).toLocaleDateString("id-ID", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })
+                    : "—"}
+                </p>
+                <p className="text-[10px] text-[#64748B] font-bold uppercase tracking-wider mt-1">
+                  Tanggal
+                </p>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* ── Answer Review ─────────────────────────────────── */}
-        <div id="review" className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="px-5 sm:px-6 py-4 border-b border-slate-100 bg-slate-50/60 flex items-center justify-between">
+        <Card id="review" className="rounded-2xl border border-[#E4E7EC] bg-white shadow-sm overflow-hidden">
+          <div className="px-5 sm:px-6 py-4 border-b border-[#E4E7EC] bg-[#F8F9FB] flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <BookOpen className="h-5 w-5 text-slate-500" />
-              <h2 className="text-base font-semibold text-slate-900">
+              <BookOpen className="h-5 w-5 text-[#475467]" />
+              <h2 className="text-base font-bold text-[#0F1C3F] font-['Lexend_Deca']">
                 Lembar Jawaban
               </h2>
             </div>
-            <span className="text-xs font-medium text-slate-500 bg-white px-3 py-1 rounded-full border border-slate-200">
-              {totalQ} soal
-            </span>
+            <Badge className="bg-white text-[#475467] border-[#E4E7EC] hover:bg-white text-[11px] font-bold">
+              {totalQ} Soal
+            </Badge>
           </div>
 
-          <div className="p-4 sm:p-6 flex flex-col gap-4 max-h-[700px] overflow-y-auto">
+          <CardContent className="p-0 flex flex-col divide-y divide-[#E4E7EC]">
+            {sortedAnswers.length === 0 && (
+              <div className="p-8 text-center text-[#475467] text-sm">
+                Belum ada jawaban yang tersimpan.
+              </div>
+            )}
+            
             {sortedAnswers.map((answer: any, idx: number) => {
               const question = (attempt as any).test.questions.find(
                 (q: any) => q.id === answer.questionId
@@ -420,137 +432,103 @@ export default async function TestResultPage({
               const isCorrect = answer?.isCorrect ?? false;
 
               return (
-                <div
-                  key={question.id}
-                  className="q-card rounded-xl border bg-white overflow-hidden"
-                >
-                  {/* Question header */}
-                  <div className="px-4 sm:px-5 py-4 flex items-start gap-3">
-                    {/* Status icon */}
-                    <div
-                      className={`
-                        mt-0.5 h-7 w-7 rounded-full flex items-center justify-center shrink-0
-                        ${isCorrect ? "bg-emerald-500" : "bg-red-500"}
-                      `}
-                    >
-                      {isCorrect ? (
-                        <CheckCircle2 className="h-4 w-4 text-white" />
-                      ) : (
-                        <XCircle className="h-4 w-4 text-white" />
-                      )}
-                    </div>
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wide">
-                          Soal {idx + 1}
-                        </span>
-                        <span
-                          className={`
-                            text-[10px] font-semibold px-2 py-0.5 rounded-full border
-                            ${isCorrect ? c.badgeCorrect : c.badgeWrong}
-                          `}
+                <div key={question.id} className="p-5 sm:p-6 hover:bg-[#F8F9FB]/50 transition-colors">
+                  <div className="flex flex-col md:flex-row gap-6">
+                    
+                    {/* Question Column */}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className={cn(
+                          "flex items-center justify-center w-7 h-7 rounded-lg text-xs font-extrabold shrink-0 border",
+                          isCorrect ? "bg-[#ECFDF3] border-[#A6F4C5] text-[#027A48]" : "bg-[#FEF3F2] border-[#FECDCA] text-[#B42318]"
+                        )}>
+                          {idx + 1}
+                        </div>
+                        <Badge
+                          className={cn(
+                            "text-[10px] font-bold uppercase tracking-wider",
+                            isCorrect
+                              ? "bg-[#ECFDF3] text-[#027A48] border-[#A6F4C5] hover:bg-[#ECFDF3]"
+                              : "bg-[#FEF3F2] text-[#B42318] border-[#FECDCA] hover:bg-[#FEF3F2]"
+                          )}
+                          variant="outline"
                         >
                           {isCorrect ? "Benar" : "Salah"}
-                        </span>
+                        </Badge>
                       </div>
-                      <p className="text-sm font-medium text-slate-800 leading-relaxed">
+                      <p className="text-[#101828] text-sm font-medium leading-relaxed">
                         {question.text}
                       </p>
                     </div>
-                  </div>
 
-                  {/* Options */}
-                  <div className="px-4 sm:px-5 pb-4 flex flex-col gap-2">
-                    {question.options
-                      .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
-                      .map((option: any, optIdx: number) => {
-                        const label = String.fromCharCode(65 + optIdx);
-                        const isUserSelected = answer?.selectedOptionId === option.id;
-                        const isOptionCorrect = option.isCorrect;
+                    {/* Options Column */}
+                    <div className="flex-1 w-full space-y-2">
+                      {question.options
+                        .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
+                        .map((option: any, optIdx: number) => {
+                          const label = String.fromCharCode(65 + optIdx);
+                          const isUserSelected = answer?.selectedOptionId === option.id;
+                          const isOptionCorrect = option.isCorrect;
 
-                        // User picked this — and it's correct
-                        if (isUserSelected && isCorrect) {
+                          // Minimalist Option styling
+                          let stateClass = "bg-white border-[#E4E7EC]";
+                          let labelClass = "bg-[#F1F3F7] text-[#64748B]";
+                          let textClass = "text-[#475467]";
+                          let indicator = null;
+
+                          if (isUserSelected && isCorrect) {
+                            stateClass = "bg-[#ECFDF3] border-[#6CE9A6]";
+                            labelClass = "bg-[#12B76A] text-white";
+                            textClass = "text-[#027A48] font-semibold";
+                            indicator = <CheckCircle2 size={16} className="text-[#12B76A] shrink-0" />;
+                          } else if (isUserSelected && !isCorrect) {
+                            stateClass = "bg-[#FEF3F2] border-[#FDA29B]";
+                            labelClass = "bg-[#F04438] text-white";
+                            textClass = "text-[#B42318] font-semibold";
+                            indicator = <XCircle size={16} className="text-[#F04438] shrink-0" />;
+                          } else if (!isUserSelected && isOptionCorrect) {
+                            stateClass = "bg-white border-[#E4E7EC] ring-1 ring-[#12B76A]/50";
+                            labelClass = "bg-white border border-[#E4E7EC] text-[#101828]";
+                            textClass = "text-[#101828] font-medium";
+                            indicator = (
+                              <div className="flex items-center gap-1 text-[10px] font-bold text-[#12B76A] uppercase tracking-wider shrink-0 bg-[#ECFDF3] px-2 py-0.5 rounded">
+                                <Check size={12} />
+                                Kunci
+                              </div>
+                            );
+                          }
+
                           return (
                             <div
                               key={option.id}
-                              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-emerald-50 border border-emerald-200"
+                              className={cn(
+                                "flex items-start gap-3 p-3 rounded-xl border transition-colors",
+                                stateClass
+                              )}
                             >
-                              <span className="text-sm font-bold text-emerald-600 mt-0.5 w-5 shrink-0">
+                              <div className={cn(
+                                "w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 mt-0.5",
+                                labelClass
+                              )}>
                                 {label}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-800">{option.text}</p>
-                                <p className="text-xs font-semibold text-emerald-600 mt-0.5">
-                                  Jawaban Anda — Benar
-                                </p>
                               </div>
-                              <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-1" />
+                              <div className="flex-1 flex items-start justify-between gap-4 pt-1">
+                                <p className={cn("text-sm leading-snug", textClass)}>
+                                  {option.text}
+                                </p>
+                                {indicator}
+                              </div>
                             </div>
                           );
-                        }
+                        })}
+                    </div>
 
-                        // User picked this — but wrong
-                        if (isUserSelected && !isCorrect) {
-                          return (
-                            <div
-                              key={option.id}
-                              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-red-50 border border-red-200"
-                            >
-                              <span className="text-sm font-bold text-red-600 mt-0.5 w-5 shrink-0">
-                                {label}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-800">{option.text}</p>
-                                <p className="text-xs font-semibold text-red-600 mt-0.5">
-                                  Jawaban Anda — Salah
-                                </p>
-                              </div>
-                              <XCircle className="h-4 w-4 text-red-400 shrink-0 mt-1" />
-                            </div>
-                          );
-                        }
-
-                        // User didn't pick — but this is the correct answer
-                        if (!isUserSelected && isOptionCorrect) {
-                          return (
-                            <div
-                              key={option.id}
-                              className="flex items-start gap-3 px-3 py-2.5 rounded-lg bg-slate-50 border border-slate-200"
-                            >
-                              <span className="text-sm font-bold text-slate-400 mt-0.5 w-5 shrink-0">
-                                {label}
-                              </span>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm text-slate-700">{option.text}</p>
-                                <p className="text-xs font-semibold text-slate-500 mt-0.5">
-                                  Kunci Jawaban
-                                </p>
-                              </div>
-                              <CheckCircle2 className="h-4 w-4 text-slate-300 shrink-0 mt-1" />
-                            </div>
-                          );
-                        }
-
-                        // Not selected, not correct — plain option
-                        return (
-                          <div
-                            key={option.id}
-                            className="flex items-start gap-3 px-3 py-2.5 rounded-lg"
-                          >
-                            <span className="text-sm font-bold text-slate-300 mt-0.5 w-5 shrink-0">
-                              {label}
-                            </span>
-                            <p className="text-sm text-slate-500">{option.text}</p>
-                          </div>
-                        );
-                      })}
                   </div>
                 </div>
               );
             })}
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

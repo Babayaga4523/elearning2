@@ -359,7 +359,14 @@ export default async function StudentCourseDetailPage({
         include: {
           attempts: { where: { userId }, orderBy: { createdAt: "desc" } },
           _count: {
-            select: { attempts: { where: { userId, status: "SUBMITTED" } } },
+            select: { 
+              attempts: { 
+                where: { 
+                  userId, 
+                  status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] } 
+                } 
+              } 
+            },
           },
         },
       },
@@ -567,8 +574,8 @@ export default async function StudentCourseDetailPage({
 
           {/* ─── Left: Curriculum ─────────────────────────────────────── */}
           <div className="lg:col-span-2 space-y-6">
-            <div>
-              <h2 className="text-lg font-semibold text-[#101828] font-['Lexend_Deca'] mb-1">
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-[#101828] font-['Lexend_Deca'] mb-0.5">
                 Jalur Pembelajaran
               </h2>
               <p className="text-sm text-[#475467] font-['DM_Sans']">
@@ -576,104 +583,106 @@ export default async function StudentCourseDetailPage({
               </p>
             </div>
 
-            {/* Pre-Test */}
-            {preTest && (
-              <TestStepWithModal
-                courseId={course.id}
-                testId={preTest.id}
-                testType="PRE"
-                testTitle={preTest.title}
-                locked={(!isEnrolled && !isAdmin) || isDeadlinePast}
-                done={preTest.attempts.length > 0}
-                lockReason={
-                  isDeadlinePast ? "Batas waktu kursus telah berakhir" : undefined
-                }
-                testStatus={preStatus}
-                bestScore={preBestScore}
-                testInfo={{
-                  duration: preTest.duration,
-                  passingScore: preTest.passingScore ?? 70,
-                  maxAttempts: preTest.maxAttempts,
-                  attemptCount: preAttemptCount,
-                  remainingAttempts: preRemaining,
-                  passedKKM: prePassedKKM,
-                  randomizeQuestions: preTest.randomizeQuestions,
-                  randomizeOptions: preTest.randomizeOptions,
-                }}
-                resultUrl={
-                  preTest.attempts.length > 0
-                    ? `/courses/${course.id}/tests/${preTest.id}/result?attemptId=${preTest.attempts[0].id}`
-                    : undefined
-                }
-              />
-            )}
-
-            {/* Modules */}
-            {course.modules.map((module, index) => {
-              const isDone = module.userProgress[0]?.isCompleted === true;
-              return (
-                <LearningStepCard
-                  key={module.id}
-                  href={
-                    (isEnrolled || isAdmin) && !isDeadlinePast
-                      ? `/courses/${course.id}/modules/${module.id}`
-                      : null
-                  }
+            <div className="space-y-5">
+              {/* Pre-Test */}
+              {preTest && (
+                <TestStepWithModal
+                  courseId={course.id}
+                  testId={preTest.id}
+                  testType="PRE"
+                  testTitle={preTest.title}
                   locked={(!isEnrolled && !isAdmin) || isDeadlinePast}
-                  done={isDone}
-                  type={module.type === "VIDEO" ? "VIDEO" : "PDF"}
-                  title={module.title}
-                  number={index + 1}
+                  done={preTest.attempts.length > 0}
                   lockReason={
                     isDeadlinePast ? "Batas waktu kursus telah berakhir" : undefined
                   }
-                  moduleInfo={{
-                    duration: module.duration ?? 0,
-                    type: module.type,
+                  testStatus={preStatus}
+                  bestScore={preBestScore}
+                  testInfo={{
+                    duration: preTest.duration,
+                    passingScore: preTest.passingScore ?? 70,
+                    maxAttempts: preTest.maxAttempts,
+                    attemptCount: preAttemptCount,
+                    remainingAttempts: preRemaining,
+                    passedKKM: prePassedKKM,
+                    randomizeQuestions: preTest.randomizeQuestions,
+                    randomizeOptions: preTest.randomizeOptions,
                   }}
+                  resultUrl={
+                    preTest.attempts.length > 0
+                      ? `/courses/${course.id}/tests/${preTest.id}/result?attemptId=${preTest.attempts[0].id}`
+                      : undefined
+                  }
                 />
-              );
-            })}
+              )}
 
-            {/* Post-Test */}
-            {postTest && (
-              <TestStepWithModal
-                courseId={course.id}
-                testId={postTest.id}
-                testType="POST"
-                testTitle={postTest.title}
-                locked={
-                  (!isAllModulesCompleted && !isAdmin) ||
-                  (!isEnrolled && !isAdmin) ||
-                  isDeadlinePast
-                }
-                done={postTest.attempts.length > 0}
-                lockReason={
-                  isDeadlinePast
-                    ? "Batas waktu kursus telah berakhir"
-                    : !isAllModulesCompleted && !isAdmin
-                    ? "Selesaikan semua modul untuk membuka ujian akhir"
-                    : undefined
-                }
-                testStatus={postStatus}
-                bestScore={postBestScore}
-                testInfo={{
-                  duration: postTest.duration,
-                  passingScore: postTest.passingScore ?? 70,
-                  maxAttempts: postTest.maxAttempts,
-                  attemptCount: postAttemptCount,
-                  remainingAttempts: postRemaining,
-                  passedKKM: postPassedKKM,
-                  randomizeQuestions: postTest.randomizeQuestions,
-                  randomizeOptions: postTest.randomizeOptions,
-                }}
-                resultUrl={
-                  postTest.attempts.length > 0
-                    ? `/courses/${course.id}/tests/${postTest.id}/result?attemptId=${postTest.attempts[0].id}`
-                    : undefined
-                }
-              />
-            )}
+              {/* Modules */}
+              {course.modules.map((module, index) => {
+                const isDone = module.userProgress[0]?.isCompleted === true;
+                return (
+                  <LearningStepCard
+                    key={module.id}
+                    href={
+                      (isEnrolled || isAdmin) && !isDeadlinePast
+                        ? `/courses/${course.id}/modules/${module.id}`
+                        : null
+                    }
+                    locked={(!isEnrolled && !isAdmin) || isDeadlinePast}
+                    done={isDone}
+                    type={module.type === "VIDEO" ? "VIDEO" : "PDF"}
+                    title={module.title}
+                    number={index + 1}
+                    lockReason={
+                      isDeadlinePast ? "Batas waktu kursus telah berakhir" : undefined
+                    }
+                    moduleInfo={{
+                      duration: module.duration ?? 0,
+                      type: module.type,
+                    }}
+                  />
+                );
+              })}
+
+              {/* Post-Test */}
+              {postTest && (
+                <TestStepWithModal
+                  courseId={course.id}
+                  testId={postTest.id}
+                  testType="POST"
+                  testTitle={postTest.title}
+                  locked={
+                    (!isAllModulesCompleted && !isAdmin) ||
+                    (!isEnrolled && !isAdmin) ||
+                    isDeadlinePast
+                  }
+                  done={postTest.attempts.length > 0}
+                  lockReason={
+                    isDeadlinePast
+                      ? "Batas waktu kursus telah berakhir"
+                      : !isAllModulesCompleted && !isAdmin
+                      ? "Selesaikan semua modul untuk membuka ujian akhir"
+                      : undefined
+                  }
+                  testStatus={postStatus}
+                  bestScore={postBestScore}
+                  testInfo={{
+                    duration: postTest.duration,
+                    passingScore: postTest.passingScore ?? 70,
+                    maxAttempts: postTest.maxAttempts,
+                    attemptCount: postAttemptCount,
+                    remainingAttempts: postRemaining,
+                    passedKKM: postPassedKKM,
+                    randomizeQuestions: postTest.randomizeQuestions,
+                    randomizeOptions: postTest.randomizeOptions,
+                  }}
+                  resultUrl={
+                    postTest.attempts.length > 0
+                      ? `/courses/${course.id}/tests/${postTest.id}/result?attemptId=${postTest.attempts[0].id}`
+                      : undefined
+                  }
+                />
+              )}
+            </div>
           </div>
 
           {/* ─── Right: Sidebar ──────────────────────────────────────── */}

@@ -78,17 +78,46 @@ export async function POST(
       }
     }
 
-    // CRITICAL FIX: Create session with enrollmentId (handle admin bypass)
-    const testSession = await db.testSession.create({
-      data: {
+    // Determine attempt number
+    const attemptCount = await db.testAttempt.count({
+      where: {
         testId,
         userId,
-        enrollmentId: enrollment?.id ?? null,
-        startedAt: new Date(),
       },
     });
+    const nextAttemptNumber = attemptCount + 1;
 
-    return NextResponse.json({ sessionId: testSession.id });
+    // Use transaction to create both Session and Attempt
+    const result = await db.$transaction(async (tx) => {
+      const session = await tx.testSession.create({
+        data: {
+          testId,
+          userId,
+          enrollmentId: enrollment?.id ?? null,
+          startedAt: new Date(),
+          status: "ONGOING",
+          attemptNumber: nextAttemptNumber,
+        },
+      });
+
+      const attempt = await tx.testAttempt.create({
+        data: {
+          userId,
+          testId,
+          enrollmentId: enrollment?.id ?? null,
+          attemptNumber: nextAttemptNumber,
+          startedAt: new Date(),
+          status: "ONGOING",
+          score: null,
+          passed: false,
+          timeSpent: 0,
+        },
+      });
+
+      return { sessionId: session.id, attemptId: attempt.id };
+    });
+
+    return NextResponse.json(result);
   } catch (error: any) {
     return new NextResponse("Internal Error", { status: 500 });
   }

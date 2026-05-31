@@ -140,7 +140,7 @@ export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalPr
                 </DialogTitle>
                 <DialogDescription id="role-selection-description" className="text-sm text-[#475467] mt-1.5 font-medium flex flex-col items-center">
                   <span>Masuk sebagai apa hari ini?</span>
-                  <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F8F9FB] border border-[#E4E7EC] text-[13px] mt-4 shadow-sm">
+                  <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#F8F9FB] border border-[#E4E7EC] text-[13px] mt-4 shadow-sm">
                     <span className="font-bold text-[#101828]">{user.name.split(" ")[0]}</span>
                     <span className="w-1 h-1 rounded-full bg-[#D0D5DD]" />
                     <span className="text-[#475467] truncate max-w-[150px]">{user.email}</span>
@@ -150,7 +150,7 @@ export function RoleSelectionModal({ user, open, onClose }: RoleSelectionModalPr
                         <span className="text-[#475467]">{user.nip}</span>
                       </>
                     )}
-                  </div>
+                  </span>
                 </DialogDescription>
               </div>
             </div>

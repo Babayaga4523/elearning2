@@ -67,7 +67,7 @@ export default async function TestPlayerPage({
     where: {
       userId,
       testId: params.testId,
-      status: "SUBMITTED",
+      status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
     },
   });
 
@@ -113,25 +113,58 @@ export default async function TestPlayerPage({
   const durationMs = test.duration * 60 * 1000;
 
   let startedAt: string;
+  let activeAttemptId: string = "";
 
-  // Logic: Jika belum ada session, ATAU session terakhir sudah kadaluarsa, ATAU session terakhir sudah pernah disubmit (ada attempt baru setelah session start), maka buat session baru.
+  // Logic: Jika belum ada session, ATAU session terakhir sudah kadaluarsa, ATAU session terakhir sudah pernah disubmit
   const isSessionValid = latestSession &&
-    (now.getTime() - latestSession.startedAt.getTime() < durationMs) &&
-    (!latestAttempt || latestSession.startedAt.getTime() > latestAttempt.createdAt.getTime());
+    latestSession.status === "ONGOING" &&
+    (now.getTime() - latestSession.startedAt.getTime() < durationMs);
 
   if (!isSessionValid) {
-    // CRITICAL FIX: Create session with enrollmentId (optional for admin)
-    const newSession = await db.testSession.create({
-      data: {
-        userId,
-        testId: params.testId,
-        enrollmentId: enrollment?.id ?? null, // FIXED: Optional for admin preview
-        startedAt: now,
-      }
+    // Determine attempt number
+    const nextAttemptNumber = actualAttemptCount + 1;
+
+    // Create session and attempt together
+    const [newSession, newAttempt] = await db.$transaction(async (tx) => {
+      const session = await tx.testSession.create({
+        data: {
+          userId,
+          testId: params.testId,
+          enrollmentId: enrollment?.id ?? null,
+          startedAt: now,
+          status: "ONGOING",
+          attemptNumber: nextAttemptNumber,
+        }
+      });
+
+      const attempt = await tx.testAttempt.create({
+        data: {
+          userId,
+          testId: params.testId,
+          enrollmentId: enrollment?.id ?? null,
+          attemptNumber: nextAttemptNumber,
+          startedAt: now,
+          status: "ONGOING",
+          score: null,
+          passed: false,
+          timeSpent: 0,
+        },
+      });
+
+      return [session, attempt];
     });
+
     startedAt = newSession.startedAt.toISOString();
+    activeAttemptId = newAttempt.id;
   } else {
     startedAt = latestSession!.startedAt.toISOString();
+    
+    // Find the existing active attempt
+    const activeAttempt = await db.testAttempt.findFirst({
+      where: { userId, testId: params.testId, status: "ONGOING" },
+      orderBy: { startedAt: "desc" }
+    });
+    activeAttemptId = activeAttempt?.id ?? "";
   }
 
   // Attempt number is actual attempt count + 1
@@ -145,6 +178,7 @@ export default async function TestPlayerPage({
       maxAttempts={test.maxAttempts}
       startedAt={startedAt}
       userId={userId}
+      attemptId={activeAttemptId}
     />
   );
 }

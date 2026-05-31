@@ -51,14 +51,14 @@ export async function POST(
     }
 
     const body = await req.json();
-    const { answers } = body;
+    const { answers, attemptId, isForceSubmit } = body;
 
     if (!answers || !Array.isArray(answers)) {
       return new NextResponse("Invalid answers format", { status: 400 });
     }
 
     // Call existing server action for robust scoring and atomic transaction
-    const result = await submitTest(params.testId, answers);
+    const result = await submitTest(params.testId, answers, { attemptId, isForceSubmit });
 
     return NextResponse.json({ 
       attemptId: result.id,

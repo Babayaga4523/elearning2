@@ -52,7 +52,10 @@ export async function getPerformanceData() {
 
   // 3. Fetch All Test Attempts for this user
   const allAttempts = await db.testAttempt.findMany({
-    where: { userId },
+    where: { 
+      userId,
+      status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] }
+    },
     orderBy: { createdAt: "desc" },
     include: {
       test: {
