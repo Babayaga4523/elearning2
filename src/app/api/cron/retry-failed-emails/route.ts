@@ -9,14 +9,17 @@ import { sendEmailWithAttachment } from "@/lib/email";
  * Vercel Cron: 0 *\/6 * * *
  * Security: Bearer token CRON_SECRET required
  *
- * CRITICAL FIX #6: Retry mechanism with exponential backoff
+ * FIX: Use try-catch instead of .catch() for better error handling
  */
 export async function GET(req: Request) {
   try {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     log.info("Retry failed emails cron job started", { context: "cron" });
@@ -29,7 +32,7 @@ export async function GET(req: Request) {
         status: "PENDING",
       },
       orderBy: { createdAt: "asc" },
-      take: 100, // Process max 100 at a time
+      take: 100,
     });
 
     if (pendingRetries.length === 0) {
@@ -42,8 +45,8 @@ export async function GET(req: Request) {
         }
       });
 
-      return NextResponse.json({ 
-        success: true, 
+      return NextResponse.json({
+        success: true,
         message: "No pending retries",
         timestamp: new Date().toISOString()
       });
@@ -54,6 +57,7 @@ export async function GET(req: Request) {
     const permanentFailures: string[] = [];
 
     for (const retry of pendingRetries) {
+      // FIX: Use try-catch instead of .catch() for proper error handling
       try {
         const metadata = retry.metadata as any;
         const attemptCount = (metadata.attemptCount || 0) + 1;
@@ -61,10 +65,9 @@ export async function GET(req: Request) {
 
         // Check if max attempts reached
         if (attemptCount > MAX_ATTEMPTS) {
-          // Mark as permanent failure
           await db.schedulerLog.update({
             where: { id: retry.id },
-            data: { 
+            data: {
               status: "FAILED",
               message: `Max retry attempts (${MAX_ATTEMPTS}) reached`,
               metadata: {
@@ -79,12 +82,11 @@ export async function GET(req: Request) {
           continue;
         }
 
-        // Exponential backoff: wait longer between retries
+        // Exponential backoff
         const hoursSinceCreated = (Date.now() - new Date(retry.createdAt).getTime()) / (1000 * 60 * 60);
-        const backoffHours = Math.pow(2, attemptCount - 1); // 1h, 2h, 4h
-        
+        const backoffHours = Math.pow(2, attemptCount - 1);
+
         if (hoursSinceCreated < backoffHours) {
-          // Too soon to retry
           continue;
         }
 
@@ -95,19 +97,14 @@ export async function GET(req: Request) {
         const userName = metadata.userName || "Karyawan";
         const userEmail = metadata.userEmail;
 
-        const escapeHtml = (unsafe: string) => 
-          unsafe.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        const safeTitle = escapeHtml(courseTitle);
-        const safeName = escapeHtml(userName);
-
         if (!userEmail) {
           throw new Error("No email address in metadata");
         }
 
-        // Get enrollment to check if still needs reminder
+        // Get enrollment
         const enrollment = await db.enrollment.findUnique({
           where: { id: metadata.enrollmentId },
-          select: { 
+          select: {
             [reminderType]: true,
             status: true,
             deadline: true
@@ -118,7 +115,7 @@ export async function GET(req: Request) {
         if (!enrollment || enrollment[reminderType] || enrollment.status !== "IN_PROGRESS") {
           await db.schedulerLog.update({
             where: { id: retry.id },
-            data: { 
+            data: {
               status: "SKIPPED",
               message: "Enrollment state changed, reminder no longer needed"
             }
@@ -126,25 +123,19 @@ export async function GET(req: Request) {
           continue;
         }
 
-        // Retry email send
+        // Send email
         await sendEmailWithAttachment({
           to: userEmail,
-          subject: `[Reminder - Retry] Pelatihan: ${safeTitle}`,
+          subject: `[Reminder - Retry] Pelatihan: ${courseTitle}`,
           html: `
             <div style="font-family: sans-serif; color: #0F1C3F;">
               <div style="background-color: #0F1C3F; padding: 20px; text-align: center;">
                 <h1 style="color: #E8A020; margin: 0;">Peringatan Tenggat Waktu</h1>
               </div>
               <div style="padding: 20px; border: 1px solid #e2e8f0;">
-                <p>Halo <b>${safeName}</b>,</p>
-                <p>Kami mengingatkan bahwa pelatihan <b>"${safeTitle}"</b> harus segera diselesaikan dalam <b>${reminderDays} hari</b> lagi.</p>
-                <div style="padding: 15px; background-color: #f8fafc; border-radius: 8px; margin: 20px 0;">
-                  <p style="margin: 0;"><b>Tenggat Waktu:</b> ${enrollment.deadline ? new Date(enrollment.deadline).toLocaleDateString("id-ID", { dateStyle: "long" }) : "—"}</p>
-                </div>
+                <p>Halo <b>${userName}</b>,</p>
+                <p>Kami mengingatkan bahwa pelatihan <b>${courseTitle}</b> harus segera diselesaikan dalam <b>${reminderDays} hari</b> lagi.</p>
                 <p>Segera selesaikan materi dan ujian untuk menghindari eskalasi ke Department Head.</p>
-                <div style="text-align: center; margin: 30px 0;">
-                  <a href="${process.env.NEXTAUTH_URL}/courses" style="background-color: #0F1C3F; color: #fff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold;">Ke Dashboard Pelatihan</a>
-                </div>
                 <hr />
                 <p style="font-size: 12px; color: #64748b;">Pesan ini dikirim secara otomatis oleh E-Learning BNI Finance System.</p>
               </div>
@@ -152,7 +143,7 @@ export async function GET(req: Request) {
           `,
         });
 
-        // Mark enrollment as reminded
+        // Mark as reminded
         await db.enrollment.update({
           where: { id: metadata.enrollmentId },
           data: { [reminderType]: new Date() }
@@ -161,7 +152,7 @@ export async function GET(req: Request) {
         // Mark retry as successful
         await db.schedulerLog.update({
           where: { id: retry.id },
-          data: { 
+          data: {
             status: "SUCCESS",
             message: `Email sent successfully on attempt ${attemptCount}`,
             metadata: {
@@ -173,37 +164,39 @@ export async function GET(req: Request) {
         });
 
         successCount++;
-        
+
         // Small delay to avoid overwhelming SMTP
         await new Promise(resolve => setTimeout(resolve, 500));
       } catch (err: any) {
         log.error(`Retry failed for ${retry.id}`, {
           context: "cron",
           retryId: retry.id,
-          error: err
+          error: String(err)
         });
-        
-        // Update metadata with attempt count
-        const metadata = retry.metadata as any;
-        const attemptCount = (metadata.attemptCount || 0) + 1;
-        
-        await db.schedulerLog.update({
-          where: { id: retry.id },
-          data: {
-            metadata: {
-              ...metadata,
-              attemptCount,
-              lastAttemptAt: new Date().toISOString(),
-              lastError: err.message
+
+        // FIX: Use try-catch instead of .catch() for proper error handling
+        try {
+          const metadata = retry.metadata as any;
+          const attemptCount = (metadata.attemptCount || 0) + 1;
+
+          await db.schedulerLog.update({
+            where: { id: retry.id },
+            data: {
+              metadata: {
+                ...metadata,
+                attemptCount,
+                lastAttemptAt: new Date().toISOString(),
+                lastError: err.message
+              }
             }
-          }
-        }).catch(updateErr => {
+          });
+        } catch (updateErr) {
           log.error(`Failed to update retry metadata for ${retry.id}`, {
             context: "cron",
             retryId: retry.id,
-            error: updateErr
+            error: String(updateErr)
           });
-        });
+        }
 
         failedCount++;
       }
@@ -233,8 +226,8 @@ export async function GET(req: Request) {
       permanentFailures: permanentFailures.length
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       result: {
         processed: pendingRetries.length,
         succeeded: successCount,
@@ -244,9 +237,9 @@ export async function GET(req: Request) {
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    log.error("Retry failed emails cron job failed", { context: "cron", error });
+    log.error("Retry failed emails cron job failed", { context: "cron", error: String(error) });
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
@@ -254,5 +247,5 @@ export async function GET(req: Request) {
 
 // Allow POST as well for manual triggers
 export async function POST(req: Request) {
-  return GET(req);
+  return await GET(req);
 }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { toast } from "react-hot-toast";
+import { cn } from "@/lib/utils";
 
 interface ExportTranscriptButtonProps {
   data: any;
@@ -248,8 +249,3 @@ export const ExportTranscriptButton = ({ data, userName }: ExportTranscriptButto
     </Button>
   );
 };
-
-// Helper for class merging inside client component
-function cn(...inputs: any[]) {
-  return inputs.filter(Boolean).join(" ");
-}

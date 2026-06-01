@@ -16,7 +16,8 @@
       "Bash(xxd)",
       "Bash(Get-Content *)",
       "Bash(powershell *)",
-      "Bash(dir /s /b src\\\\app\\\\api\\\\admin\\\\import\\\\questions)"
+      "Bash(dir /s /b src\\\\app\\\\api\\\\admin\\\\import\\\\questions)",
+      "Bash(git commit -m 'fix: security and bug fixes *)"
     ]
   }
 }

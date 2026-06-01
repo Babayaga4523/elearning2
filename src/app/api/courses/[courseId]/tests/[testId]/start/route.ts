@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
+import { log } from "@/lib/logger";
 import { rateLimit, rateLimitResponse, RateLimitPresets } from "@/lib/rate-limit";
 
 export async function POST(
@@ -16,7 +17,10 @@ export async function POST(
 
     const session = await auth();
     if (!session?.user?.id) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     const userId = session.user.id;
@@ -39,12 +43,15 @@ export async function POST(
 
     // Allow admin to bypass enrollment check for test preview
     if (!enrollment && !isAdminUser) {
-      return new NextResponse("Not enrolled in this course", { status: 403 });
+      return NextResponse.json(
+        { success: false, error: "Not enrolled in this course" },
+        { status: 403 }
+      );
     }
 
     const test = await db.test.findUnique({
       where: { id: testId },
-      select: { 
+      select: {
         courseId: true,
         maxAttempts: true,
         type: true,
@@ -52,7 +59,10 @@ export async function POST(
     });
 
     if (!test || test.courseId !== courseId) {
-      return new NextResponse("Test not found for this course", { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "Test not found for this course" },
+        { status: 404 }
+      );
     }
 
     // Check if user has exceeded max attempts (admin bypass for preview)
@@ -65,15 +75,13 @@ export async function POST(
       });
 
       if (attemptCount >= test.maxAttempts) {
-        return new NextResponse(
-          JSON.stringify({
+        return NextResponse.json(
+          {
+            success: false,
             error: "MAX_ATTEMPTS_REACHED",
             message: `Anda sudah mencapai batas maksimal ${test.maxAttempts} percobaan untuk ${test.type === "PRE" ? "Pre-Test" : "Post-Test"} ini.`
-          }),
-          {
-            status: 403,
-            headers: { "Content-Type": "application/json" }
-          }
+          },
+          { status: 403 }
         );
       }
     }
@@ -117,8 +125,19 @@ export async function POST(
       return { sessionId: session.id, attemptId: attempt.id };
     });
 
-    return NextResponse.json(result);
+    return NextResponse.json({ success: true, ...result });
   } catch (error: any) {
-    return new NextResponse("Internal Error", { status: 500 });
+    log.error("[TEST_START]", {
+      context: "api",
+      courseId: params.courseId,
+      testId: params.testId,
+      userId: (await auth())?.user?.id,
+      error: String(error),
+      stack: error?.stack
+    });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
   }
 }

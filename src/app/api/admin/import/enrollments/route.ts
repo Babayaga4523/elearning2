@@ -199,11 +199,14 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     log.error("Enrollments import error", {
-      error: error.message,
-      stack: error.stack,
+      context: "api",
+      adminId: (await auth())?.user?.id,
+      error: String(error),
+      stack: error?.stack,
     });
+    // Return generic message to client (don't leak internal details)
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

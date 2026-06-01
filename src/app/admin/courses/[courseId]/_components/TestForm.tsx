@@ -84,8 +84,7 @@ export function TestForm({
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues:
-      initialData?.questions?.length > 0
+    defaultValues: initialData && initialData.questions && initialData.questions.length > 0
         ? {
             type: initialData.type,
             duration: initialData.duration,
@@ -95,7 +94,7 @@ export function TestForm({
             randomizeOptions: initialData.randomizeOptions ?? false,
             questions: initialData.questions.map((q: any) => ({
               text: q.text,
-              options: q.options.map((o: any) => ({
+              options: (q.options || []).map((o: any) => ({
                 text: o.text,
                 isCorrect: o.isCorrect,
               })),

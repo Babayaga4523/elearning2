@@ -1,19 +1,34 @@
 import { NextResponse } from "next/server";
+import { log } from "@/lib/logger";
 
 // DEPRECATED: This endpoint is deprecated. Use /api/cron/auto-enrollment instead.
 // Keeping for backwards compatibility, redirects to new endpoint.
 
 export async function GET(req: Request) {
-  const authHeader = req.headers.get("authorization");
+  try {
+    const authHeader = req.headers.get("authorization");
 
-  if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return new NextResponse("Unauthorized", { status: 401 });
+    // FIX: Always require CRON_SECRET if it's set in environment
+    if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Redirect to the new endpoint
+    const baseUrl = req.url?.split("/api/cron/auto-enroll")[0] || "http://localhost:3000";
+    return NextResponse.redirect(`${baseUrl}/api/cron/auto-enrollment`, 302);
+  } catch (error: any) {
+    log.error("[DEPRECATED_AUTO_ENROLL]", { context: "cron", error: String(error) });
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
   }
-
-  // Redirect to the new endpoint
-  return NextResponse.redirect(new URL("/api/cron/auto-enrollment", req.url), 302);
 }
 
+// FIX: Add await to prevent floating promise
 export async function POST(req: Request) {
-  return GET(req);
+  return await GET(req);
 }

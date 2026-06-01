@@ -113,15 +113,23 @@ export default function RolesPage() {
 
       setOriginalPermissions([...permissions]);
       setSuccessMessage("Permission ADMIN berhasil diperbarui!");
-
-      // Auto-hide success message
-      setTimeout(() => setSuccessMessage(null), 4000);
     } catch (err: any) {
       setError(err.message);
     } finally {
       setIsSaving(false);
     }
   };
+
+  // Cleanup for success message timeout
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+    if (successMessage) {
+      timeoutId = setTimeout(() => setSuccessMessage(null), 4000);
+    }
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [successMessage]);
 
   // Group permissions by group
   const groupedPermissions = permissions.reduce<Record<string, Permission[]>>(

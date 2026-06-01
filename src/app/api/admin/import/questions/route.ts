@@ -7,6 +7,8 @@ import { rateLimit, rateLimitResponse, RateLimitPresets } from "@/lib/rate-limit
 import { isAdmin } from "@/lib/auth-helpers";
 
 export async function POST(req: NextRequest) {
+  let testId: string | null = null;
+
   try {
     // Rate limiting
     const rateLimitResult = await rateLimit(req, RateLimitPresets.UPLOAD);
@@ -26,7 +28,7 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const testId = formData.get("testId") as string;
+    testId = formData.get("testId") as string;
 
     if (!file) {
       return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
@@ -86,8 +88,8 @@ export async function POST(req: NextRequest) {
         const question = await tx.question.create({
           data: {
             text: q.questionText,
-            testId: testId,
-            position: i,   // Preserve import order as question sequence
+            testId: testId!,
+            position: i,
           },
         });
 
@@ -127,11 +129,15 @@ export async function POST(req: NextRequest) {
     });
   } catch (error: any) {
     log.error("Questions import error", {
-      error: error.message,
-      stack: error.stack,
+      context: "api",
+      testId: testId,
+      adminId: (await auth())?.user?.id,
+      error: String(error),
+      stack: error?.stack,
     });
+    // Return generic message to client (don't leak internal details)
     return NextResponse.json(
-      { error: "Internal server error", details: error.message },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }

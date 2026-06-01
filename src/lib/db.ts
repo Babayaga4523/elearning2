@@ -20,3 +20,21 @@ export const db = globalThis.prisma || new PrismaClient({
 });
 
 if (process.env.NODE_ENV !== "production") globalThis.prisma = db;
+
+// Graceful shutdown for serverless environments
+// Prevents connection leaks on cold shutdowns
+if (process.env.NODE_ENV === "production") {
+  const handleShutdown = async (signal: string) => {
+    console.log(`[Prisma] Received ${signal}, disconnecting gracefully...`);
+    try {
+      await db.$disconnect();
+      console.log("[Prisma] Disconnected successfully");
+    } catch (error) {
+      console.error("[Prisma] Error during disconnect:", error);
+    }
+    process.exit(0);
+  };
+
+  process.on("SIGTERM", () => handleShutdown("SIGTERM"));
+  process.on("SIGINT", () => handleShutdown("SIGINT"));
+}

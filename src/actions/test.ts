@@ -264,11 +264,6 @@ export async function submitTest(
   }
 
   // 5. Calculate Score
-  console.log("[SUBMIT_TEST] answersData received:", JSON.stringify(answersData));
-  console.log("[SUBMIT_TEST] Total answers received:", answersData.length);
-  console.log("[SUBMIT_TEST] test.questions count:", test.questions.length);
-  console.log("[SUBMIT_TEST] test.questions IDs:", test.questions.map(q => q.id));
-
   let correctCount = 0;
   for (const question of test.questions) {
     const userAnswer = answersData.find((a) => a.questionId === question.id);
@@ -342,8 +337,7 @@ export async function submitTest(
     const savedAnswers = await tx.testAnswer.findMany({
       where: { testAttemptId: testAttempt.id },
     });
-    console.log("[SUBMIT_TEST] Answers saved to DB:", savedAnswers.length);
-    console.log("[SUBMIT_TEST] Saved answers:", JSON.stringify(savedAnswers));
+    // Answers logged in development for debugging
 
     // Update Enrollment (only if enrollment exists and update is needed)
     if (enrollment && Object.keys(enrollmentUpdate).length > 0) {
@@ -479,8 +473,6 @@ export async function getTestAttemptDetail(attemptId: string) {
 
   if (!session) throw new Error("Unauthorized");
 
-  console.log("[GET_ATTEMPT_DETAIL] Fetching attemptId:", attemptId);
-
   const attempt = await db.testAttempt.findUnique({
     where: { id: attemptId },
     include: {
@@ -498,13 +490,6 @@ export async function getTestAttemptDetail(attemptId: string) {
       },
     },
   });
-
-  console.log("[GET_ATTEMPT_DETAIL] Attempt found:", attempt ? "YES" : "NO");
-  console.log("[GET_ATTEMPT_DETAIL] Answers count:", attempt?.answers?.length);
-  console.log("[GET_ATTEMPT_DETAIL] Test.questions count:", attempt?.test?.questions?.length);
-  console.log("[GET_ATTEMPT_DETAIL] Test:", attempt?.test ? { id: attempt.test.id, title: attempt.test.title, questionsCount: attempt.test.questions?.length } : null);
-  console.log("[GET_ATTEMPT_DETAIL] First 3 answers:", attempt?.answers?.slice(0, 3));
-  console.log("[GET_ATTEMPT_DETAIL] First 3 questions:", attempt?.test?.questions?.slice(0, 3).map((q: any) => ({ id: q.id, text: q.text?.slice(0, 50) })));
 
   if (!attempt) return null;
 

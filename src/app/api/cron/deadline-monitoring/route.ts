@@ -13,7 +13,10 @@ export async function GET(req: Request) {
     // Security: Verify cron secret
     const authHeader = req.headers.get("authorization");
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return new NextResponse("Unauthorized", { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
     log.info("Deadline monitoring cron job started", { context: "cron" });
@@ -27,22 +30,23 @@ export async function GET(req: Request) {
       result,
       cleanup: cleanupResult
     });
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       result,
       cleanup: cleanupResult,
       timestamp: new Date().toISOString()
     });
   } catch (error: any) {
-    log.error("Deadline monitoring cron job failed", { context: "cron", error });
+    log.error("Deadline monitoring cron job failed", { context: "cron", error: String(error) });
     return NextResponse.json(
-      { success: false, error: error.message },
+      { success: false, error: "Internal server error" },
       { status: 500 }
     );
   }
 }
 
 // Allow POST as well for manual triggers
+// FIX: Use await to prevent floating promise
 export async function POST(req: Request) {
-  return GET(req);
+  return await GET(req);
 }
