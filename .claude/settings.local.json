@@ -15,7 +15,8 @@
       "Bash(xxd C:/Dev/elearning2/_check.js)",
       "Bash(xxd)",
       "Bash(Get-Content *)",
-      "Bash(powershell *)"
+      "Bash(powershell *)",
+      "Bash(dir /s /b src\\\\app\\\\api\\\\admin\\\\import\\\\questions)"
     ]
   }
 }

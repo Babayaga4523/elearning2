@@ -46,7 +46,7 @@ export function TestStepWithModal({
   const [showModal, setShowModal] = useState(false);
 
   const hasAttemptsLeft = testInfo.maxAttempts === 0 || testInfo.attemptCount < testInfo.maxAttempts;
-  const canRetry = hasAttemptsLeft;
+  const canRetry = hasAttemptsLeft && (bestScore === null || bestScore === undefined || bestScore < 100);
   const hasPassedKKM = testStatus === "LULUS" || testInfo.passedKKM;
   const hasResult = done && resultUrl;
 

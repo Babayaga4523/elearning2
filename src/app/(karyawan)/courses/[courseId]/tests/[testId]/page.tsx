@@ -77,8 +77,25 @@ export default async function TestPlayerPage({
     orderBy: { createdAt: "desc" },
   });
 
+  // Find if there's any attempt with 100 score
+  const perfectScoreAttempt = await db.testAttempt.findFirst({
+    where: {
+      userId,
+      testId: params.testId,
+      status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
+      score: 100,
+    },
+  });
+
   // Admin can preview test without restrictions
   if (!isAdmin) {
+    // RULE: If they got a perfect score (100) already, redirect to that result
+    if (perfectScoreAttempt) {
+      return redirect(
+        `/courses/${params.courseId}/tests/${params.testId}/result?attemptId=${perfectScoreAttempt.id}`
+      );
+    }
+
     // Get effective max attempts from test configuration (admin configurable per test)
     // If maxAttempts = 0, it means unlimited attempts
     const effectiveMaxAttempts = test.maxAttempts > 0 ? test.maxAttempts : 999;

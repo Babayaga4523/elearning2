@@ -81,9 +81,9 @@ export default async function TestResultPage({
       ? Math.max(0, effectiveMaxAttempts - attemptCount)
       : Infinity;
   const canTryAgain =
-    effectiveMaxAttempts > 0
+    (effectiveMaxAttempts > 0
       ? attemptCount < effectiveMaxAttempts
-      : true;
+      : true) && bestScore < 100;
 
   const duration =
     attempt.timeSpent && attempt.timeSpent > 0

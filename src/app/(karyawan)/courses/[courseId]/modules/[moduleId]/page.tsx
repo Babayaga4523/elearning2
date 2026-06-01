@@ -8,7 +8,7 @@ import {
   ChevronLeft,
   PlayCircle,
   FileText,
-  ExternalLink,
+  List,
 } from "lucide-react";
 import Link from "next/link";
 import { ModuleCompletionButton } from "@/components/courses/module-completion-button";
@@ -29,13 +29,16 @@ export default async function ModulePlayerPage({
   if (!session?.user?.id) return redirect("/");
 
   const userId = session.user.id;
-  const isAdmin = (session.user.roles?.includes("ADMIN") || session.user.roles?.includes("SUPER_ADMIN"))
-    && (session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN");
+  const isAdmin =
+    (session.user.roles?.includes("ADMIN") ||
+      session.user.roles?.includes("SUPER_ADMIN")) &&
+    (session.user.activeRole === "ADMIN" ||
+      session.user.activeRole === "SUPER_ADMIN");
 
   const course = await db.course.findUnique({
-    where: { 
+    where: {
       id: params.courseId,
-      ...(isAdmin ? {} : { isPublished: true })
+      ...(isAdmin ? {} : { isPublished: true }),
     },
     include: {
       modules: {
@@ -55,95 +58,121 @@ export default async function ModulePlayerPage({
     where: { userId_courseId: { userId, courseId: params.courseId } },
   });
 
-  // Admin can bypass enrollment check for preview
-  const isEnrollmentActive = isAdmin || (
-    !!enrollment &&
-    ["IN_PROGRESS", "FAILED", "COMPLETED"].includes(enrollment.status)
-  );
+  const isEnrollmentActive =
+    isAdmin ||
+    (!!enrollment &&
+      ["IN_PROGRESS", "FAILED", "COMPLETED"].includes(enrollment.status));
 
-  if (!isAdmin && (!isEnrollmentActive || (course.deadlineDate && course.deadlineDate.getTime() < Date.now()))) {
+  if (
+    !isAdmin &&
+    (!isEnrollmentActive ||
+      (course.deadlineDate && course.deadlineDate.getTime() < Date.now()))
+  ) {
     return redirect(`/courses/${params.courseId}`);
   }
 
   const isCompleted = moduleData.userProgress[0]?.isCompleted ?? false;
-  const currentIndex = course.modules.findIndex((m) => m.id === params.moduleId);
+  const currentIndex = course.modules.findIndex(
+    (m) => m.id === params.moduleId
+  );
   const prevModule = currentIndex > 0 ? course.modules[currentIndex - 1] : null;
-  const nextModule = currentIndex < course.modules.length - 1 ? course.modules[currentIndex + 1] : null;
+  const nextModule =
+    currentIndex < course.modules.length - 1
+      ? course.modules[currentIndex + 1]
+      : null;
 
   const completedCount = course.modules.filter(
     (m) => m.userProgress[0]?.isCompleted
   ).length;
-  const progressPct = Math.round((completedCount / course.modules.length) * 100);
+  const progressPct = Math.round(
+    (completedCount / course.modules.length) * 100
+  );
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] font-sans">
-      {/* Compact Header */}
-      <header className="sticky top-0 z-50 w-full border-b border-[#E4E7EC]/80 bg-white/80 backdrop-blur-md shadow-2xs">
-        <div className="container flex h-14 items-center justify-between px-4 max-w-7xl mx-auto">
-          <div className="flex items-center gap-3">
-            <Link href={`/courses/${params.courseId}`}>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="group gap-1.5 h-8.5 text-slate-600 hover:text-[#0F1C3F] hover:bg-slate-100/80 active:scale-95 transition-transform font-semibold rounded-lg"
-              >
-                <ArrowLeft className="h-3.5 w-3.5 group-hover:-translate-x-0.5 transition-transform duration-200" />
-                <span className="text-xs">Kembali</span>
-              </Button>
+    <div className="min-h-screen bg-[#F8F9FB]">
+      {/* ═══ Sticky Header ═══════════════════════════════════════════════ */}
+      <header className="sticky top-0 z-50 w-full border-b border-[#E4E7EC] bg-white shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between gap-4">
+          {/* Left: Back button + Module info */}
+          <div className="flex items-center gap-3 min-w-0">
+            <Link
+              href={`/courses/${params.courseId}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#475467] hover:text-[#0F1C3F] hover:bg-[#F8F9FB] transition-colors font-medium text-sm shrink-0"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span className="hidden sm:inline">Kembali</span>
             </Link>
-            
-            <div className="hidden md:flex items-center gap-2.5 pl-3 border-l border-slate-200">
-              <div className={cn(
-                "h-7 w-7 rounded-lg flex items-center justify-center border",
-                moduleData.type === "VIDEO" 
-                  ? "bg-[#E8A020]/10 text-[#E8A020] border-[#E8A020]/20" 
-                  : "bg-rose-50 text-rose-600 border-rose-100"
-              )}>
+
+            <div className="hidden md:flex items-center gap-3 pl-3 border-l border-[#E4E7EC]">
+              {/* Module type icon */}
+              <div
+                className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0",
+                  moduleData.type === "VIDEO"
+                    ? "bg-[#E8A020]/10 text-[#E8A020]"
+                    : "bg-[#FEF3DC] text-[#C4861A]"
+                )}
+              >
                 {moduleData.type === "VIDEO" ? (
-                  <PlayCircle className="h-3.5 w-3.5" />
+                  <PlayCircle className="h-4 w-4" />
                 ) : (
-                  <FileText className="h-3.5 w-3.5" />
+                  <FileText className="h-4 w-4" />
                 )}
               </div>
-              <div>
-                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                  Materi {currentIndex + 1} dari {course.modules.length}
+
+              {/* Module title */}
+              <div className="min-w-0">
+                <p className="text-[10px] text-[#98A2B3] font-semibold uppercase tracking-wider">
+                  Modul {currentIndex + 1} dari {course.modules.length}
                 </p>
-                <p className="text-xs font-extrabold text-[#0F1C3F] max-w-[250px] truncate leading-tight mt-0.5">
+                <p className="text-sm font-semibold text-[#101828] truncate max-w-[200px]">
                   {moduleData.title}
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
-            {prevModule && (
-              <Button asChild variant="outline" size="sm" className="h-8.5 gap-1.5 rounded-lg border-slate-200 text-slate-600 hover:text-slate-900 active:scale-95 transition-all text-xs font-semibold">
-                <Link href={`/courses/${params.courseId}/modules/${prevModule.id}`}>
-                  <ChevronLeft className="h-3.5 w-3.5" />
+          {/* Right: Navigation buttons */}
+          <div className="flex items-center gap-2 shrink-0">
+            {prevModule ? (
+              <Link href={`/courses/${params.courseId}/modules/${prevModule.id}`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 gap-1.5 border-[#E4E7EC] text-[#475467] hover:text-[#0F1C3F] hover:border-[#0F1C3F]/30 hover:bg-[#F8F9FB] transition-colors"
+                >
+                  <ChevronLeft className="h-4 w-4" />
                   <span className="hidden sm:inline">Sebelumnya</span>
-                </Link>
-              </Button>
+                </Button>
+              </Link>
+            ) : (
+              <div className="w-[88px]" />
             )}
-            
-            {nextModule && (
-              <Button asChild size="sm" className="h-8.5 gap-1.5 bg-[#0F1C3F] hover:bg-[#15254F] text-white rounded-lg active:scale-95 transition-all text-xs font-bold border-0 shadow-xs">
-                <Link href={`/courses/${params.courseId}/modules/${nextModule.id}`}>
+
+            {nextModule ? (
+              <Link href={`/courses/${params.courseId}/modules/${nextModule.id}`}>
+                <Button
+                  size="sm"
+                  className="h-9 gap-1.5 bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white border-0 transition-colors font-semibold"
+                >
                   <span className="hidden sm:inline">Selanjutnya</span>
-                  <ChevronRight className="h-3.5 w-3.5 text-white" />
-                </Link>
-              </Button>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </Link>
+            ) : (
+              <div className="w-[88px]" />
             )}
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-6 max-w-7xl">
+      {/* ═══ Main Content ═══════════════════════════════════════════════ */}
+      <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main Content - 2/3 width */}
-          <div className="lg:col-span-2 space-y-4">
+          {/* ─── Left: Video/PDF Player + Info ─────────────────────────── */}
+          <div className="lg:col-span-2 space-y-5">
             {/* Video/PDF Player Card */}
-            <Card className="overflow-hidden border-slate-100 shadow-sm rounded-2xl bg-white">
+            <Card className="overflow-hidden border-[#E4E7EC] shadow-sm rounded-xl">
               <CardContent className="p-0">
                 {moduleData.type === "VIDEO" ? (
                   moduleData.videoUrl || moduleData.url ? (
@@ -152,120 +181,144 @@ export default async function ModulePlayerPage({
                       videoUrl={moduleData.videoUrl || moduleData.url!}
                     />
                   ) : (
-                    <div className="w-full aspect-video flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#0F1C3F] to-[#15254F]">
-                      <div className="h-16 w-16 rounded-xl bg-white/10 flex items-center justify-center border border-white/5 shadow-lg">
+                    <div className="w-full aspect-video flex flex-col items-center justify-center gap-4 bg-gradient-to-br from-[#0F1C3F] to-[#1A2D5A]">
+                      <div className="h-16 w-16 rounded-xl bg-white/10 flex items-center justify-center border border-white/10">
                         <PlayCircle className="h-8 w-8 text-[#E8A020]" />
                       </div>
-                      <div className="text-center space-y-1">
-                        <p className="font-bold text-white tracking-wide">{moduleData.title}</p>
-                        <p className="text-xs text-slate-300">Video URL tidak tersedia</p>
+                      <div className="text-center">
+                        <p className="font-semibold text-white">
+                          {moduleData.title}
+                        </p>
+                        <p className="text-sm text-white/60 mt-1">
+                          Video tidak tersedia
+                        </p>
                       </div>
                     </div>
                   )
+                ) : moduleData.pdfUrl || moduleData.url ? (
+                  <PDFViewer
+                    moduleId={moduleData.id}
+                    pdfUrl={`/api/modules/pdf/${moduleData.id}`}
+                  />
                 ) : (
-                  moduleData.pdfUrl || moduleData.url ? (
-                    <PDFViewer
-                      moduleId={moduleData.id}
-                      pdfUrl={`/api/modules/pdf/${moduleData.id}`}
-                    />
-                  ) : (
-                    <div className="w-full aspect-video flex items-center justify-center bg-slate-50 border border-slate-100 rounded-xl">
-                      <p className="text-sm text-slate-500 font-medium">Dokumen PDF tidak tersedia</p>
+                  <div className="w-full aspect-video flex items-center justify-center bg-[#F8F9FB] border border-[#E4E7EC]">
+                    <div className="text-center">
+                      <FileText className="h-12 w-12 text-[#98A2B3] mx-auto mb-3" />
+                      <p className="text-sm text-[#475467] font-medium">
+                        Dokumen PDF tidak tersedia
+                      </p>
                     </div>
-                  )
+                  </div>
                 )}
               </CardContent>
             </Card>
 
             {/* Module Info Card */}
-            <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
-              <CardContent className="p-5">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <Badge variant="secondary" className={cn(
-                      "gap-1 text-[10px] font-bold px-2.5 py-0.5 rounded-md border border-slate-150 shadow-3xs uppercase tracking-wider",
-                      moduleData.type === "VIDEO" 
-                        ? "bg-[#E8A020]/10 text-[#E8A020]" 
-                        : "bg-rose-50 text-rose-600 border-rose-100"
-                    )}>
-                      {moduleData.type === "VIDEO" ? (
-                        <><PlayCircle className="h-3 w-3" /> Video</>
-                      ) : (
-                        <><FileText className="h-3 w-3" /> Dokumen PDF</>
-                      )}
-                    </Badge>
-
-                    {isCompleted && (
-                      <Badge className="bg-emerald-500 hover:bg-emerald-600 gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md shadow-3xs border-0 text-white uppercase tracking-wider">
-                        <CheckCircle2 className="h-3 w-3 text-white" />
-                        Selesai Dibaca
-                      </Badge>
+            <Card className="border-[#E4E7EC] shadow-sm rounded-xl">
+<CardContent className="p-5">
+<div className="flex flex-wrap items-center gap-2 mb-4">
+                  {/* Type badge */}
+                  <Badge
+                    className={cn(
+                      "gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg border",
+                      moduleData.type === "VIDEO"
+                        ? "bg-[#E8A020]/10 text-[#C4861A] border-[#E8A020]/20"
+                        : "bg-[#FEF3DC] text-[#C4861A] border-[#F5C05A]/30"
                     )}
+                  >
+                    {moduleData.type === "VIDEO" ? (
+                      <>
+                        <PlayCircle className="h-3.5 w-3.5" />
+                        Video
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="h-3.5 w-3.5" />
+                        Dokumen PDF
+                      </>
+                    )}
+                  </Badge>
 
-                    <Badge variant="outline" className="text-[10px] font-semibold px-2 py-0.5 rounded-md text-slate-500 border-slate-200">
-                      Materi {currentIndex + 1} dari {course.modules.length}
+                  {/* Completed badge */}
+                  {isCompleted && (
+                    <Badge className="gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-[#ECFDF3] text-[#027A48] border border-[#6CE9A6]">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                      Selesai
                     </Badge>
-                  </div>
+                  )}
 
-                  <div>
-                    <h1 className="text-xl font-extrabold text-[#0F1C3F] tracking-tight leading-tight mb-2">
-                      {moduleData.title}
-                    </h1>
-                    <p className="text-xs sm:text-sm text-slate-600 leading-relaxed font-medium">
-                      {moduleData.description ?? "Tidak ada deskripsi tambahan untuk materi modul ini."}
-                    </p>
-                  </div>
+                  {/* Position badge */}
+                  <Badge
+                    variant="outline"
+                    className="text-[11px] font-medium px-2.5 py-1 rounded-lg text-[#475467] border-[#E4E7EC]"
+                  >
+                    Modul {currentIndex + 1} dari {course.modules.length}
+                  </Badge>
+                </div>
 
-                  <div className="pt-4 border-t border-slate-100/80 mt-2">
-                    <ModuleCompletionButton
-                      courseId={params.courseId}
-                      moduleId={params.moduleId}
-                      isCompleted={isCompleted}
-                      nextModuleId={nextModule?.id}
-                    />
-                  </div>
+                {/* Title */}
+                <h1 className="text-xl font-bold text-[#101828] mb-3 font-['Lexend_Deca']">
+                  {moduleData.title}
+                </h1>
+
+                {/* Description */}
+                {moduleData.description && (
+                  <p className="text-sm text-[#475467] leading-relaxed mb-5">
+                    {moduleData.description}
+                  </p>
+                )}
+
+                {/* Completion button */}
+                <div className="pt-4 border-t border-[#E4E7EC]">
+                  <ModuleCompletionButton
+                    courseId={params.courseId}
+                    moduleId={params.moduleId}
+                    isCompleted={isCompleted}
+                    nextModuleId={nextModule?.id}
+                  />
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Sidebar - 1/3 width */}
+          {/* ─── Right: Sidebar ─────────────────────────────────────────── */}
           <div className="space-y-4">
             {/* Course Progress Card */}
-            <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
+            <Card className="border-[#E4E7EC] shadow-sm rounded-xl">
               <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div>
-                    <h3 className="font-bold text-sm text-[#0F1C3F] mb-0.5 line-clamp-2 leading-snug">
-                      {course.title}
-                    </h3>
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Progress Kursus</p>
-                  </div>
+                <h3 className="text-sm font-semibold text-[#101828] mb-1 font-['Lexend_Deca']">
+                  {course.title}
+                </h3>
+                <p className="text-[11px] text-[#98A2B3] font-medium uppercase tracking-wider mb-4">
+                  Progress Kursus
+                </p>
 
-                  <div className="space-y-2">
-                    <div className="flex justify-between items-center text-xs">
-                      <span className="text-slate-500 font-medium">Modul Selesai</span>
-                      <span className="font-bold text-[#0F1C3F]">
-                        {completedCount} dari {course.modules.length}
-                      </span>
-                    </div>
-                    <Progress value={progressPct} className="h-2 bg-slate-100" />
-                    <p className="text-[10px] text-slate-500 font-bold text-right tracking-tight">
-                      {progressPct}% SELESAI
-                    </p>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-[#475467]">Modul Selesai</span>
+                    <span className="font-semibold text-[#101828]">
+                      {completedCount} dari {course.modules.length}
+                    </span>
                   </div>
+                  <Progress value={progressPct} className="h-2 bg-[#F1F3F7]" />
+                  <p className="text-xs font-semibold text-[#475467] text-right">
+                    {progressPct}% SELESAI
+                  </p>
                 </div>
               </CardContent>
             </Card>
 
             {/* Module List Card */}
-            <Card className="border-slate-100 shadow-xs rounded-2xl bg-white">
+            <Card className="border-[#E4E7EC] shadow-sm rounded-xl">
               <CardContent className="p-4">
-                <h3 className="font-bold text-[10px] text-[#0F1C3F] uppercase tracking-wider mb-3">
-                  Daftar Modul
-                </h3>
-                
-                <nav className="space-y-2 max-h-[500px] overflow-y-auto pr-1 scrollbar-thin">
+                <div className="flex items-center gap-2 mb-4">
+                  <List className="h-4 w-4 text-[#475467]" />
+                  <h3 className="text-sm font-semibold text-[#101828] font-['Lexend_Deca']">
+                    Daftar Modul
+                  </h3>
+                </div>
+
+                <nav className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin">
                   {course.modules.map((m, i) => {
                     const isActive = m.id === params.moduleId;
                     const isDone = m.userProgress[0]?.isCompleted ?? false;
@@ -275,40 +328,48 @@ export default async function ModulePlayerPage({
                         key={m.id}
                         href={`/courses/${params.courseId}/modules/${m.id}`}
                         className={cn(
-                          "group flex items-center gap-3 p-3 rounded-xl transition-all duration-200 text-xs active:scale-[0.98] border border-transparent",
-                          isActive 
-                            ? "bg-[#E8EDF7]/50 text-[#0F1C3F] border-l-4 border-l-[#E8A020] pl-2 font-semibold shadow-2xs" 
-                            : "hover:bg-slate-50 text-slate-700 bg-white border border-slate-100"
+                          "group flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-sm",
+                          isActive
+                            ? "bg-[#E8EDF7] text-[#0F1C3F] border-l-4 border-l-[#E8A020] border border-[#E8A020]/20"
+                            : "bg-white border border-[#E4E7EC] hover:border-[#0F1C3F]/30 hover:bg-[#F8F9FB]"
                         )}
                       >
-                        <div className={cn(
-                          "h-6 w-6 rounded-md flex items-center justify-center shrink-0 text-[10px] font-bold transition-all duration-200",
-                          isDone 
-                            ? "bg-[#12B76A] text-white" 
-                            : isActive 
-                            ? "bg-[#0F1C3F] text-white" 
-                            : "bg-slate-100 text-slate-500 group-hover:bg-slate-200"
-                        )}>
-                          {isDone ? <CheckCircle2 className="h-3 w-3" /> : i + 1}
+                        {/* Number circle */}
+                        <div
+                          className={cn(
+                            "h-7 w-7 rounded-lg flex items-center justify-center shrink-0 text-[11px] font-bold",
+                            isDone
+                              ? "bg-[#12B76A] text-white"
+                              : isActive
+                              ? "bg-[#0F1C3F] text-white"
+                              : "bg-[#F1F3F7] text-[#475467] group-hover:bg-[#E4E7EC]"
+                          )}
+                        >
+                          {isDone ? (
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                          ) : (
+                            i + 1
+                          )}
                         </div>
 
+                        {/* Content */}
                         <div className="flex-1 min-w-0">
-                          <p className={cn(
-                            "font-bold leading-tight truncate transition-colors duration-200",
-                            isActive ? "text-[#0F1C3F]" : "text-slate-800 group-hover:text-[#0F1C3F]"
-                          )}>
+                          <p
+                            className={cn(
+                              "font-medium text-sm leading-tight truncate",
+                              isActive ? "text-[#0F1C3F]" : "text-[#344054]"
+                            )}
+                          >
                             {m.title}
                           </p>
-                          <p className={cn(
-                            "text-[10px] mt-0.5 font-medium transition-colors duration-200",
-                            isActive ? "text-[#0F1C3F]/75" : "text-slate-400 group-hover:text-slate-500"
-                          )}>
-                            {m.type === "VIDEO" ? "Materi Video" : "Dokumen PDF"}
+                          <p className="text-[11px] text-[#98A2B3] mt-0.5">
+                            {m.type === "VIDEO" ? "Video" : "PDF"}
                           </p>
                         </div>
 
+                        {/* Active indicator */}
                         {isActive && (
-                          <ChevronRight className="h-3.5 w-3.5 text-[#0F1C3F] shrink-0 animate-pulse" />
+                          <ChevronRight className="h-4 w-4 text-[#E8A020] shrink-0" />
                         )}
                       </Link>
                     );
@@ -319,26 +380,26 @@ export default async function ModulePlayerPage({
 
             {/* Next Module Card */}
             {nextModule && (
-              <Card className="bg-gradient-to-br from-[#0F1C3F] via-[#12224A] to-[#15254F] text-white border-0 shadow-md relative overflow-hidden group rounded-2xl">
-                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#E8A020]/10 to-transparent rounded-full blur-xl pointer-events-none group-hover:scale-125 transition-transform duration-500" />
-                <CardContent className="p-4 relative z-10">
-                  <p className="text-[10px] font-bold text-[#E8A020] mb-1 tracking-wider uppercase">
+              <Card className="bg-gradient-to-br from-[#0F1C3F] to-[#1A2D5A] text-white border-0 shadow-md rounded-xl overflow-hidden">
+                <CardContent className="p-4">
+                  <p className="text-[10px] font-semibold text-[#E8A020] uppercase tracking-wider mb-1">
                     Modul Berikutnya
                   </p>
-                  <h4 className="text-sm font-bold mb-4 line-clamp-2 text-white/95 leading-snug">
+                  <h4 className="text-sm font-semibold mb-4 line-clamp-2">
                     {nextModule.title}
                   </h4>
-                  <Button 
-                    asChild 
-                    variant="secondary" 
-                    size="sm"
-                    className="w-full gap-1.5 h-8.5 bg-[#E8A020] hover:bg-[#d08f1b] text-white border-0 transition-transform duration-200 active:scale-[0.98] font-bold text-xs"
+                  <Link
+                    href={`/courses/${params.courseId}/modules/${nextModule.id}`}
                   >
-                    <Link href={`/courses/${params.courseId}/modules/${nextModule.id}`}>
-                      <span className="text-xs">Lanjut ke Modul Ini</span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      className="w-full gap-1.5 h-9 bg-[#E8A020] hover:bg-[#C4861A] text-white border-0 font-semibold"
+                    >
+                      Lanjut ke Modul Ini
                       <ChevronRight className="h-4 w-4" />
-                    </Link>
-                  </Button>
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             )}
