@@ -74,7 +74,8 @@ export function isAdmin(session: Session | null): boolean {
 
 /**
  * Check if user has specific role in their roles array
- * 
+ * Case-insensitive comparison for robustness
+ *
  * @param session - NextAuth session object
  * @param role - Role to check
  * @returns true if user has the role
@@ -85,7 +86,8 @@ export function hasRole(session: Session | null, role: "ADMIN" | "KARYAWAN" | "S
   }
 
   const roles = session.user.roles || [];
-  return roles.includes(role);
+  // Case-insensitive comparison
+  return roles.some(r => r.toUpperCase() === role.toUpperCase());
 }
 
 /**

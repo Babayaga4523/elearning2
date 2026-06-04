@@ -3,11 +3,14 @@ import { auth } from "@/auth";
 import { redirect } from "next/navigation";
 import { TestClient } from "@/components/courses/test-client";
 
-export default async function TestPlayerPage({
-  params,
-}: {
-  params: { courseId: string; testId: string };
-}) {
+// Next.js 15: params and searchParams are now Promises
+interface PageProps {
+  params: Promise<{ courseId: string; testId: string }>;
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+}
+
+export default async function TestPlayerPage({ params }: PageProps) {
+  const { courseId, testId } = await params;
   const session = await auth();
   if (!session?.user?.id) return redirect("/");
 
@@ -15,7 +18,7 @@ export default async function TestPlayerPage({
   const isAdmin = session.user.activeRole === "ADMIN" || session.user.activeRole === "SUPER_ADMIN";
 
   const test = await db.test.findUnique({
-    where: { id: params.testId },
+    where: { id: testId },
     include: {
       course: {
         select: { deadlineDate: true }
@@ -27,8 +30,8 @@ export default async function TestPlayerPage({
     },
   });
 
-  if (!test || test.courseId !== params.courseId) {
-    return redirect(`/courses/${params.courseId}`);
+  if (!test || test.courseId !== courseId) {
+    return redirect(`/courses/${courseId}`);
   }
 
   // SECURITY: Remove isCorrect from options before sending to client
@@ -44,7 +47,7 @@ export default async function TestPlayerPage({
   };
 
   const enrollment = await db.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId: params.courseId } },
+    where: { userId_courseId: { userId, courseId: courseId } },
     select: {
       id: true,
       status: true,
@@ -59,21 +62,21 @@ export default async function TestPlayerPage({
 
   // Admin bisa bypass enrollment & deadline
   if (!isAdmin && (!isEnrollmentActive || (test.course.deadlineDate && test.course.deadlineDate.getTime() < Date.now()))) {
-    return redirect(`/courses/${params.courseId}`);
+    return redirect(`/courses/${courseId}`);
   }
 
   // Count actual SUBMITTED attempts from TestAttempt table (server-side validation)
   const actualAttemptCount = await db.testAttempt.count({
     where: {
       userId,
-      testId: params.testId,
+      testId: testId,
       status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
     },
   });
 
   // Get the latest attempt for redirection
   const latestAttempt = await db.testAttempt.findFirst({
-    where: { userId, testId: params.testId },
+    where: { userId, testId: testId },
     orderBy: { createdAt: "desc" },
   });
 
@@ -81,7 +84,7 @@ export default async function TestPlayerPage({
   const perfectScoreAttempt = await db.testAttempt.findFirst({
     where: {
       userId,
-      testId: params.testId,
+      testId: testId,
       status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] },
       score: 100,
     },
@@ -92,7 +95,7 @@ export default async function TestPlayerPage({
     // RULE: If they got a perfect score (100) already, redirect to that result
     if (perfectScoreAttempt) {
       return redirect(
-        `/courses/${params.courseId}/tests/${params.testId}/result?attemptId=${perfectScoreAttempt.id}`
+        `/courses/${courseId}/tests/${testId}/result?attemptId=${perfectScoreAttempt.id}`
       );
     }
 
@@ -105,24 +108,24 @@ export default async function TestPlayerPage({
 
     if (hasUsedAllAttempts && latestAttempt) {
       return redirect(
-        `/courses/${params.courseId}/tests/${params.testId}/result?attemptId=${latestAttempt.id}`
+        `/courses/${courseId}/tests/${testId}/result?attemptId=${latestAttempt.id}`
       );
     }
   }
 
   if (test.type === "POST" && !isAdmin) {
     const modules = await db.module.findMany({
-      where: { courseId: params.courseId, isPublished: true },
+      where: { courseId: courseId, isPublished: true },
       include: { userProgress: { where: { userId } } },
     });
     const isAllDone = modules.every(
       (m) => m.userProgress[0]?.isCompleted === true
     );
-    if (!isAllDone) return redirect(`/courses/${params.courseId}`);
+    if (!isAllDone) return redirect(`/courses/${courseId}`);
   }
 
   const latestSession = await db.testSession.findFirst({
-    where: { userId, testId: params.testId },
+    where: { userId, testId: testId },
     orderBy: { startedAt: "desc" },
   });
 
@@ -146,7 +149,7 @@ export default async function TestPlayerPage({
       const session = await tx.testSession.create({
         data: {
           userId,
-          testId: params.testId,
+          testId: testId,
           enrollmentId: enrollment?.id ?? null,
           startedAt: now,
           status: "ONGOING",
@@ -157,7 +160,7 @@ export default async function TestPlayerPage({
       const attempt = await tx.testAttempt.create({
         data: {
           userId,
-          testId: params.testId,
+          testId: testId,
           enrollmentId: enrollment?.id ?? null,
           attemptNumber: nextAttemptNumber,
           startedAt: now,
@@ -178,7 +181,7 @@ export default async function TestPlayerPage({
     
     // Find the existing active attempt
     const activeAttempt = await db.testAttempt.findFirst({
-      where: { userId, testId: params.testId, status: "ONGOING" },
+      where: { userId, testId: testId, status: "ONGOING" },
       orderBy: { startedAt: "desc" }
     });
     activeAttemptId = activeAttempt?.id ?? "";
@@ -190,7 +193,7 @@ export default async function TestPlayerPage({
   return (
     <TestClient
       test={sanitizedTest}
-      courseId={params.courseId}
+      courseId={courseId}
       attemptNumber={attemptNumber}
       maxAttempts={test.maxAttempts}
       startedAt={startedAt}

@@ -82,6 +82,22 @@ export async function POST(req: NextRequest) {
     const userMap = new Map(users.map((u) => [u.email, u]));
     const courseMap = new Map(courses.map((c) => [c.title, c]));
 
+    // Fetch existing enrollments in bulk to solve N+1 query
+    const userIds = users.map((u) => u.id);
+    const courseIds = courses.map((c) => c.id);
+
+    const existingEnrollments = await db.enrollment.findMany({
+      where: {
+        userId: { in: userIds },
+        courseId: { in: courseIds },
+      },
+      select: { userId: true, courseId: true },
+    });
+
+    const existingSet = new Set(
+      existingEnrollments.map((en) => `${en.userId}_${en.courseId}`)
+    );
+
     // Validate and prepare enrollments
     const validEnrollments: Array<{
       userId: string;
@@ -107,17 +123,9 @@ export async function POST(req: NextRequest) {
         continue;
       }
 
-      // Check if already enrolled
-      const existing = await db.enrollment.findUnique({
-        where: {
-          userId_courseId: {
-            userId: user.id,
-            courseId: course.id,
-          },
-        },
-      });
-
-      if (existing) {
+      // Check if already enrolled in O(1)
+      const compositeKey = `${user.id}_${course.id}`;
+      if (existingSet.has(compositeKey)) {
         errors.push(`Row ${i + 2}: User already enrolled (${e.email} in ${e.courseTitle})`);
         continue;
       }
@@ -147,54 +155,54 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Batch insert with transaction
+    // Batch insert with transaction - optimized for bulk operations
     const result = await db.$transaction(async (tx) => {
-      const created = [];
+      // Create all enrollments in a single createMany call
+      const enrollmentData = validEnrollments.map((e) => ({
+        userId: e.userId,
+        courseId: e.courseId,
+        status: "IN_PROGRESS" as const,
+        deadline: e.deadline,
+        source: "BULK_IMPORT",
+      }));
 
-      for (const e of validEnrollments) {
-        const enrollment = await tx.enrollment.create({
-          data: {
-            userId: e.userId,
-            courseId: e.courseId,
-            status: "IN_PROGRESS",
-            deadline: e.deadline,
-            source: "BULK_IMPORT",
-          },
+      const createdEnrollments = await tx.enrollment.createMany({
+        data: enrollmentData,
+        skipDuplicates: true,
+      });
+
+      // Create all notifications in a single createMany call
+      if (sendNotification) {
+        const notificationData = validEnrollments.map((e) => ({
+          userId: e.userId,
+          type: "ENROLLMENT" as const,
+          title: "Anda Terdaftar di Kursus Baru",
+          body: `Anda telah didaftarkan ke kursus "${e.courseTitle}". ${
+            e.deadline
+              ? `Deadline: ${e.deadline.toLocaleDateString("id-ID")}`
+              : ""
+          }`,
+          href: "/courses",
+        }));
+
+        await tx.notification.createMany({
+          data: notificationData,
         });
-
-        // Create notification
-        if (sendNotification) {
-          await tx.notification.create({
-            data: {
-              userId: e.userId,
-              type: "ENROLLMENT",
-              title: "Anda Terdaftar di Kursus Baru",
-              body: `Anda telah didaftarkan ke kursus "${e.courseTitle}". ${
-                e.deadline
-                  ? `Deadline: ${e.deadline.toLocaleDateString("id-ID")}`
-                  : ""
-              }`,
-              href: `/courses`,
-            },
-          });
-        }
-
-        created.push(enrollment);
       }
 
-      return created;
+      return { count: createdEnrollments.count };
     });
 
     log.info("Enrollments imported successfully", {
-      count: result.length,
+      count: result.count,
       errors: errors.length,
       adminId: session?.user?.id,
     });
 
     return NextResponse.json({
       success: true,
-      message: `Successfully imported ${result.length} enrollments`,
-      count: result.length,
+      message: `Successfully imported ${result.count} enrollments`,
+      count: result.count,
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error: any) {

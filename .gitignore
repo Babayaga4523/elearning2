@@ -30,7 +30,7 @@ yarn-error.log*
 .env*.local
 
 # logs
-logs/
+/logs/
 *.log
 
 # backups

@@ -20,11 +20,13 @@ import { cn } from "@/lib/utils";
 import { SmartVideoPlayer } from "@/components/media/SmartVideoPlayer";
 import { PDFViewer } from "@/components/media/PDFViewer";
 
-export default async function ModulePlayerPage({
-  params,
-}: {
-  params: { courseId: string; moduleId: string };
-}) {
+// Next.js 15: params are now Promises
+interface PageProps {
+  params: Promise<{ courseId: string; moduleId: string }>;
+}
+
+export default async function ModulePlayerPage({ params }: PageProps) {
+  const { courseId, moduleId } = await params;
   const session = await auth();
   if (!session?.user?.id) return redirect("/");
 
@@ -37,7 +39,7 @@ export default async function ModulePlayerPage({
 
   const course = await db.course.findUnique({
     where: {
-      id: params.courseId,
+      id: courseId,
       ...(isAdmin ? {} : { isPublished: true }),
     },
     include: {
@@ -51,11 +53,11 @@ export default async function ModulePlayerPage({
 
   if (!course) return redirect("/courses");
 
-  const moduleData = course.modules.find((m) => m.id === params.moduleId);
-  if (!moduleData) return redirect(`/courses/${params.courseId}`);
+  const moduleData = course.modules.find((m) => m.id === moduleId);
+  if (!moduleData) return redirect(`/courses/${courseId}`);
 
   const enrollment = await db.enrollment.findUnique({
-    where: { userId_courseId: { userId, courseId: params.courseId } },
+    where: { userId_courseId: { userId, courseId: courseId } },
   });
 
   const isEnrollmentActive =
@@ -68,12 +70,12 @@ export default async function ModulePlayerPage({
     (!isEnrollmentActive ||
       (course.deadlineDate && course.deadlineDate.getTime() < Date.now()))
   ) {
-    return redirect(`/courses/${params.courseId}`);
+    return redirect(`/courses/${courseId}`);
   }
 
   const isCompleted = moduleData.userProgress[0]?.isCompleted ?? false;
   const currentIndex = course.modules.findIndex(
-    (m) => m.id === params.moduleId
+    (m) => m.id === moduleId
   );
   const prevModule = currentIndex > 0 ? course.modules[currentIndex - 1] : null;
   const nextModule =
@@ -96,7 +98,7 @@ export default async function ModulePlayerPage({
           {/* Left: Back button + Module info */}
           <div className="flex items-center gap-3 min-w-0">
             <Link
-              href={`/courses/${params.courseId}`}
+              href={`/courses/${courseId}`}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[#475467] hover:text-[#0F1C3F] hover:bg-[#F8F9FB] transition-colors font-medium text-sm shrink-0"
             >
               <ArrowLeft className="h-4 w-4" />
@@ -135,7 +137,7 @@ export default async function ModulePlayerPage({
           {/* Right: Navigation buttons */}
           <div className="flex items-center gap-2 shrink-0">
             {prevModule ? (
-              <Link href={`/courses/${params.courseId}/modules/${prevModule.id}`}>
+              <Link href={`/courses/${courseId}/modules/${prevModule.id}`}>
                 <Button
                   variant="outline"
                   size="sm"
@@ -150,7 +152,7 @@ export default async function ModulePlayerPage({
             )}
 
             {nextModule ? (
-              <Link href={`/courses/${params.courseId}/modules/${nextModule.id}`}>
+              <Link href={`/courses/${courseId}/modules/${nextModule.id}`}>
                 <Button
                   size="sm"
                   className="h-9 gap-1.5 bg-[#0F1C3F] hover:bg-[#1A2D5A] text-white border-0 transition-colors font-semibold"
@@ -271,8 +273,8 @@ export default async function ModulePlayerPage({
                 {/* Completion button */}
                 <div className="pt-4 border-t border-[#E4E7EC]">
                   <ModuleCompletionButton
-                    courseId={params.courseId}
-                    moduleId={params.moduleId}
+                    courseId={courseId}
+                    moduleId={moduleId}
                     isCompleted={isCompleted}
                     nextModuleId={nextModule?.id}
                   />
@@ -320,13 +322,13 @@ export default async function ModulePlayerPage({
 
                 <nav className="space-y-2 max-h-[400px] overflow-y-auto pr-1 scrollbar-thin">
                   {course.modules.map((m, i) => {
-                    const isActive = m.id === params.moduleId;
+                    const isActive = m.id === moduleId;
                     const isDone = m.userProgress[0]?.isCompleted ?? false;
 
                     return (
                       <Link
                         key={m.id}
-                        href={`/courses/${params.courseId}/modules/${m.id}`}
+                        href={`/courses/${courseId}/modules/${m.id}`}
                         className={cn(
                           "group flex items-center gap-3 p-3 rounded-lg transition-all duration-200 text-sm",
                           isActive
@@ -389,7 +391,7 @@ export default async function ModulePlayerPage({
                     {nextModule.title}
                   </h4>
                   <Link
-                    href={`/courses/${params.courseId}/modules/${nextModule.id}`}
+                    href={`/courses/${courseId}/modules/${nextModule.id}`}
                   >
                     <Button
                       variant="secondary"

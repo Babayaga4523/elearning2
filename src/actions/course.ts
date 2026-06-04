@@ -3,16 +3,17 @@
 import { db } from "@/lib/db";
 import { auth } from "@/auth";
 import { revalidatePath } from "next/cache";
+import { requireAdmin } from "@/lib/auth-helpers";
 
 export async function createCourse(data: { title: string; categoryId?: string }) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   if (!data.categoryId) throw new Error("Kategori kursus wajib dipilih");
 
   const existingDraft = await db.course.findFirst({
     where: {
-      userId: session.user?.id,
+      userId: session.user.id,
       title: data.title,
       isPublished: false,
       modules: { none: {} },
@@ -31,7 +32,7 @@ export async function createCourse(data: { title: string; categoryId?: string })
 
   const course = await db.course.create({
     data: {
-      userId: session.user!.id,
+      userId: session.user.id,
       title: data.title,
       categoryId: data.categoryId!,
     },
@@ -44,8 +45,8 @@ export async function createCourse(data: { title: string; categoryId?: string })
 }
 
 export async function updateCourse(id: string, values: Record<string, unknown>) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   const ALLOWED = new Set([
     "title", "description", "categoryId", "deadlineDate",
@@ -83,8 +84,8 @@ export async function updateCourse(id: string, values: Record<string, unknown>) 
 }
 
 export async function deleteCourse(id: string) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   await db.course.delete({ where: { id } });
 
@@ -94,8 +95,8 @@ export async function deleteCourse(id: string) {
 }
 
 export async function publishCourse(id: string, isPublished: boolean) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   const course = await db.course.update({
     where: { id },
@@ -116,8 +117,8 @@ export async function createModule(
   courseId: string,
   data: { title: string; position?: number }
 ) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   const last = await db.module.findFirst({
     where: { courseId },
@@ -136,8 +137,8 @@ export async function createModule(
 }
 
 export async function updateModule(id: string, values: Record<string, unknown>) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   const ALLOWED = new Set([
     "title", "description", "position", "isPublished", "isFree",
@@ -158,8 +159,8 @@ export async function updateModule(id: string, values: Record<string, unknown>) 
 }
 
 export async function deleteModule(id: string) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   const existing = await db.module.findUnique({ where: { id } });
   if (!existing) throw new Error("Module not found");
@@ -178,8 +179,8 @@ export async function createTest(
   courseId: string,
   data: { title: string; type: "PRE" | "POST" }
 ) {
-  const session = await auth();
-  if (!session) throw new Error("Unauthorized");
+  const session = await requireAdmin();
+  if ("success" in session) throw new Error(session.error);
 
   const test = await db.test.create({ data: { courseId, title: data.title, type: data.type } });
 

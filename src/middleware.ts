@@ -62,15 +62,15 @@ export default auth((req: any) => {
   if (isLoggedIn && nextUrl.pathname.startsWith("/admin")) {
     const token = req.auth;
     const activeRole = token?.user?.activeRole || token?.user?.role;
-    
+
     // SUPER_ADMIN bypasses all permission checks
     if (activeRole === "SUPER_ADMIN") {
       return;
     }
 
-    // Check if the route requires specific permissions
-    const permissions: string[] = token?.user?.permissions || [];
-    
+    // Permissions from JWT (case-insensitive)
+    const permissions: string[] = (token?.user?.permissions || []).map((p: string) => p.toLowerCase());
+
     // Find matching route pattern (longest match first)
     const sortedRoutes = Object.keys(ROUTE_PERMISSION_MAP).sort(
       (a, b) => b.length - a.length
@@ -79,8 +79,9 @@ export default auth((req: any) => {
     for (const route of sortedRoutes) {
       if (nextUrl.pathname === route || nextUrl.pathname.startsWith(route + "/")) {
         const requiredPermissions = ROUTE_PERMISSION_MAP[route];
+        // Case-insensitive permission check
         const hasAccess = requiredPermissions.some((perm) =>
-          permissions.includes(perm)
+          permissions.includes(perm.toLowerCase())
         );
 
         if (!hasAccess) {
@@ -102,7 +103,8 @@ export default auth((req: any) => {
       return;
     }
 
-    const permissions: string[] = token?.user?.permissions || [];
+    // Permissions from JWT (case-insensitive)
+    const permissions: string[] = (token?.user?.permissions || []).map((p: string) => p.toLowerCase());
 
     const sortedApiRoutes = Object.keys(API_ROUTE_PERMISSION_MAP).sort(
       (a, b) => b.length - a.length
@@ -111,8 +113,9 @@ export default auth((req: any) => {
     for (const route of sortedApiRoutes) {
       if (nextUrl.pathname === route || nextUrl.pathname.startsWith(route + "/")) {
         const requiredPermissions = API_ROUTE_PERMISSION_MAP[route];
+        // Case-insensitive permission check
         const hasAccess = requiredPermissions.some((perm) =>
-          permissions.includes(perm)
+          permissions.includes(perm.toLowerCase())
         );
 
         if (!hasAccess) {

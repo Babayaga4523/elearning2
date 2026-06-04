@@ -4,13 +4,14 @@
  */
 
 import { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth-helpers";
 import Link from "next/link";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { 
-  FileSpreadsheet, 
-  Users, 
-  BookOpen, 
+import {
+  FileSpreadsheet,
+  Users,
+  BookOpen,
   UserPlus,
   Download,
   Upload
@@ -21,7 +22,13 @@ export const metadata: Metadata = {
   description: "Bulk import questions, users, and enrollments from Excel files",
 };
 
-export default function ImportPage() {
+export default async function ImportPage() {
+  // Auth check - require admin role
+  const session = await requireAdmin();
+  if ("success" in session) {
+    throw new Error(session.error);
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}

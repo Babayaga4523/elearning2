@@ -12,18 +12,18 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, FileText, Plus } from "lucide-react";
 
+// Next.js 15: params are now Promises
+interface PageProps {
+  params: Promise<{ courseId: string }>;
+}
+
 export const metadata: Metadata = {
   title: "Course Tests - Admin Dashboard",
   description: "Manage course tests",
 };
 
-interface PageProps {
-  params: {
-    courseId: string;
-  };
-}
-
 export default async function CourseTestsPage({ params }: PageProps) {
+  const { courseId } = await params;
   const session = await auth();
 
   if (!session?.user) {
@@ -35,8 +35,6 @@ export default async function CourseTestsPage({ params }: PageProps) {
   if (activeRole !== "ADMIN" && activeRole !== "SUPER_ADMIN") {
     redirect("/dashboard");
   }
-
-  const { courseId } = params;
 
   // Fetch course with tests
   const course = await db.course.findUnique({

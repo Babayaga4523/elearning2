@@ -26,6 +26,12 @@ export const metadata = {
   title: "Hasil Ujian | E-Learning BNI Finance",
 };
 
+// Next.js 15: params and searchParams are now Promises
+interface PageProps {
+  params: Promise<{ courseId: string; testId: string }>;
+  searchParams: Promise<{ attemptId?: string; [key: string]: string | undefined }>;
+}
+
 function formatDuration(secs: number): string {
   const h = Math.floor(secs / 3600);
   const m = Math.floor((secs % 3600) / 60);
@@ -35,22 +41,26 @@ function formatDuration(secs: number): string {
   return `${s}d`;
 }
 
-export default async function TestResultPage({
-  params,
-  searchParams,
-}: {
-  params: { courseId: string; testId: string };
-  searchParams: { attemptId?: string };
-}) {
+export default async function TestResultPage({ params, searchParams }: PageProps) {
+  const { courseId, testId } = await params;
+  const { attemptId } = await searchParams;
+
   const session = await auth();
   if (!session?.user?.id) return redirect("/");
-  if (!searchParams.attemptId)
-    return redirect(`/courses/${params.courseId}/tests/${params.testId}`);
+  if (!attemptId)
+    return redirect(`/courses/${courseId}/tests/${testId}`);
 
-  const attempt = await getTestAttemptDetail(searchParams.attemptId);
-  if (!attempt) return redirect(`/courses/${params.courseId}`);
-  if (attempt.testId !== params.testId || (attempt as any).test?.courseId !== params.courseId) {
-    return redirect(`/courses/${params.courseId}`);
+  const attempt = await getTestAttemptDetail(attemptId);
+
+  // Move redirect checks outside try-catch block
+  if (!attempt) {
+    return redirect(`/courses/${courseId}`);
+  }
+
+  // Validate attempt belongs to the correct test and course
+  const attemptCourseId = attempt.test?.courseId;
+  if (attempt.testId !== testId || attemptCourseId !== courseId) {
+    return redirect(`/courses/${courseId}`);
   }
 
   const isPassed = attempt.passed;
@@ -58,7 +68,7 @@ export default async function TestResultPage({
   const passingScore = attempt.test.passingScore ?? 0;
   const testType = attempt.test.type;
   const totalQ = attempt.test.questions.length;
-  const correctCount = attempt.answers.filter((a: any) => a.isCorrect).length;
+  const correctCount = attempt.answers.filter((a) => a.isCorrect).length;
   const wrongCount = totalQ - correctCount;
 
   const attemptCount = await db.testAttempt.count({
@@ -95,6 +105,9 @@ export default async function TestResultPage({
     (a, b) => (a.answerOrder ?? 0) - (b.answerOrder ?? 0)
   );
 
+  // Create a map of questionId -> question for O(1) lookup
+  const questionMap = new Map(attempt.test.questions.map(q => [q.id, q]));
+
   // Score ring configuration
   const circumference = 2 * Math.PI * 44;
   const offset = circumference * (1 - score / 100);
@@ -106,7 +119,7 @@ export default async function TestResultPage({
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           {/* Breadcrumb */}
           <nav className="flex items-center gap-1.5 text-xs text-[#98A2B3] mb-4">
-            <Link href={`/courses/${params.courseId}`} className="hover:text-[#475467] transition-colors flex items-center gap-1">
+            <Link href={`/courses/${courseId}`} className="hover:text-[#475467] transition-colors flex items-center gap-1">
               <ArrowLeft size={12} />
               Kursus
             </Link>
@@ -151,7 +164,7 @@ export default async function TestResultPage({
                       : "bg-[#E8A020] hover:bg-[#C4861A] text-white"
                   )}
                 >
-                  <Link href={`/courses/${params.courseId}/tests/${params.testId}`}>
+                  <Link href={`/courses/${courseId}/tests/${testId}`}>
                     {isPassed ? "Tingkatkan Nilai" : "Ulangi Ujian"}
                     <ChevronRight size={12} className="ml-1" />
                   </Link>
@@ -162,7 +175,7 @@ export default async function TestResultPage({
                 variant="outline"
                 className="h-9 px-4 rounded-lg text-xs font-medium border-[#E4E7EC] text-[#475467] hover:bg-[#F8F9FB] transition-all"
               >
-                <Link href={`/courses/${params.courseId}`}>
+                <Link href={`/courses/${courseId}`}>
                   <BookOpen size={12} className="mr-1.5" />
                   Kembali
                 </Link>
@@ -365,10 +378,8 @@ export default async function TestResultPage({
               </div>
             )}
 
-            {sortedAnswers.map((answer: any, idx: number) => {
-              const question = (attempt as any).test.questions.find(
-                (q: any) => q.id === answer.questionId
-              );
+            {sortedAnswers.map((answer, idx) => {
+              const question = questionMap.get(answer.questionId);
               if (!question) return null;
 
               const isCorrect = answer?.isCorrect ?? false;
@@ -406,8 +417,8 @@ export default async function TestResultPage({
                     {/* Options Column */}
                     <div className="flex-1 w-full space-y-1.5">
                       {question.options
-                        .sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0))
-                        .map((option: any, optIdx: number) => {
+                        .sort((a, b) => (a.position ?? 0) - (b.position ?? 0))
+                        .map((option, optIdx) => {
                           const label = String.fromCharCode(65 + optIdx);
                           const isUserSelected = answer?.selectedOptionId === option.id;
                           const isOptionCorrect = option.isCorrect;

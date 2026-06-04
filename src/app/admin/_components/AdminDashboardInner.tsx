@@ -274,27 +274,102 @@ function ActivityFeedItem({ item }: { item: ActivityItem }) {
 // Quick Actions
 // ─────────────────────────────────────────────
 const quickActions = [
-  { label: "Tambah Kursus", icon: BookOpen, href: "/admin/courses/create", color: "amber" },
-  { label: "Import Karyawan", icon: Users, href: "/admin/import/users", color: "blue" },
-  { label: "Lihat Laporan", icon: BarChart3, href: "/admin/analytics", color: "slate" },
-  { label: "Auto Enrollment", icon: Calendar, href: "/admin/enrollments", color: "blue" },
+  {
+    label: "Tambah Kursus",
+    description: "Buat materi & modul baru",
+    icon: BookOpen,
+    href: "/admin/courses/create",
+    color: "amber",
+  },
+  {
+    label: "Import Karyawan",
+    description: "Unggah massal data pengguna",
+    icon: Users,
+    href: "/admin/import/users",
+    color: "blue",
+  },
+  {
+    label: "Lihat Laporan",
+    description: "Analisis & statistik belajar",
+    icon: BarChart3,
+    href: "/admin/analytics",
+    color: "emerald",
+  },
+  {
+    label: "Auto Enrollment",
+    description: "Atur pendaftaran otomatis",
+    icon: Calendar,
+    href: "/admin/enrollments",
+    color: "violet",
+  },
 ];
 
-function QuickAction({ label, icon: Icon, href, color }: { label: string; icon: React.ElementType; href: string; color: string }) {
-  const styles: Record<string, { card: string; icon: string; text: string }> = {
-    amber: { card: "bg-[#FEF3DC] border-[#F5C05A] hover:bg-[#FEC84B]/30", icon: "bg-[#F5C05A]/40 text-[#C4861A]", text: "text-[#C4861A] hover:text-[#B54708]" },
-    blue: { card: "bg-[#EFF8FF] border-[#B2DDFF] hover:bg-blue-50", icon: "bg-blue-100 text-blue-600", text: "text-blue-700 hover:text-blue-800" },
-    slate: { card: "bg-[#F8F9FB] border-[#E4E7EC] hover:bg-[#F1F3F7]", icon: "bg-slate-100 text-slate-600", text: "text-slate-700 hover:text-slate-900" },
+interface QuickActionProps {
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  href: string;
+  color: string;
+}
+
+function QuickAction({ label, description, icon: Icon, href, color }: QuickActionProps) {
+  const styles: Record<string, { card: string; icon: string; title: string; desc: string; arrow: string }> = {
+    amber: {
+      card: "bg-white hover:bg-[#FFFDF6] border-[#E4E7EC] hover:border-[#FFE2A3] hover:shadow-[0_4px_20px_-4px_rgba(232,160,32,0.08)]",
+      icon: "bg-[#FEF3DC] text-[#C4861A]",
+      title: "text-[#101828]",
+      desc: "text-[#475467]",
+      arrow: "text-[#C4861A] group-hover:translate-x-0.5",
+    },
+    blue: {
+      card: "bg-white hover:bg-[#F5F9FF] border-[#E4E7EC] hover:border-[#B2DDFF] hover:shadow-[0_4px_20px_-4px_rgba(47,104,235,0.08)]",
+      icon: "bg-[#EFF8FF] text-[#2F68EB]",
+      title: "text-[#101828]",
+      desc: "text-[#475467]",
+      arrow: "text-[#2F68EB] group-hover:translate-x-0.5",
+    },
+    emerald: {
+      card: "bg-white hover:bg-[#F6FEF9] border-[#E4E7EC] hover:border-[#A6F4C5] hover:shadow-[0_4px_20px_-4px_rgba(18,183,106,0.08)]",
+      icon: "bg-[#ECFDF3] text-[#12B76A]",
+      title: "text-[#101828]",
+      desc: "text-[#475467]",
+      arrow: "text-[#12B76A] group-hover:translate-x-0.5",
+    },
+    violet: {
+      card: "bg-white hover:bg-[#FAFAFF] border-[#E4E7EC] hover:border-[#D6BBFB] hover:shadow-[0_4px_20px_-4px_rgba(158,119,237,0.08)]",
+      icon: "bg-[#F9F5FF] text-[#9E77ED]",
+      title: "text-[#101828]",
+      desc: "text-[#475467]",
+      arrow: "text-[#9E77ED] group-hover:translate-x-0.5",
+    },
   };
-  const s = styles[color] || styles.slate;
+
+  const s = styles[color] || styles.amber;
+
   return (
-    <Link href={href} className={cn("flex items-center gap-2.5 p-3 rounded-xl border transition-all duration-150 group", s.card)}>
-      <div className={cn("p-2 rounded-lg shrink-0", s.icon)}>
-        <Icon size={15} />
+    <Link
+      href={href}
+      className={cn(
+        "flex items-center gap-3.5 p-3 rounded-xl border transition-all duration-200 group",
+        s.card
+      )}
+    >
+      <div className={cn("p-2.5 rounded-lg shrink-0 transition-transform duration-200 group-hover:scale-105", s.icon)}>
+        <Icon size={16} />
       </div>
       <div className="flex-1 min-w-0">
-        <p className={cn("text-xs font-semibold", s.text)}>{label}</p>
-        <ChevronRight size={11} className="text-[#98A2B3] group-hover:translate-x-0.5 transition-transform mt-0.5" />
+        <p className={cn("text-xs font-semibold font-['DM_Sans'] transition-colors", s.title)}>
+          {label}
+        </p>
+        <p className={cn("text-[10px] mt-0.5 text-slate-400 font-medium truncate font-['DM_Sans']", s.desc)}>
+          {description}
+        </p>
+      </div>
+      <div className="shrink-0 flex items-center justify-center w-5 h-5 rounded-full bg-slate-50 group-hover:bg-white border border-slate-100/50 transition-colors">
+        <ChevronRight
+          size={11}
+          className={cn("transition-transform duration-150", s.arrow)}
+        />
       </div>
     </Link>
   );
@@ -540,10 +615,14 @@ export function AdminDashboardInner() {
           <StatsCard label="Menunggu Persetujuan" value={stats.pendingEnrollments.toLocaleString("id-ID")} icon={Clock} variant="warning" />
         </div>
         {/* Quick Actions */}
-        <div className="bg-white rounded-xl border border-[#E4E7EC] p-4">
-          <h3 className="text-sm font-semibold text-[#101828] mb-3 font-['DM_Sans']">Aksi Cepat</h3>
-          <div className="grid grid-cols-2 gap-2">
-            {quickActions.map((action) => <QuickAction key={action.label} {...action} />)}
+        <div className="bg-white rounded-xl border border-[#E4E7EC] p-5 flex flex-col justify-between">
+          <div>
+            <h3 className="text-sm font-semibold text-[#101828] mb-4 font-['DM_Sans']">Aksi Cepat</h3>
+            <div className="flex flex-col gap-3">
+              {quickActions.map((action) => (
+                <QuickAction key={action.label} {...action} />
+              ))}
+            </div>
           </div>
         </div>
       </div>

@@ -6,6 +6,9 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { TestForm } from "../../_components/TestForm";
 
+// Define test type for proper TypeScript typing
+type TestType = "PRE_TEST" | "POST_TEST";
+
 export default async function TestIdPage({
   params,
   searchParams,
@@ -33,7 +36,7 @@ export default async function TestIdPage({
   ]);
 
   const isPost = test ? test.type === "POST" : searchParams.type === "POST";
-  const testType = isPost ? "POST_TEST" : "PRE_TEST";
+  const testType: TestType = isPost ? "POST_TEST" : "PRE_TEST";
 
   if (params.testId !== "new" && !test) return notFound();
   if (!course) return redirect("/admin/courses");
@@ -126,7 +129,7 @@ export default async function TestIdPage({
         <TestForm
           courseId={params.courseId}
           initialData={test}
-          type={testType as any}
+          type={testType}
           isCoursePublished={course.isPublished}
         />
       </div>

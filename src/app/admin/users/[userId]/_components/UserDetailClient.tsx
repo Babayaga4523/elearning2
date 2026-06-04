@@ -41,7 +41,7 @@ import {
 interface UserProfile {
   id: string;
   name: string | null;
-  email: string;
+  email: string | null;
   department: string | null;
   nip: string | null;
   lokasi: string | null;
@@ -118,7 +118,7 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
       const profileFields: [string, any][] = [
         ["Nama Lengkap", user.name],
         ["NIP", user.nip || "-"],
-        ["Email", user.email],
+        ["Email", user.email || "-"],
         ["Departemen", user.department || "-"],
         ["Lokasi / Kantor", user.lokasi || "-"],
         ["Terdaftar Sejak", new Date(user.createdAt).toLocaleDateString("id-ID")],
@@ -382,7 +382,7 @@ export function UserDetailClient({ user, enrollments, summary }: UserDetailClien
               </Avatar>
               <div className="min-w-0">
                 <h2 className="text-lg font-bold text-[#101828] font-lexend truncate">{user.name}</h2>
-                <p className="text-[13px] text-[#475467] font-medium truncate mt-0.5">{user.email}</p>
+                <p className="text-[13px] text-[#475467] font-medium truncate mt-0.5">{user.email || "—"}</p>
               </div>
             </div>
 

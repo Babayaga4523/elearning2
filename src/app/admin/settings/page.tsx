@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { db } from "@/lib/db";
 import { Settings, User, Bell, Shield, Database, Info } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -9,7 +10,14 @@ export const metadata = {
 };
 
 export default async function AdminSettingsPage() {
-  const session = await auth();
+  // Auth check - require admin role
+  const session = await requireAdmin();
+  if ("success" in session) {
+    throw new Error(session.error);
+  }
+
+  // Get user data from auth
+  const user = session.user;
 
   const [userCount, courseCount, moduleCount, enrollmentCount] = await Promise.all([
     db.user.count(),
@@ -39,11 +47,11 @@ export default async function AdminSettingsPage() {
           <CardContent className="py-4 px-5 space-y-4">
             <div className="flex items-center gap-4">
               <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center font-bold text-xl text-primary">
-                {session?.user?.name?.charAt(0)?.toUpperCase() ?? "A"}
+                {user?.name?.charAt(0)?.toUpperCase() ?? "A"}
               </div>
               <div>
-                <p className="font-bold text-slate-900 text-base">{session?.user?.name}</p>
-                <p className="text-slate-500 text-xs">{session?.user?.email}</p>
+                <p className="font-bold text-slate-900 text-base">{user?.name}</p>
+                <p className="text-slate-500 text-xs">{user?.email}</p>
                 <Badge className="mt-1 bg-indigo-50 text-indigo-700 hover:bg-indigo-50 text-[10px] font-bold h-5 px-2">
                   ADMINISTRATOR
                 </Badge>

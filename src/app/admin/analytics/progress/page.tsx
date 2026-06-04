@@ -4,6 +4,7 @@
  */
 
 import { Metadata } from "next";
+import { requireAdmin } from "@/lib/auth-helpers";
 import { ProgressAnalyticsClient } from "./_components/ProgressAnalyticsClient";
 
 export const metadata: Metadata = {
@@ -11,6 +12,12 @@ export const metadata: Metadata = {
   description: "Monitor video and PDF progress across all users",
 };
 
-export default function ProgressAnalyticsPage() {
+export default async function ProgressAnalyticsPage() {
+  // Auth check - require admin role
+  const session = await requireAdmin();
+  if ("success" in session) {
+    throw new Error(session.error);
+  }
+
   return <ProgressAnalyticsClient />;
 }

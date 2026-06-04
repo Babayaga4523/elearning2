@@ -93,6 +93,8 @@ export function TestClient({
   useEffect(() => { isSubmittingRef.current = isSubmitting; }, [isSubmitting]);
   useEffect(() => { currentQuestionIndexRef.current = currentQuestionIndex; }, [currentQuestionIndex]);
   useEffect(() => { markedQuestionsRef.current = markedQuestions; }, [markedQuestions]);
+  // Sync answersRef with answers state - CRITICAL for auto-submit to capture latest answers
+  useEffect(() => { answersRef.current = answers; }, [answers]);
   const [showSidebar, setShowSidebar] = useState(true);
   // Offline States
   const [isOnline, setIsOnline] = useState(true);
@@ -323,36 +325,45 @@ export function TestClient({
     localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
   }, [answers, isReady]);
 
-  // Keyboard Navigation
+  // Keyboard Navigation - using refs to avoid listener recreation
+  const handleSelectOptionRef = useRef<(questionId: string, optionId: string) => void>(() => {});
+  const toggleMarkRef = useRef<(index: number) => void>(() => {});
+
   useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
-      if (isSubmitting) return;
+      if (isSubmittingRef.current) return;
+
+      const currentIdx = currentQuestionIndexRef.current;
+      const questions = shuffledQuestionsRef.current;
+      const currentQ = questions[currentIdx];
+
+      if (!currentQ) return;
 
       // Number keys 1-4 for options A-D
       if (e.key >= '1' && e.key <= '4') {
         const optionIndex = parseInt(e.key) - 1;
-        if (currentQuestion.options[optionIndex]) {
-          handleSelectOption(currentQuestion.id, currentQuestion.options[optionIndex].id);
+        if (currentQ.options?.[optionIndex]) {
+          handleSelectOptionRef.current(currentQ.id, currentQ.options[optionIndex].id);
         }
       }
 
       // Arrow keys for navigation
-      if (e.key === 'ArrowLeft' && currentQuestionIndex > 0) {
+      if (e.key === 'ArrowLeft' && currentIdx > 0) {
         setCurrentQuestionIndex(prev => prev - 1);
       }
-      if (e.key === 'ArrowRight' && currentQuestionIndex < totalQuestions - 1) {
+      if (e.key === 'ArrowRight' && currentIdx < questions.length - 1) {
         setCurrentQuestionIndex(prev => prev + 1);
       }
 
       // M key to mark/unmark
       if (e.key.toLowerCase() === 'm') {
-        toggleMark(currentQuestionIndex);
+        toggleMarkRef.current(currentIdx);
       }
     };
 
     window.addEventListener('keydown', handleKeyPress);
     return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [currentQuestionIndex, isSubmitting, markedQuestions]);
+  }, [isSubmitting]);
 
   // Online/Offline Detection
   useEffect(() => {
@@ -437,6 +448,10 @@ export function TestClient({
       return newSet;
     });
   };
+
+  // Sync function refs after definitions
+  useEffect(() => { handleSelectOptionRef.current = handleSelectOption; }, [handleSelectOption]);
+  useEffect(() => { toggleMarkRef.current = toggleMark; }, [toggleMark]);
 
   const handleSubmit = async (isForceSubmit = false) => {
     if (isSubmitting) return;

@@ -2,13 +2,15 @@ import { db } from "@/lib/db";
 import { redirect } from "next/navigation";
 import { UserDetailClient } from "./_components/UserDetailClient";
 
+// Next.js 15: params are now Promises
 interface Props {
-  params: { userId: string };
+  params: Promise<{ userId: string }>;
 }
 
 export async function generateMetadata({ params }: Props) {
+  const { userId } = await params;
   const user = await db.user.findUnique({
-    where: { id: params.userId },
+    where: { id: userId },
     select: { name: true },
   });
   return {
@@ -17,9 +19,11 @@ export async function generateMetadata({ params }: Props) {
 }
 
 export default async function UserDetailPage({ params }: Props) {
+  const { userId } = await params;
+
   const [user, enrollments, testAttempts, userProgress, videoProgress, pDFProgress] = await Promise.all([
-    (db.user as any).findUnique({
-      where: { id: params.userId },
+    db.user.findUnique({
+      where: { id: userId },
       select: {
         id: true,
         name: true,
@@ -30,8 +34,8 @@ export default async function UserDetailPage({ params }: Props) {
         createdAt: true,
       },
     }),
-    (db.enrollment as any).findMany({
-      where: { userId: params.userId },
+    db.enrollment.findMany({
+      where: { userId: userId },
       include: {
         course: {
           include: {
@@ -54,9 +58,9 @@ export default async function UserDetailPage({ params }: Props) {
       },
       orderBy: { createdAt: "desc" },
     }),
-    (db.testAttempt as any).findMany({
-      where: { 
-        userId: params.userId,
+    db.testAttempt.findMany({
+      where: {
+        userId: userId,
         status: { in: ["SUBMITTED", "FORCE_SUBMITTED"] }
       },
       select: {
@@ -85,12 +89,12 @@ export default async function UserDetailPage({ params }: Props) {
       },
       orderBy: { createdAt: "asc" },
     }),
-    (db.userProgress as any).findMany({
-      where: { userId: params.userId, isCompleted: true },
+    db.userProgress.findMany({
+      where: { userId: userId, isCompleted: true },
       select: { moduleId: true, updatedAt: true },
     }),
-    (db.videoProgress as any).findMany({
-      where: { userId: params.userId },
+    db.videoProgress.findMany({
+      where: { userId: userId },
       select: {
         moduleId: true,
         completionRate: true,
@@ -99,8 +103,8 @@ export default async function UserDetailPage({ params }: Props) {
         completed: true,
       },
     }),
-    (db.pDFProgress as any).findMany({
-      where: { userId: params.userId },
+    db.pDFProgress.findMany({
+      where: { userId: userId },
       select: {
         moduleId: true,
         completionRate: true,
@@ -136,7 +140,7 @@ export default async function UserDetailPage({ params }: Props) {
 
     // Get the latest post-test result
     const sortedPostAttempts = [...postAttempts].sort((a, b) =>
-      new Date(b.completedAt || b.startedAt).getTime() - new Date(a.completedAt || a.startedAt).getTime()
+      new Date(b.completedAt || b.startedAt || b.createdAt).getTime() - new Date(a.completedAt || a.startedAt || a.createdAt).getTime()
     );
     const postPassed = postAttempts.length > 0 ? postAttempts.some((a: any) => a.passed) : null;
 
@@ -203,6 +207,7 @@ export default async function UserDetailPage({ params }: Props) {
       course: { title: e.course.title },
       courseTitle: e.course.title,
       status: e.status,
+      createdAt: e.createdAt,
       enrolledAt: e.createdAt,
       moduleProgress: moduleProgressPct,
       completedModulesCount: completedInCourse,
